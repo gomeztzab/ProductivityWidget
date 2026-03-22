@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Productivity Widget</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="widget">
+
+<button class="widget__config-btn" id="configBtn">⚙</button>
+
+<!-- CLOCK -->
+<div class="widget__section">
+
+<div class="widget__clock" id="clock">00:00:00</div>
+<div class="widget__date" id="date"></div>
+
+</div>
+
+<!-- TODO -->
+<div class="widget__section">
+
+<h2 class="widget__section-title">Lista de tareas</h2>
+
+<input class="widget__input" id="taskInput" placeholder="Nueva tarea">
+<button class="btn" id="addTaskBtn">Agregar</button>
+
+<ul class="widget__task-list" id="taskList"></ul>
+
+</div>
+
+<!-- POMODORO -->
+<div class="widget__section">
+
+<h2 class="widget__section-title">Pomodoro</h2>
+
+<div class="widget__timer" id="timer">25:00</div>
+
+<div class="widget__timer-controls">
+
+<button class="btn" id="startTimerBtn">Start</button>
+<button class="btn" id="resetTimerBtn">Reset</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="renderer.js"></script>
+
+</body>
+</html>

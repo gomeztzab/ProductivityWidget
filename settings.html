@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Configuración</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body class="settings-body">
+
+<div class="settings">
+
+<h1 class="settings__title">⚙ Configuración</h1>
+
+<div class="settings__group">
+
+<label class="settings__group-label">Color del widget</label>
+<input class="settings__group-input" type="color" id="widgetColor">
+
+</div>
+
+<div class="settings__group">
+
+<label class="settings__group-label">Duración Pomodoro</label>
+<input class="settings__group-input" type="number" id="pomodoroTime" value="25" min="1">
+
+</div>
+
+<div class="settings__group">
+
+<label class="settings__group-label">Siempre encima</label>
+<input class="settings__group-input" type="checkbox" id="alwaysOnTop" checked>
+
+</div>
+
+<div class="settings__buttons">
+
+<button class="btn btn--secondary" id="closeSettingsBtn">Cerrar</button>
+<button class="btn btn--danger" id="closeAppBtn">Cerrar Widget</button>
+
+</div>
+
+</div>
+
+<script src="settings.js"></script>
+
+</body>
+</html>
