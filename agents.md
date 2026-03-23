@@ -248,3 +248,98 @@ Porque será vendido como producto digital.
 
 ---
 
+---
+
+## 🎵 Integración de Control Multimedia Global (Windows)
+
+La aplicación debe ser capaz de mostrar y controlar la reproducción multimedia del sistema (por ejemplo: Spotify, navegador, YouTube) utilizando APIs nativas de Windows.
+
+### 🎯 Objetivo
+
+Implementar un widget multimedia que permita:
+
+- Mostrar título de la canción actual
+- Mostrar nombre del artista
+- Mostrar progreso de reproducción
+- Controles:
+  - Play / Pause
+  - Siguiente
+  - Anterior
+
+---
+
+### ⚙️ Enfoque técnico
+
+- Usar Node.js junto con integración a APIs de Windows (SMTC / Windows Media Session API)
+- Implementar desde Electron (proceso principal)
+
+### Reglas importantes:
+
+- ❌ No usar scraping de navegador
+- ❌ No inspeccionar procesos del sistema manualmente
+- ❌ No depender únicamente de APIs externas (ej: Spotify)
+
+- ✅ Priorizar integración nativa del sistema operativo
+- ✅ Usar librerías Node compatibles con Windows Media APIs (WinRT / SMTC)
+
+---
+
+### 🧱 Arquitectura
+
+- **Main process (Electron):**
+  - Maneja la conexión con el sistema multimedia de Windows
+  - Escucha cambios en reproducción
+
+- **Renderer process:**
+  - Recibe datos mediante IPC
+  - Actualiza la UI del widget multimedia
+
+---
+
+### 🔌 Comunicación IPC
+
+Eventos:
+
+- main → renderer:
+  - `media:update` → { title, artist, duration, position, isPlaying }
+
+- renderer → main:
+  - `media:play-pause`
+  - `media:next`
+  - `media:previous`
+
+---
+
+### 🎨 UX del widget
+
+El widget multimedia debe ser:
+
+- Compacto
+- Minimalista
+- Visualmente consistente con el resto del sistema
+
+Debe incluir:
+
+- Título
+- Artista
+- Barra de progreso
+- Botones de control
+
+---
+
+### ⚡ Comportamiento
+
+- Actualización en tiempo casi real
+- Detectar cambios automáticamente:
+  - Nueva canción
+  - Pausa / reproducción
+  - Avance del tiempo
+
+---
+
+### ⭐ Mejoras futuras
+
+- Mostrar portada del álbum
+- Animaciones suaves en la barra de progreso
+- Fallback a Spotify API si no hay media del sistema
+
