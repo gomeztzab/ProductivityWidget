@@ -57,6 +57,9 @@ Cada widget debe ser modular:
 - Bajo acoplamiento
 
 ---
+## Prompts
+- Si te doy el prompt en ingles mantener comentarios e intrucciones en español
+- Tarea: tarea especifica a realizar
 
 ## 🎨 Sistema de diseño
 

@@ -9,6 +9,8 @@ const breakSel  = document.getElementById("breakDuration")
 const reminderSoundToggle = document.getElementById("reminderSoundEnabled")
 const reminderNotificationsToggle = document.getElementById("reminderNotificationsEnabled")
 const reminderSoundLevelSel = document.getElementById("reminderSoundLevel")
+const launchAtStartupToggle = document.getElementById("launchAtStartupToggle")
+const launchAtStartupHint = document.getElementById("launchAtStartupHint")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 const themeCards    = document.querySelectorAll(".settings__theme-card")
@@ -51,6 +53,7 @@ let selectedFont      = localStorage.getItem("fontFamily")  || "Inter"
 let reminderSoundEnabled = localStorage.getItem("reminderSoundEnabled") !== "false"
 let reminderNotificationsEnabled = localStorage.getItem("reminderNotificationsEnabled") !== "false"
 let reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
+let launchAtStartupEnabled = localStorage.getItem("launchAtStartupEnabled") === "true"
 
 /* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
@@ -65,6 +68,7 @@ if(savedBreak) breakSel.value = savedBreak
 if(reminderSoundToggle) reminderSoundToggle.checked = reminderSoundEnabled
 if(reminderNotificationsToggle) reminderNotificationsToggle.checked = reminderNotificationsEnabled
 if(reminderSoundLevelSel) reminderSoundLevelSel.value = reminderSoundLevel
+if(launchAtStartupToggle) launchAtStartupToggle.checked = launchAtStartupEnabled
 updateColorPreview(selectedColor)
 updateActiveSwatch(selectedColor)
 updateTextColorPreview(selectedTextColor)
@@ -72,6 +76,7 @@ updateActiveTextSwatch(selectedTextColor)
 updateActiveThemeCard(selectedTheme)
 updateActiveFontCard(selectedFont)
 updateBars()
+void syncLaunchAtStartupState()
 
 /* ---- Preview bars en tiempo real ---- */
 focusSel.addEventListener("change", updateBars)
@@ -147,6 +152,32 @@ if (reminderSoundLevelSel) {
     })
 }
 
+if (launchAtStartupToggle) {
+    launchAtStartupToggle.addEventListener("change", () => {
+        launchAtStartupEnabled = launchAtStartupToggle.checked
+    })
+}
+
+async function syncLaunchAtStartupState() {
+    if (!launchAtStartupToggle) return
+
+    try {
+        const startupState = await ipcRenderer.invoke("get-launch-at-startup")
+        const isSupported = startupState?.supported !== false
+        launchAtStartupEnabled = Boolean(startupState?.enabled)
+        launchAtStartupToggle.checked = launchAtStartupEnabled
+        launchAtStartupToggle.disabled = !isSupported
+
+        if (launchAtStartupHint) {
+            launchAtStartupHint.textContent = isSupported
+                ? "La app se abrira automaticamente cuando inicies sesion."
+                : "Esta opcion no esta disponible en este sistema."
+        }
+    } catch (_) {
+        launchAtStartupToggle.checked = launchAtStartupEnabled
+    }
+}
+
 function updateActiveFontCard(font) {
     fontCards.forEach(c => c.classList.remove("settings__font-card--active"))
     const active = document.querySelector(`.settings__font-card[data-font='${font}']`)
@@ -211,7 +242,7 @@ function updateColorPreview(color) {
 }
 
 /* ---- Guardar ---- */
-saveBtn.addEventListener("click", () => {
+saveBtn.addEventListener("click", async () => {
     localStorage.setItem("focusDuration",  focusSel.value)
     localStorage.setItem("breakDuration",  breakSel.value)
     localStorage.setItem("accentColor",    selectedColor)
@@ -221,6 +252,14 @@ saveBtn.addEventListener("click", () => {
     localStorage.setItem("reminderSoundEnabled", String(reminderSoundEnabled))
     localStorage.setItem("reminderNotificationsEnabled", String(reminderNotificationsEnabled))
     localStorage.setItem("reminderSoundLevel", reminderSoundLevel)
+    localStorage.setItem("launchAtStartupEnabled", String(launchAtStartupEnabled))
+
+    const startupResult = await ipcRenderer.invoke("set-launch-at-startup", launchAtStartupEnabled)
+    if (startupResult?.error) {
+        window.alert(startupResult.error)
+        return
+    }
+
     ipcRenderer.send("save-settings", {
         accentColor: selectedColor,
         textColor:   selectedTextColor,

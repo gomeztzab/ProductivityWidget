@@ -42,8 +42,17 @@ const VIEW_MODE_HEIGHTS = {
     bar: 178,
     collapsed: 82
 }
+const VIEW_MODE_WIDTH_GROWTH = {
+    full: 40,
+    compact: 0,
+    mini: 0,
+    bar: 0,
+    collapsed: 0
+}
 let selectedViewMode = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'full'
 let collapsedDragState = null
+let pendingDragPosition = null
+let dragPositionRaf = 0
 const strictModeState = {
     exit: false,
     screen: false,
@@ -227,7 +236,7 @@ document.addEventListener('mousemove', event => {
 
     if (!collapsedDragState.dragged) return
 
-    ipcRenderer.send('set-window-position', {
+    scheduleDragPosition({
         x: collapsedDragState.startWindowX + deltaX,
         y: collapsedDragState.startWindowY + deltaY
     })
@@ -239,6 +248,16 @@ document.addEventListener('mouseup', () => {
     const dragged = collapsedDragState.dragged
     collapsedDragState = null
     collapsedExpandBtn?.classList.remove('collapsed-view--dragging')
+
+    if (pendingDragPosition) {
+        ipcRenderer.send('set-window-position', pendingDragPosition)
+        pendingDragPosition = null
+    }
+
+    if (dragPositionRaf) {
+        cancelAnimationFrame(dragPositionRaf)
+        dragPositionRaf = 0
+    }
 
     if (!dragged && selectedViewMode === 'collapsed') {
         renderViewModeSelection('full')
@@ -268,6 +287,26 @@ const FONT_WIDTHS = {
 }
 const dashboardEl = document.querySelector(".dashboard")
 let widthSyncRaf = 0
+let widthSyncTimeout = 0
+let lastSentWindowSize = null
+
+function sendWindowSize(width, height) {
+    const nextSize = {
+        width: Math.round(width),
+        height: Math.round(height)
+    }
+
+    if (
+        lastSentWindowSize &&
+        lastSentWindowSize.width === nextSize.width &&
+        lastSentWindowSize.height === nextSize.height
+    ) {
+        return
+    }
+
+    lastSentWindowSize = nextSize
+    ipcRenderer.send("set-window-size", nextSize)
+}
 
 function syncWindowWidth() {
     if (!dashboardEl) return
@@ -283,23 +322,44 @@ function syncWindowWidth() {
         (parseFloat(bodyStyles.paddingTop) || 0) +
         (parseFloat(bodyStyles.paddingBottom) || 0)
     const baseWidth = VIEW_MODE_WIDTHS[selectedViewMode] || FONT_WIDTHS[savedFont] || 960
-    const desiredWidth = Math.max(
+    const measuredWidth = Math.max(
         baseWidth,
         Math.ceil(dashboardWidth + bodyPaddingX + 6)
     )
+    const widthGrowthLimit = VIEW_MODE_WIDTH_GROWTH[selectedViewMode] ?? 0
+    const desiredWidth = widthGrowthLimit > 0
+        ? Math.min(baseWidth + widthGrowthLimit, measuredWidth)
+        : measuredWidth
     const desiredHeight = Math.max(
         VIEW_MODE_HEIGHTS[selectedViewMode] || 740,
         Math.ceil(dashboardEl.scrollHeight + bodyPaddingY + 8)
     )
-    ipcRenderer.send("set-window-size", { width: desiredWidth, height: desiredHeight })
+    sendWindowSize(desiredWidth, desiredHeight)
 }
 
 function scheduleWindowWidthSync() {
     if (widthSyncRaf) cancelAnimationFrame(widthSyncRaf)
     widthSyncRaf = requestAnimationFrame(() => {
         widthSyncRaf = 0
-        syncWindowWidth()
+        if (widthSyncTimeout) clearTimeout(widthSyncTimeout)
+        widthSyncTimeout = setTimeout(() => {
+            widthSyncTimeout = 0
+            syncWindowWidth()
+        }, 20)
     })
+}
+
+function flushPendingDragPosition() {
+    dragPositionRaf = 0
+    if (!pendingDragPosition) return
+    ipcRenderer.send('set-window-position', pendingDragPosition)
+    pendingDragPosition = null
+}
+
+function scheduleDragPosition(position) {
+    pendingDragPosition = position
+    if (dragPositionRaf) return
+    dragPositionRaf = requestAnimationFrame(flushPendingDragPosition)
 }
 
 function applyFont(font) {
@@ -477,11 +537,7 @@ const Stats = (() => {
     }
 
     function _renderPage1() {
-        const list    = document.getElementById('taskList')
-        const all     = list ? list.querySelectorAll('.todo__item').length       : 0
-        const done    = list ? list.querySelectorAll('.todo__item--completed').length : 0
-        const pending = all - done
-        const rate    = all > 0 ? Math.round(done / all * 100) : 0
+        const { all, done, pending, rate } = getTaskStats()
         document.getElementById('statTasksDone').textContent    = done
         document.getElementById('statTasksPending').textContent = pending
         document.getElementById('statTasksRate').textContent    = rate + '%'
@@ -525,69 +581,436 @@ const Stats = (() => {
    TODO LIST
    ===================== */
 
-const taskList  = document.getElementById("taskList")
-const taskInput = document.getElementById("taskInput")
+let TodoList = null
 
-const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
-
-function loadTasks() {
-    const raw   = JSON.parse(localStorage.getItem("tasks") || "[]")
-    /* migración: soporte strings antiguas y objetos nuevos {text, done} */
-    const tasks = raw.map(t => typeof t === 'string' ? { text: t, done: false } : t)
-    tasks.forEach(t => appendTask(t.text, t.done))
+function getTaskStats() {
+    if (!TodoList || typeof TodoList.getStats !== 'function') {
+        return { all: 0, done: 0, pending: 0, rate: 0, activeTask: null }
+    }
+    return TodoList.getStats()
 }
 
-function addTask() {
-    if (!taskInput || taskInput.value.trim() === "") return
-    const text = taskInput.value.trim()
-    appendTask(text, false)
-    saveTasks()
-    taskInput.value = ""
-    Stats.refreshTasks()
-}
+TodoList = (() => {
+    const taskList = document.getElementById('taskList')
+    const taskInput = document.getElementById('taskInput')
+    const addTaskBtn = document.getElementById('addTaskBtn')
+    const taskPrioritySelect = document.getElementById('taskPrioritySelect')
+    const taskSortSelect = document.getElementById('taskSortSelect')
+    const taskFilters = Array.from(document.querySelectorAll('.todo__filter'))
+    const todoCard = document.querySelector('.todo')
+    const todoCompactToggleBtn = document.getElementById('todoCompactToggleBtn')
+    const todoCompactSummaryBtn = document.getElementById('todoCompactSummaryBtn')
+    const todoSummaryText = document.getElementById('todoSummaryText')
+    const todoCompactCount = document.getElementById('todoCompactCount')
+    const todoCompactActive = document.getElementById('todoCompactActive')
+    const todoActiveTask = document.getElementById('todoActiveTask')
+    const todoEmptyState = document.getElementById('todoEmptyState')
 
-function appendTask(text, done = false) {
-    const li = document.createElement("li")
-    li.classList.add("todo__item")
-    if (done) li.classList.add("todo__item--completed")
-    li.innerHTML = `
-        <div class="todo__checkbox${done ? ' todo__checkbox--checked' : ''}"></div>
-        <span class="todo__text">${text}</span>
-        <button class="todo__remove" title="Eliminar">&times;</button>
-    `
+    const TODO_STORAGE_KEY = 'todoStateV2'
+    const LEGACY_TASKS_STORAGE_KEY = 'tasks'
+    const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+    const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
+    const PRIORITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Baja' }
+    const PRIORITY_SEQUENCE = ['high', 'medium', 'low']
+    const VALID_FILTERS = new Set(['all', 'pending', 'completed'])
+    const VALID_SORTS = new Set(['manual', 'priority'])
 
-    const checkbox = li.querySelector(".todo__checkbox")
-    if (done) checkbox.innerHTML = CHECK_SVG
-    checkbox.addEventListener("click", () => {
-        const completed = li.classList.toggle("todo__item--completed")
-        checkbox.classList.toggle("todo__checkbox--checked", completed)
-        checkbox.innerHTML = completed ? CHECK_SVG : ""
-        saveTasks()
+    let state = {
+        ...readState(),
+        compact: true
+    }
+
+    function createTaskId() {
+        return `task_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+    }
+
+    function readState() {
+        let parsed = null
+        let legacy = []
+
+        try {
+            parsed = JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || 'null')
+        } catch {
+            parsed = null
+        }
+
+        try {
+            legacy = JSON.parse(localStorage.getItem(LEGACY_TASKS_STORAGE_KEY) || '[]')
+        } catch {
+            legacy = []
+        }
+
+        if (parsed && typeof parsed === 'object') {
+            return normalizeState(parsed)
+        }
+
+        return normalizeState({ tasks: Array.isArray(legacy) ? legacy : [] })
+    }
+
+    function normalizeState(raw = {}) {
+        const tasks = Array.isArray(raw.tasks) ? raw.tasks.map(normalizeTask).filter(Boolean) : []
+        let activeAssigned = false
+
+        const normalizedTasks = tasks.map(task => {
+            const normalizedTask = { ...task }
+
+            if (normalizedTask.done) {
+                normalizedTask.active = false
+                return normalizedTask
+            }
+
+            if (normalizedTask.active && !activeAssigned) {
+                activeAssigned = true
+                return normalizedTask
+            }
+
+            normalizedTask.active = false
+            return normalizedTask
+        })
+
+        return {
+            tasks: normalizedTasks,
+            filter: VALID_FILTERS.has(raw.filter) ? raw.filter : 'all',
+            sort: VALID_SORTS.has(raw.sort) ? raw.sort : 'manual',
+            compact: Boolean(raw.compact)
+        }
+    }
+
+    function normalizeTask(task) {
+        if (typeof task === 'string') {
+            const text = task.trim()
+            return text ? { id: createTaskId(), text, done: false, priority: 'medium', active: false } : null
+        }
+
+        if (!task || typeof task !== 'object') return null
+
+        const text = String(task.text || '').trim()
+        if (!text) return null
+
+        return {
+            id: typeof task.id === 'string' && task.id ? task.id : createTaskId(),
+            text,
+            done: Boolean(task.done),
+            priority: PRIORITY_LABELS[task.priority] ? task.priority : 'medium',
+            active: !task.done && Boolean(task.active)
+        }
+    }
+
+    function saveState() {
+        localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(state))
+    }
+
+    function getStats() {
+        const all = state.tasks.length
+        const done = state.tasks.filter(task => task.done).length
+        const pending = all - done
+        const rate = all > 0 ? Math.round(done / all * 100) : 0
+        const activeTask = state.tasks.find(task => task.active && !task.done) || null
+
+        return { all, done, pending, rate, activeTask }
+    }
+
+    function getVisibleTasks() {
+        const filteredTasks = state.tasks
+            .map((task, index) => ({ task, sourceIndex: index }))
+            .filter(({ task }) => {
+                if (state.filter === 'pending') return !task.done
+                if (state.filter === 'completed') return task.done
+                return true
+            })
+
+        if (state.sort === 'priority') {
+            filteredTasks.sort((left, right) => {
+                if (left.task.done !== right.task.done) {
+                    return Number(left.task.done) - Number(right.task.done)
+                }
+
+                const priorityDiff = PRIORITY_ORDER[left.task.priority] - PRIORITY_ORDER[right.task.priority]
+                if (priorityDiff !== 0) return priorityDiff
+                return left.sourceIndex - right.sourceIndex
+            })
+        }
+
+        return filteredTasks
+    }
+
+    function render() {
+        if (!taskList) return
+
+        const visibleTasks = getVisibleTasks()
+        const { all, pending, done, activeTask } = getStats()
+        const emptyMessage = all === 0
+            ? 'Agrega una tarea para empezar.'
+            : 'No hay tareas en este filtro.'
+
+        if (todoCard) {
+            todoCard.classList.toggle('todo--compact', state.compact)
+        }
+
+        if (todoCompactToggleBtn) {
+            todoCompactToggleBtn.textContent = state.compact ? 'Expandir' : 'Compacto'
+            todoCompactToggleBtn.setAttribute('aria-pressed', state.compact ? 'true' : 'false')
+        }
+
+        if (taskSortSelect) {
+            taskSortSelect.value = state.sort
+        }
+
+        taskFilters.forEach(button => {
+            const selected = button.dataset.filter === state.filter
+            button.classList.toggle('todo__filter--active', selected)
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false')
+        })
+
+        if (todoSummaryText) {
+            todoSummaryText.textContent = `${pending} pendientes · ${done} completas`
+        }
+
+        if (todoCompactCount) {
+            todoCompactCount.textContent = all === 0 ? 'Sin tareas' : `${pending} pendientes de ${all}`
+        }
+
+        if (todoCompactActive) {
+            todoCompactActive.textContent = activeTask ? `En foco: ${activeTask.text}` : 'Sin tarea en foco'
+        }
+
+        if (todoActiveTask) {
+            todoActiveTask.innerHTML = activeTask
+                ? `
+                    <span class="todo__active-task-kicker">Tarea en foco</span>
+                    <strong class="todo__active-task-title">${escapeHtml(activeTask.text)}</strong>
+                    <span class="todo__active-task-meta">Prioridad ${PRIORITY_LABELS[activeTask.priority].toLowerCase()} · lista para Pomodoro</span>
+                `
+                : `
+                    <span class="todo__active-task-kicker">Foco</span>
+                    <strong class="todo__active-task-title">Sin tarea activa</strong>
+                    <span class="todo__active-task-meta">Selecciona una tarea para centrarte en ella.</span>
+                `
+            todoActiveTask.classList.toggle('todo__active-task--idle', !activeTask)
+        }
+
+        taskList.innerHTML = visibleTasks
+            .map(({ task, sourceIndex }) => renderTask(task, sourceIndex))
+            .join('')
+
+        if (todoEmptyState) {
+            todoEmptyState.textContent = emptyMessage
+            todoEmptyState.hidden = visibleTasks.length > 0
+        }
+
         Stats.refreshTasks()
+        scheduleWindowWidthSync()
+    }
+
+    function renderTask(task, sourceIndex) {
+        const isCompleted = task.done
+        const isActive = task.active && !task.done
+        const isManualSort = state.sort === 'manual'
+        const moveUpDisabled = !isManualSort || sourceIndex === 0
+        const moveDownDisabled = !isManualSort || sourceIndex === state.tasks.length - 1
+
+        return `
+            <li class="todo__item${isCompleted ? ' todo__item--completed' : ''}${isActive ? ' todo__item--active' : ''}" data-task-id="${task.id}" data-source-index="${sourceIndex}">
+                <button class="todo__checkbox${isCompleted ? ' todo__checkbox--checked' : ''}" data-action="toggle" type="button" aria-label="${isCompleted ? 'Marcar como pendiente' : 'Marcar como completada'}">${isCompleted ? CHECK_SVG : ''}</button>
+                <div class="todo__content">
+                    <div class="todo__meta-row">
+                        <button class="todo__priority todo__priority--${task.priority}" data-action="priority" type="button">${PRIORITY_LABELS[task.priority]}</button>
+                        ${isActive ? '<span class="todo__focus-badge">En foco ahora</span>' : ''}
+                    </div>
+                    <span class="todo__text">${escapeHtml(task.text)}</span>
+                </div>
+                <div class="todo__actions">
+                    <button class="todo__action${isActive ? ' todo__action--focus-active' : ' todo__action--focus'}" data-action="focus" type="button" ${isCompleted ? 'disabled' : ''}>${isActive ? 'Quitar foco' : 'Poner foco'}</button>
+                    <button class="todo__action" data-action="move-up" type="button" ${moveUpDisabled ? 'disabled' : ''}>↑</button>
+                    <button class="todo__action" data-action="move-down" type="button" ${moveDownDisabled ? 'disabled' : ''}>↓</button>
+                    <button class="todo__remove" data-action="remove" type="button" title="Eliminar">&times;</button>
+                </div>
+            </li>
+        `
+    }
+
+    function commit(nextState, options = {}) {
+        state = normalizeState(nextState)
+        saveState()
+        render()
+
+        if (options.focusInput && taskInput) {
+            taskInput.focus()
+        }
+    }
+
+    function addTask() {
+        if (!taskInput) return
+
+        const text = taskInput.value.trim()
+        if (!text) return
+
+        const hasActivePendingTask = state.tasks.some(task => task.active && !task.done)
+        const nextTask = {
+            id: createTaskId(),
+            text,
+            done: false,
+            priority: PRIORITY_LABELS[taskPrioritySelect?.value] ? taskPrioritySelect.value : 'medium',
+            active: !hasActivePendingTask
+        }
+
+        commit({
+            ...state,
+            tasks: [nextTask, ...state.tasks],
+            compact: false
+        }, { focusInput: true })
+
+        taskInput.value = ''
+        if (taskPrioritySelect) taskPrioritySelect.value = 'medium'
+    }
+
+    function cyclePriority(taskId) {
+        commit({
+            ...state,
+            tasks: state.tasks.map(task => {
+                if (task.id !== taskId) return task
+                const currentIndex = PRIORITY_SEQUENCE.indexOf(task.priority)
+                const nextPriority = PRIORITY_SEQUENCE[(currentIndex + 1) % PRIORITY_SEQUENCE.length]
+                return { ...task, priority: nextPriority }
+            })
+        })
+    }
+
+    function toggleTask(taskId) {
+        commit({
+            ...state,
+            tasks: state.tasks.map(task => {
+                if (task.id !== taskId) return task
+                const done = !task.done
+                return { ...task, done, active: done ? false : task.active }
+            })
+        })
+    }
+
+    function toggleActiveTask(taskId) {
+        commit({
+            ...state,
+            tasks: state.tasks.map(task => {
+                if (task.done) return { ...task, active: false }
+                if (task.id === taskId) return { ...task, active: !task.active }
+                return { ...task, active: false }
+            })
+        })
+    }
+
+    function removeTask(taskId) {
+        commit({
+            ...state,
+            tasks: state.tasks.filter(task => task.id !== taskId)
+        })
+    }
+
+    function moveTask(taskId, direction, sourceIndex) {
+        if (state.sort !== 'manual') return
+
+        const currentIndex = Number.isInteger(sourceIndex)
+            ? sourceIndex
+            : state.tasks.findIndex(task => task.id === taskId)
+
+        if (currentIndex === -1) return
+
+        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+        if (targetIndex < 0 || targetIndex >= state.tasks.length) return
+
+        const nextTasks = [...state.tasks]
+        ;[nextTasks[currentIndex], nextTasks[targetIndex]] = [nextTasks[targetIndex], nextTasks[currentIndex]]
+        commit({ ...state, tasks: nextTasks })
+    }
+
+    function setFilter(filter) {
+        if (!VALID_FILTERS.has(filter)) return
+        commit({ ...state, filter })
+    }
+
+    function setSort(sort) {
+        if (!VALID_SORTS.has(sort)) return
+        commit({ ...state, sort })
+    }
+
+    function toggleCompact() {
+        commit({ ...state, compact: !state.compact })
+    }
+
+    function expandFromCompact() {
+        if (selectedViewMode === 'compact') {
+            commit({ ...state, compact: false })
+            renderViewModeSelection('full')
+            requestAnimationFrame(() => taskInput?.focus())
+            return
+        }
+
+        commit({ ...state, compact: false }, { focusInput: true })
+    }
+
+    if (addTaskBtn) {
+        addTaskBtn.addEventListener('click', addTask)
+    }
+
+    if (taskInput) {
+        taskInput.addEventListener('keydown', event => {
+            if (event.key !== 'Enter') return
+            event.preventDefault()
+            addTask()
+        })
+    }
+
+    if (taskSortSelect) {
+        taskSortSelect.addEventListener('change', event => setSort(event.target.value))
+    }
+
+    taskFilters.forEach(button => {
+        button.addEventListener('click', () => setFilter(button.dataset.filter))
     })
 
-    li.querySelector(".todo__remove").addEventListener("click", () => {
-        li.remove()
-        saveTasks()
-        Stats.refreshTasks()
-    })
+    if (todoCompactToggleBtn) {
+        todoCompactToggleBtn.addEventListener('click', toggleCompact)
+    }
 
-    taskList.appendChild(li)
-}
+    if (todoCompactSummaryBtn) {
+        todoCompactSummaryBtn.addEventListener('click', expandFromCompact)
+    }
 
-function saveTasks() {
-    const items = Array.from(taskList.querySelectorAll('.todo__item'))
-    const tasks = items.map(li => ({
-        text: li.querySelector('.todo__text').textContent,
-        done: li.classList.contains('todo__item--completed')
-    }))
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-}
+    if (taskList) {
+        taskList.addEventListener('click', event => {
+            const trigger = event.target.closest('[data-action]')
+            if (!trigger) return
 
-document.getElementById("addTaskBtn").addEventListener("click", addTask)
-taskInput.addEventListener("keydown", (e) => { if(e.key === "Enter") addTask() })
+            const item = trigger.closest('.todo__item')
+            if (!item) return
 
-loadTasks()
+            const taskId = item.dataset.taskId
+            const action = trigger.dataset.action
+            const sourceIndex = Number.parseInt(item.dataset.sourceIndex || '-1', 10)
+
+            if (action === 'toggle') toggleTask(taskId)
+            else if (action === 'priority') cyclePriority(taskId)
+            else if (action === 'focus') toggleActiveTask(taskId)
+            else if (action === 'move-up') moveTask(taskId, 'up', sourceIndex)
+            else if (action === 'move-down') moveTask(taskId, 'down', sourceIndex)
+            else if (action === 'remove') removeTask(taskId)
+        })
+    }
+
+    render()
+
+    return {
+        getStats
+    }
+})()
 
 
 /* =====================

@@ -98,16 +98,46 @@
             <!-- Lista de tareas -->
             <div class="todo">
                 <div class="todo__header">
-                    <h3 class="todo__title">To-Do List</h3>
-                    <svg class="todo__header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+                    <div class="todo__header-copy">
+                        <h3 class="todo__title">To-Do List</h3>
+                        <span class="todo__summary-text" id="todoSummaryText">0 tareas pendientes</span>
+                    </div>
+                    <div class="todo__header-actions">
+                        <svg class="todo__header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <button class="todo__compact-toggle" id="todoCompactToggleBtn" type="button" aria-pressed="false">Compacto</button>
+                    </div>
                 </div>
-                <div class="todo__input-row">
-                    <input class="todo__input" id="taskInput" type="text" placeholder="Nueva tarea...">
-                    <button class="btn btn--primary" id="addTaskBtn">+</button>
+                <button class="todo__compact-summary" id="todoCompactSummaryBtn" type="button">
+                    <span class="todo__compact-count" id="todoCompactCount">0 pendientes</span>
+                    <span class="todo__compact-active" id="todoCompactActive">Sin tarea en foco</span>
+                </button>
+                <div class="todo__panel" id="todoPanel">
+                    <div class="todo__input-row">
+                        <input class="todo__input" id="taskInput" type="text" placeholder="Nueva tarea...">
+                        <select class="todo__priority-select" id="taskPrioritySelect" aria-label="Prioridad de la nueva tarea">
+                            <option value="high">Alta</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="low">Baja</option>
+                        </select>
+                        <button class="btn btn--primary" id="addTaskBtn" type="button" aria-label="Agregar tarea">+</button>
+                    </div>
+                    <div class="todo__toolbar">
+                        <div class="todo__filters" id="taskFilters">
+                            <button class="todo__filter todo__filter--active" data-filter="all" type="button">Todas</button>
+                            <button class="todo__filter" data-filter="pending" type="button">Pendientes</button>
+                            <button class="todo__filter" data-filter="completed" type="button">Completadas</button>
+                        </div>
+                        <select class="todo__sort" id="taskSortSelect" aria-label="Ordenar tareas">
+                            <option value="manual">Manual</option>
+                            <option value="priority">Prioridad</option>
+                        </select>
+                    </div>
+                    <div class="todo__active-task" id="todoActiveTask">Sin tarea activa</div>
+                    <ul class="todo__list" id="taskList"></ul>
+                    <p class="todo__empty" id="todoEmptyState">Agrega una tarea para empezar.</p>
                 </div>
-                <ul class="todo__list" id="taskList"></ul>
             </div>
 
             <!-- Stats -->

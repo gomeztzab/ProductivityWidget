@@ -18,13 +18,37 @@ let forceQuit = false
 let forceCloseLockScreen = false
 let forceCloseInteractionLock = false
 let websiteLockCleanupInProgress = false
+let persistBoundsTimeout = null
 let exitLockEnabled = store.get('strictExitLockEnabled', false)
 let screenLockEnabled = store.get('strictScreenLockEnabled', false)
 let interactionLockEnabled = store.get('strictInteractionLockEnabled', false)
 let websiteLockEnabled = store.get('strictWebsiteLockEnabled', false)
 let websiteLockDomains = normalizeWebsiteDomains(store.get('strictWebsiteLockDomains', ['youtube.com', 'facebook.com', 'twitter.com']))
 let websiteLockError = ''
+let launchAtStartupEnabled = store.get('launchAtStartupEnabled', false)
 const hostsBackupPath = path.join(app.getPath('userData'), 'hosts.strict-mode.backup')
+
+function getLoginItemSettingsPayload(enabled) {
+    const payload = {
+        openAtLogin: Boolean(enabled),
+        openAsHidden: false
+    }
+
+    if (process.platform === 'win32' && process.defaultApp && process.argv[1]) {
+        payload.path = process.execPath
+        payload.args = [path.resolve(process.argv[1])]
+    }
+
+    return payload
+}
+
+function setLaunchAtStartupEnabled(enabled) {
+    const nextEnabled = Boolean(enabled)
+    app.setLoginItemSettings(getLoginItemSettingsPayload(nextEnabled))
+    launchAtStartupEnabled = nextEnabled
+    store.set('launchAtStartupEnabled', launchAtStartupEnabled)
+    return { enabled: launchAtStartupEnabled, supported: true }
+}
 
 function broadcastExitLockState() {
     const payload = { exitLockEnabled }
@@ -136,6 +160,94 @@ function getDisplayIntersection(rectA, rectB) {
 
     if (width <= 0 || height <= 0) return null
     return { x, y, width, height }
+}
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max)
+}
+
+function getDisplayWorkAreas() {
+    return screen.getAllDisplays().map(display => display.workArea)
+}
+
+function getLargestWorkArea() {
+    return getDisplayWorkAreas().reduce((largest, area) => {
+        if (!largest) return area
+        return area.width * area.height >= largest.width * largest.height ? area : largest
+    }, null)
+}
+
+function hasEnoughVisibleArea(bounds) {
+    const minVisibleArea = Math.max(1600, Math.round(bounds.width * bounds.height * 0.2))
+
+    return getDisplayWorkAreas().some(workArea => {
+        const intersection = getDisplayIntersection(workArea, bounds)
+        return intersection && (intersection.width * intersection.height) >= minVisibleArea
+    })
+}
+
+function centerBoundsInWorkArea(bounds, workArea) {
+    const width = Math.min(bounds.width, workArea.width)
+    const height = Math.min(bounds.height, workArea.height)
+
+    return {
+        width,
+        height,
+        x: Math.round(workArea.x + ((workArea.width - width) / 2)),
+        y: Math.round(workArea.y + ((workArea.height - height) / 2))
+    }
+}
+
+function normalizeWindowBounds(rawBounds = {}) {
+    const fallbackArea = getLargestWorkArea() || screen.getPrimaryDisplay().workArea
+    const maxWidth = Math.max(72, fallbackArea.width)
+    const maxHeight = Math.max(72, fallbackArea.height)
+    const width = clamp(Math.round(rawBounds.width || 960), 72, maxWidth)
+    const height = clamp(Math.round(rawBounds.height || 740), 72, maxHeight)
+    const seedBounds = {
+        x: Number.isFinite(rawBounds.x) ? Math.round(rawBounds.x) : fallbackArea.x,
+        y: Number.isFinite(rawBounds.y) ? Math.round(rawBounds.y) : fallbackArea.y,
+        width,
+        height
+    }
+
+    const matchingArea = screen.getDisplayMatching(seedBounds).workArea
+    const clampedBounds = {
+        width,
+        height,
+        x: clamp(seedBounds.x, matchingArea.x, Math.max(matchingArea.x, matchingArea.x + matchingArea.width - width)),
+        y: clamp(seedBounds.y, matchingArea.y, Math.max(matchingArea.y, matchingArea.y + matchingArea.height - height))
+    }
+
+    if (hasEnoughVisibleArea(clampedBounds)) {
+        return clampedBounds
+    }
+
+    return centerBoundsInWorkArea(clampedBounds, screen.getPrimaryDisplay().workArea)
+}
+
+function persistWindowBounds(bounds) {
+    store.set('windowPosition', { x: bounds.x, y: bounds.y })
+    store.set('windowWidth', bounds.width)
+    store.set('windowHeight', bounds.height)
+}
+
+function schedulePersistWindowBounds(bounds, delay = 120) {
+    if (persistBoundsTimeout) clearTimeout(persistBoundsTimeout)
+    persistBoundsTimeout = setTimeout(() => {
+        persistBoundsTimeout = null
+        persistWindowBounds(bounds)
+    }, delay)
+}
+
+function ensureMainWindowVisible() {
+    if (!win || win.isDestroyed()) return
+    const safeBounds = normalizeWindowBounds(win.getBounds())
+    win.setBounds(safeBounds)
+    persistWindowBounds(safeBounds)
+    if (!win.isVisible()) win.show()
+    if (win.isMinimized()) win.restore()
+    win.focus()
 }
 
 function getInteractionLockRects() {
@@ -404,13 +516,21 @@ async function setInteractionLockEnabled(enabled) {
 function createWindow(){
 
 const position = store.get('windowPosition') || { x:100, y:100 }
+const initialBounds = normalizeWindowBounds({
+    x: position.x,
+    y: position.y,
+    width: store.get('windowWidth') || 960,
+    height: store.get('windowHeight') || 740
+})
 
 win = new BrowserWindow({
 
-x: position.x,
-y: position.y,
-width: store.get('windowWidth') || 960,
-height: store.get('windowHeight') || 740,
+x: initialBounds.x,
+y: initialBounds.y,
+width: initialBounds.width,
+height: initialBounds.height,
+
+show:false,
 
 frame:false,
 transparent:true,
@@ -424,9 +544,16 @@ contextIsolation:false
 
 })
 
+persistWindowBounds(initialBounds)
+
 win.loadFile('index.html')
 
+win.once('ready-to-show', () => {
+    ensureMainWindowVisible()
+})
+
 win.webContents.once('did-finish-load', () => {
+    ensureMainWindowVisible()
     spawnPS()
     broadcastExitLockState()
     broadcastWebsiteLockState()
@@ -443,14 +570,16 @@ win.webContents.once('did-finish-load', () => {
 win.on('move', () => {
 
 if(win){
-const { x, y } = win.getBounds()
-store.set('windowPosition', { x, y })
+const { x, y, width, height } = win.getBounds()
+schedulePersistWindowBounds({ x, y, width, height })
 if (interactionLockEnabled) updateInteractionLockWindows()
 }
 
 })
 
 win.on('resize', () => {
+const { x, y, width, height } = win.getBounds()
+schedulePersistWindowBounds({ x, y, width, height })
 if (interactionLockEnabled) updateInteractionLockWindows()
 })
 
@@ -616,6 +745,25 @@ if(settingsWindow) settingsWindow.close()
 
 })
 
+ipcMain.handle('get-launch-at-startup', () => {
+    return {
+        enabled: launchAtStartupEnabled,
+        supported: process.platform === 'win32'
+    }
+})
+
+ipcMain.handle('set-launch-at-startup', (event, enabled) => {
+    try {
+        return setLaunchAtStartupEnabled(enabled)
+    } catch (error) {
+        return {
+            enabled: launchAtStartupEnabled,
+            supported: process.platform === 'win32',
+            error: error.message || 'No se pudo actualizar el inicio automatico.'
+        }
+    }
+})
+
 ipcMain.on('close-app', () => {
 if (exitLockEnabled) {
 if (win && !win.isDestroyed()) win.webContents.send('strict-exit-lock-blocked')
@@ -630,23 +778,38 @@ if(win && !win.isDestroyed()) win.minimize()
 
 ipcMain.on('set-window-width', (event, width) => {
     if (!win || win.isDestroyed()) return
-    const w = Math.max(72, Math.min(1300, Math.round(width)))
-    const h = win.getSize()[1]
-    win.setSize(w, h)
-    store.set('windowWidth', w)
+    const currentBounds = win.getBounds()
+    const nextBounds = normalizeWindowBounds({
+        ...currentBounds,
+        width: Math.max(72, Math.min(1300, Math.round(width)))
+    })
+    if (
+        nextBounds.x === currentBounds.x &&
+        nextBounds.y === currentBounds.y &&
+        nextBounds.width === currentBounds.width &&
+        nextBounds.height === currentBounds.height
+    ) return
+    win.setBounds(nextBounds)
+    schedulePersistWindowBounds(nextBounds)
     if (interactionLockEnabled) updateInteractionLockWindows()
 })
 
 ipcMain.on('set-window-size', (event, size = {}) => {
     if (!win || win.isDestroyed()) return
-    const currentSize = win.getSize()
-    const nextWidth = Number.isFinite(size.width) ? size.width : currentSize[0]
-    const nextHeight = Number.isFinite(size.height) ? size.height : currentSize[1]
-    const w = Math.max(72, Math.min(1300, Math.round(nextWidth)))
-    const h = Math.max(72, Math.min(900, Math.round(nextHeight)))
-    win.setSize(w, h)
-    store.set('windowWidth', w)
-    store.set('windowHeight', h)
+    const currentBounds = win.getBounds()
+    const nextBounds = normalizeWindowBounds({
+        ...currentBounds,
+        width: Number.isFinite(size.width) ? size.width : currentBounds.width,
+        height: Number.isFinite(size.height) ? size.height : currentBounds.height
+    })
+    if (
+        nextBounds.x === currentBounds.x &&
+        nextBounds.y === currentBounds.y &&
+        nextBounds.width === currentBounds.width &&
+        nextBounds.height === currentBounds.height
+    ) return
+    win.setBounds(nextBounds)
+    schedulePersistWindowBounds(nextBounds)
     if (interactionLockEnabled) updateInteractionLockWindows()
 })
 
@@ -659,10 +822,14 @@ ipcMain.handle('get-window-position', () => {
 ipcMain.on('set-window-position', (event, position = {}) => {
     if (!win || win.isDestroyed()) return
     const currentBounds = win.getBounds()
-    const nextX = Number.isFinite(position.x) ? Math.round(position.x) : currentBounds.x
-    const nextY = Number.isFinite(position.y) ? Math.round(position.y) : currentBounds.y
-    win.setPosition(nextX, nextY)
-    store.set('windowPosition', { x: nextX, y: nextY })
+    const nextBounds = normalizeWindowBounds({
+        ...currentBounds,
+        x: Number.isFinite(position.x) ? Math.round(position.x) : currentBounds.x,
+        y: Number.isFinite(position.y) ? Math.round(position.y) : currentBounds.y
+    })
+    if (nextBounds.x === currentBounds.x && nextBounds.y === currentBounds.y) return
+    win.setBounds(nextBounds)
+    schedulePersistWindowBounds(nextBounds)
     if (interactionLockEnabled) updateInteractionLockWindows()
 })
 
@@ -822,12 +989,20 @@ app.on('before-quit', (event) => {
     forceQuit = true
     forceCloseLockScreen = true
     forceCloseInteractionLock = true
+    if (persistBoundsTimeout) {
+        clearTimeout(persistBoundsTimeout)
+        persistBoundsTimeout = null
+    }
+    if (win && !win.isDestroyed()) persistWindowBounds(win.getBounds())
     if (mediaPollInterval) { clearInterval(mediaPollInterval); mediaPollInterval = null }
     try { if (psProc) { psProc.kill(); psProc = null } } catch(_) {}
     try { fs.unlinkSync(scriptPath) } catch(_) {}
 })
 
 app.whenReady().then(() => {
+    try {
+        app.setLoginItemSettings(getLoginItemSettingsPayload(launchAtStartupEnabled))
+    } catch (_) {}
     void bootstrapApp()
 })
 
