@@ -12,12 +12,13 @@ const strictModeBtnLabel = strictModeBtn ? strictModeBtn.querySelector("span") :
 const strictModeState = {
     exit: false,
     screen: false,
-    interaction: false
+    interaction: false,
+    website: false
 }
 
 function syncStrictModeButtonState() {
     if (!strictModeBtn) return
-    const active = strictModeState.exit || strictModeState.screen || strictModeState.interaction
+    const active = strictModeState.exit || strictModeState.screen || strictModeState.interaction || strictModeState.website
     strictModeBtn.classList.toggle('pomodoro__strict-btn--active', active)
     if (strictModeBtnLabel) {
         strictModeBtnLabel.textContent = strictModeState.interaction ? 'Desactivar PRO' : 'Modo Estricto'
@@ -43,6 +44,11 @@ function applyScreenLockState({ screenLockEnabled } = {}) {
 
 function applyInteractionLockState({ interactionLockEnabled } = {}) {
     strictModeState.interaction = Boolean(interactionLockEnabled)
+    syncStrictModeButtonState()
+}
+
+function applyWebsiteLockState({ websiteLockEnabled } = {}) {
+    strictModeState.website = Boolean(websiteLockEnabled)
     syncStrictModeButtonState()
 }
 
@@ -153,6 +159,10 @@ ipcRenderer.on('strict-screen-lock-state', (_, payload) => {
 
 ipcRenderer.on('strict-interaction-lock-state', (_, payload) => {
     applyInteractionLockState(payload)
+})
+
+ipcRenderer.on('strict-website-lock-state', (_, payload) => {
+    applyWebsiteLockState(payload)
 })
 
 ipcRenderer.on('strict-exit-lock-blocked', () => {

@@ -26,11 +26,23 @@
         </div>
 
         <div class="strict-mode__hero">
-            <div class="strict-mode__hero-badge">Preview visual</div>
-            <div class="strict-mode__hero-grid">
-                <div class="strict-mode__hero-panel"></div>
-                <div class="strict-mode__hero-panel strict-mode__hero-panel--accent"></div>
-                <div class="strict-mode__hero-panel strict-mode__hero-panel--wide"></div>
+            <div class="strict-mode__hero-badge" id="strictModeHeroBadge">Panel en espera</div>
+            <div class="strict-mode__hero-copy">
+                <h2 class="strict-mode__hero-title" id="strictModeHeroTitle">Ningun modo activo</h2>
+                <p class="strict-mode__hero-text" id="strictModeHeroText">Selecciona una restriccion para ver aqui el alcance real que tendra sobre la app, la pantalla o los sitios configurados.</p>
+            </div>
+            <div class="strict-mode__hero-metrics">
+                <div class="strict-mode__hero-metric">
+                    <span class="strict-mode__hero-metric-label">Alcance</span>
+                    <strong class="strict-mode__hero-metric-value" id="strictModeHeroScope">Sin bloqueo</strong>
+                </div>
+                <div class="strict-mode__hero-metric">
+                    <span class="strict-mode__hero-metric-label">Dominios</span>
+                    <strong class="strict-mode__hero-metric-value" id="strictModeHeroDomains">0 listos</strong>
+                </div>
+            </div>
+            <div class="strict-mode__hero-tags" id="strictModeHeroTags">
+                <span class="strict-mode__hero-tag strict-mode__hero-tag--muted">Sin dominios cargados</span>
             </div>
         </div>
 
@@ -89,7 +101,7 @@
                 </div>
             </article>
 
-            <article class="strict-mode__card">
+            <article class="strict-mode__card" id="websiteLockCard">
                 <div class="strict-mode__card-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="9"></circle>
@@ -101,10 +113,16 @@
                 <div class="strict-mode__card-copy">
                     <div class="strict-mode__card-kicker">Web</div>
                     <h2 class="strict-mode__card-title">Bloqueo de sitios web</h2>
-                    <p class="strict-mode__card-text">Espacio reservado para una lista de dominios distractores, reglas por sesion y activacion selectiva por tarea.</p>
+                    <p class="strict-mode__card-text">Bloquea dominios a nivel sistema editando el archivo hosts de Windows. Requiere permisos de administrador y se revierte al salir del modo.</p>
+                    <label class="strict-mode__field">
+                        <span class="strict-mode__field-label">Dominios a bloquear</span>
+                        <textarea class="strict-mode__textarea" id="websiteLockDomainsInput" rows="4" placeholder="youtube.com&#10;facebook.com&#10;twitter.com"></textarea>
+                    </label>
+                    <div class="strict-mode__field-hint" id="websiteLockHint">Se bloquean en todos los navegadores usando C:\Windows\System32\drivers\etc\hosts.</div>
                 </div>
                 <div class="strict-mode__card-footer">
-                    <span class="strict-mode__pill">Diseno preparado</span>
+                    <div class="strict-mode__card-status" id="websiteLockStatus">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="websiteLockToggleBtn">Activar bloqueo web</button>
                 </div>
             </article>
         </div>

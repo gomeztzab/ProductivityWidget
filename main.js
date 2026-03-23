@@ -4,6 +4,7 @@ const { spawn } = require('child_process')
 const os   = require('os')
 const path = require('path')
 const fs   = require('fs')
+const { HOSTS_PATH, applyWebsiteBlock, normalizeWebsiteDomains, restoreWebsiteBlock } = require('./website-blocker')
 
 const store = new Store()
 
@@ -16,9 +17,14 @@ let flashTimeout = null
 let forceQuit = false
 let forceCloseLockScreen = false
 let forceCloseInteractionLock = false
+let websiteLockCleanupInProgress = false
 let exitLockEnabled = store.get('strictExitLockEnabled', false)
 let screenLockEnabled = store.get('strictScreenLockEnabled', false)
 let interactionLockEnabled = store.get('strictInteractionLockEnabled', false)
+let websiteLockEnabled = store.get('strictWebsiteLockEnabled', false)
+let websiteLockDomains = normalizeWebsiteDomains(store.get('strictWebsiteLockDomains', ['youtube.com', 'facebook.com', 'twitter.com']))
+let websiteLockError = ''
+const hostsBackupPath = path.join(app.getPath('userData'), 'hosts.strict-mode.backup')
 
 function broadcastExitLockState() {
     const payload = { exitLockEnabled }
@@ -40,6 +46,17 @@ function broadcastInteractionLockState() {
     interactionLockWindows.forEach(currentWindow => currentWindow.webContents.send('strict-interaction-lock-state', payload))
 }
 
+function broadcastWebsiteLockState() {
+    const payload = {
+        websiteLockEnabled,
+        domains: websiteLockDomains,
+        error: websiteLockError,
+        hostsPath: HOSTS_PATH
+    }
+    if (win && !win.isDestroyed()) win.webContents.send('strict-website-lock-state', payload)
+    if (strictModeWindow && !strictModeWindow.isDestroyed()) strictModeWindow.webContents.send('strict-website-lock-state', payload)
+}
+
 function closeLockScreenWindow() {
     if (!lockScreenWindow || lockScreenWindow.isDestroyed()) return
     forceCloseLockScreen = true
@@ -51,6 +68,62 @@ function closeInteractionLockWindow() {
     if (!interactionLockWindows.length) return
     forceCloseInteractionLock = true
     interactionLockWindows.forEach(currentWindow => currentWindow.close())
+}
+
+function formatWebsiteLockError(error) {
+    if (!error) return 'No se pudo actualizar el archivo hosts.'
+    if (error.code === 1223) return 'La elevacion a administrador fue cancelada.'
+    return error.message || 'No se pudo actualizar el archivo hosts.'
+}
+
+async function deactivateWebsiteLock() {
+    if (!websiteLockEnabled && !fs.existsSync(hostsBackupPath)) {
+        websiteLockError = ''
+        return { ok: true, enabled: false }
+    }
+
+    try {
+        await restoreWebsiteBlock(hostsBackupPath)
+        websiteLockEnabled = false
+        websiteLockError = ''
+        store.set('strictWebsiteLockEnabled', false)
+        broadcastWebsiteLockState()
+        return { ok: true, enabled: false }
+    } catch (error) {
+        websiteLockError = formatWebsiteLockError(error)
+        broadcastWebsiteLockState()
+        return { ok: false, enabled: websiteLockEnabled, error: websiteLockError }
+    }
+}
+
+async function activateWebsiteLock(domains) {
+    const normalizedDomains = normalizeWebsiteDomains(domains)
+    if (!normalizedDomains.length) {
+        websiteLockError = 'Agrega al menos un dominio valido para bloquear.'
+        websiteLockDomains = []
+        store.set('strictWebsiteLockDomains', websiteLockDomains)
+        broadcastWebsiteLockState()
+        return { ok: false, enabled: false, error: websiteLockError }
+    }
+
+    try {
+        await applyWebsiteBlock(normalizedDomains, hostsBackupPath)
+        websiteLockEnabled = true
+        websiteLockDomains = normalizedDomains
+        websiteLockError = ''
+        store.set('strictWebsiteLockEnabled', true)
+        store.set('strictWebsiteLockDomains', websiteLockDomains)
+        broadcastWebsiteLockState()
+        return { ok: true, enabled: true, domains: websiteLockDomains }
+    } catch (error) {
+        websiteLockEnabled = false
+        websiteLockDomains = normalizedDomains
+        websiteLockError = formatWebsiteLockError(error)
+        store.set('strictWebsiteLockEnabled', false)
+        store.set('strictWebsiteLockDomains', websiteLockDomains)
+        broadcastWebsiteLockState()
+        return { ok: false, enabled: false, error: websiteLockError }
+    }
 }
 
 function getDisplayIntersection(rectA, rectB) {
@@ -183,7 +256,7 @@ function updateInteractionLockWindows() {
     }
 }
 
-function disableOtherStrictModes(exceptMode) {
+async function disableOtherStrictModes(exceptMode) {
     if (exceptMode !== 'exit' && exitLockEnabled) {
         exitLockEnabled = false
         store.set('strictExitLockEnabled', false)
@@ -203,10 +276,20 @@ function disableOtherStrictModes(exceptMode) {
         closeInteractionLockWindow()
         broadcastInteractionLockState()
     }
+
+    if (exceptMode !== 'website' && websiteLockEnabled) {
+        const result = await deactivateWebsiteLock()
+        if (!result.ok) return false
+    }
+
+    return true
 }
 
-function setExitLockEnabled(enabled) {
-    if (enabled) disableOtherStrictModes('exit')
+async function setExitLockEnabled(enabled) {
+    if (enabled) {
+        const canContinue = await disableOtherStrictModes('exit')
+        if (!canContinue) return
+    }
     exitLockEnabled = Boolean(enabled)
     store.set('strictExitLockEnabled', exitLockEnabled)
     broadcastExitLockState()
@@ -276,8 +359,11 @@ function openLockScreenWindow() {
     })
 }
 
-function setScreenLockEnabled(enabled) {
-    if (enabled) disableOtherStrictModes('screen')
+async function setScreenLockEnabled(enabled) {
+    if (enabled) {
+        const canContinue = await disableOtherStrictModes('screen')
+        if (!canContinue) return
+    }
     screenLockEnabled = Boolean(enabled)
     store.set('strictScreenLockEnabled', screenLockEnabled)
 
@@ -294,8 +380,11 @@ function setScreenLockEnabled(enabled) {
     broadcastScreenLockState()
 }
 
-function setInteractionLockEnabled(enabled) {
-    if (enabled) disableOtherStrictModes('interaction')
+async function setInteractionLockEnabled(enabled) {
+    if (enabled) {
+        const canContinue = await disableOtherStrictModes('interaction')
+        if (!canContinue) return
+    }
     interactionLockEnabled = Boolean(enabled)
     store.set('strictInteractionLockEnabled', interactionLockEnabled)
 
@@ -340,6 +429,7 @@ win.loadFile('index.html')
 win.webContents.once('did-finish-load', () => {
     spawnPS()
     broadcastExitLockState()
+    broadcastWebsiteLockState()
     if (screenLockEnabled) {
         win.webContents.send('strict-screen-lock-activated')
         openLockScreenWindow()
@@ -448,6 +538,12 @@ strictModeWindow.webContents.once('did-finish-load', () => {
 strictModeWindow.webContents.send('strict-exit-lock-state', { exitLockEnabled })
 strictModeWindow.webContents.send('strict-screen-lock-state', { screenLockEnabled })
 strictModeWindow.webContents.send('strict-interaction-lock-state', { interactionLockEnabled })
+strictModeWindow.webContents.send('strict-website-lock-state', {
+    websiteLockEnabled,
+    domains: websiteLockDomains,
+    error: websiteLockError,
+    hostsPath: HOSTS_PATH
+})
 })
 
 strictModeWindow.on('closed', () => {
@@ -476,15 +572,37 @@ strictModeWindow.close()
 })
 
 ipcMain.on('set-strict-exit-lock', (event, enabled) => {
-setExitLockEnabled(enabled)
+void setExitLockEnabled(enabled)
 })
 
 ipcMain.on('set-strict-screen-lock', (event, enabled) => {
-setScreenLockEnabled(enabled)
+void setScreenLockEnabled(enabled)
 })
 
 ipcMain.on('set-strict-interaction-lock', (event, enabled) => {
-setInteractionLockEnabled(enabled)
+void setInteractionLockEnabled(enabled)
+})
+
+ipcMain.on('set-strict-website-domains', (event, domains = []) => {
+    websiteLockDomains = normalizeWebsiteDomains(domains)
+    websiteLockError = ''
+    store.set('strictWebsiteLockDomains', websiteLockDomains)
+    broadcastWebsiteLockState()
+})
+
+ipcMain.handle('set-strict-website-lock', async (event, payload = {}) => {
+    const enabled = Boolean(payload.enabled)
+    const requestedDomains = Array.isArray(payload.domains) ? payload.domains : websiteLockDomains
+
+    if (enabled) {
+        const canContinue = await disableOtherStrictModes('website')
+        if (!canContinue) {
+            return { ok: false, enabled: false, error: websiteLockError || 'No se pudo desactivar el otro modo estricto activo.' }
+        }
+        return activateWebsiteLock(requestedDomains)
+    }
+
+    return deactivateWebsiteLock()
 })
 
 ipcMain.on('save-settings', (event, data) => {
@@ -651,7 +769,27 @@ ipcMain.on('media-control', (event, action) => {
     psCmd(action, () => {})
 })
 
-app.on('before-quit', () => {
+async function bootstrapApp() {
+    if (fs.existsSync(hostsBackupPath)) {
+        await deactivateWebsiteLock()
+    } else if (websiteLockEnabled) {
+        websiteLockEnabled = false
+        store.set('strictWebsiteLockEnabled', false)
+    }
+
+    createWindow()
+}
+
+app.on('before-quit', (event) => {
+    if (!websiteLockCleanupInProgress && (websiteLockEnabled || fs.existsSync(hostsBackupPath))) {
+        event.preventDefault()
+        websiteLockCleanupInProgress = true
+        deactivateWebsiteLock().finally(() => {
+            app.quit()
+        })
+        return
+    }
+
     forceQuit = true
     forceCloseLockScreen = true
     forceCloseInteractionLock = true
@@ -660,7 +798,9 @@ app.on('before-quit', () => {
     try { fs.unlinkSync(scriptPath) } catch(_) {}
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+    void bootstrapApp()
+})
 
 app.on('window-all-closed', () => {
 if(process.platform !== 'darwin') app.quit()
