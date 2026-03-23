@@ -450,6 +450,7 @@ body {
 .stats__dots {
     display: flex;
     gap: 6px;
+    align-items: center;
 }
 
 .stats__dot {
@@ -457,10 +458,37 @@ body {
     height: 8px;
     border-radius: 50%;
     background: #ffffff4d;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.stats__dot:hover {
+    background: var(--accent-color);
+    opacity: 0.7;
+    transform: scale(1.25);
 }
 
 .stats__dot--active {
     background: var(--accent-color);
+    transform: scale(1.15);
+}
+
+.stats__pages {
+    overflow: hidden;
+}
+
+.stats__page {
+    display: none;
+}
+
+.stats__page--active {
+    display: flex;
+    animation: stats-page-in 0.22s ease;
+}
+
+@keyframes stats-page-in {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
 .stats__grid {

@@ -56,6 +56,135 @@ updateClock()
 
 
 /* =====================
+   STATS
+   Persistencia diaria + historial 30 días + 3 páginas navegables.
+   Módulo IIFE — sin dependencias externas.
+   ===================== */
+const Stats = (() => {
+    const PAGE_TITLES = ['Timer', 'Tasks', 'History']
+
+    /* ---- Estado diario (clave = fecha del día) ---- */
+    function _todayKey() { return `stats_${new Date().toDateString()}` }
+
+    const _defaults = { pomodoros: 0, focusedSecs: 0, breaks: 0 }
+    let _daily = Object.assign({}, _defaults, JSON.parse(localStorage.getItem(_todayKey()) || '{}'))
+
+    function _saveDaily() {
+        localStorage.setItem(_todayKey(), JSON.stringify(_daily))
+        _updateHistory()
+    }
+
+    /* ---- Historial (últimos 30 días) ---- */
+    function _getHistory() {
+        return JSON.parse(localStorage.getItem('stats_history') || '[]')
+    }
+
+    function _updateHistory() {
+        let hist  = _getHistory()
+        const key = new Date().toDateString()
+        const idx = hist.findIndex(e => e.date === key)
+        const entry = { date: key, pomodoros: _daily.pomodoros, focusedSecs: _daily.focusedSecs }
+        if (idx >= 0) hist[idx] = entry; else hist.push(entry)
+        if (hist.length > 30) hist = hist.slice(-30)
+        localStorage.setItem('stats_history', JSON.stringify(hist))
+    }
+
+    /* ---- Cálculos de historial ---- */
+    function _streak() {
+        const todayTs = new Date().setHours(0, 0, 0, 0)
+        const sorted  = _getHistory()
+            .filter(e => e.pomodoros > 0)
+            .map(e => new Date(e.date).setHours(0, 0, 0, 0))
+            .sort((a, b) => b - a)
+        if (!sorted.length) return 0
+        let streak = 0, cursor = todayTs
+        for (const d of sorted) {
+            const diff = (cursor - d) / 86400000
+            if (diff === 0 || diff === 1) { streak++; cursor = d }
+            else break
+        }
+        return streak
+    }
+
+    function _best() {
+        return Math.max(0, ..._getHistory().map(e => e.pomodoros))
+    }
+
+    function _totalHours() {
+        const secs = _getHistory().reduce((s, e) => s + (e.focusedSecs || 0), 0)
+        const h    = secs / 3600
+        return h >= 10 ? h.toFixed(0) : h.toFixed(1)
+    }
+
+    /* ---- Navegación de páginas ---- */
+    let _page     = 0
+    let _pagesEls = []
+    let _dotsEls  = []
+    let _titleEl  = null
+
+    function _setPage(n) {
+        _page = n
+        _pagesEls.forEach((el, i) => el.classList.toggle('stats__page--active', i === n))
+        _dotsEls.forEach((d, i)  => d.classList.toggle('stats__dot--active',   i === n))
+        if (_titleEl) _titleEl.textContent = PAGE_TITLES[n]
+        _renderCurrent()
+    }
+
+    /* ---- Renders por página ---- */
+    function _renderPage0() {
+        const h = Math.floor(_daily.focusedSecs / 3600)
+        const m = Math.floor((_daily.focusedSecs % 3600) / 60)
+        document.getElementById('statPomodoros').textContent = _daily.pomodoros
+        document.getElementById('statFocused').textContent  = h > 0 ? `${h}h ${m}m` : `${m}m`
+        document.getElementById('statBreaks').textContent   = _daily.breaks
+    }
+
+    function _renderPage1() {
+        const list    = document.getElementById('taskList')
+        const all     = list ? list.querySelectorAll('.todo__item').length       : 0
+        const done    = list ? list.querySelectorAll('.todo__item--completed').length : 0
+        const pending = all - done
+        const rate    = all > 0 ? Math.round(done / all * 100) : 0
+        document.getElementById('statTasksDone').textContent    = done
+        document.getElementById('statTasksPending').textContent = pending
+        document.getElementById('statTasksRate').textContent    = rate + '%'
+    }
+
+    function _renderPage2() {
+        document.getElementById('statStreak').textContent = _streak() + 'd'
+        document.getElementById('statBest').textContent   = _best()
+        document.getElementById('statTotal').textContent  = _totalHours() + 'h'
+    }
+
+    function _renderCurrent() {
+        if (_page === 0) _renderPage0()
+        else if (_page === 1) _renderPage1()
+        else _renderPage2()
+    }
+
+    /* Backup periódico cada 60s (no guardar en cada tick de foco) */
+    setInterval(_saveDaily, 60000)
+    window.addEventListener('beforeunload', _saveDaily)
+
+    /* ---- API pública ---- */
+    return {
+        addPomodoro()     { _daily.pomodoros++;   _saveDaily(); if (_page === 0) _renderPage0() },
+        addFocusedTime(s) { _daily.focusedSecs += s; if (_page === 0) _renderPage0() },
+        addBreak()        { _daily.breaks++;      _saveDaily(); if (_page === 0) _renderPage0() },
+        refreshTasks()    { if (_page === 1) _renderPage1() },
+        getPomodoros()    { return _daily.pomodoros },
+        init() {
+            _titleEl  = document.querySelector('.stats__title')
+            _pagesEls = Array.from(document.querySelectorAll('.stats__page'))
+            _dotsEls  = Array.from(document.querySelectorAll('.stats__dot'))
+            _dotsEls.forEach((d, i) => d.addEventListener('click', () => _setPage(i)))
+            _setPage(0)
+        }
+    }
+})()
+
+
+/* =====================
    TODO LIST
    ===================== */
 
@@ -65,47 +194,57 @@ const taskInput = document.getElementById("taskInput")
 const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
 
 function loadTasks() {
-    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
-    tasks.forEach(t => appendTask(t))
+    const raw   = JSON.parse(localStorage.getItem("tasks") || "[]")
+    /* migración: soporte strings antiguas y objetos nuevos {text, done} */
+    const tasks = raw.map(t => typeof t === 'string' ? { text: t, done: false } : t)
+    tasks.forEach(t => appendTask(t.text, t.done))
 }
 
 function addTask() {
-    if(!taskInput || taskInput.value.trim() === "") return
+    if (!taskInput || taskInput.value.trim() === "") return
     const text = taskInput.value.trim()
-    appendTask(text)
-    saveTask(text)
+    appendTask(text, false)
+    saveTasks()
     taskInput.value = ""
+    Stats.refreshTasks()
 }
 
-function appendTask(text) {
+function appendTask(text, done = false) {
     const li = document.createElement("li")
     li.classList.add("todo__item")
+    if (done) li.classList.add("todo__item--completed")
     li.innerHTML = `
-        <div class="todo__checkbox"></div>
+        <div class="todo__checkbox${done ? ' todo__checkbox--checked' : ''}"></div>
         <span class="todo__text">${text}</span>
         <button class="todo__remove" title="Eliminar">&times;</button>
     `
 
     const checkbox = li.querySelector(".todo__checkbox")
+    if (done) checkbox.innerHTML = CHECK_SVG
     checkbox.addEventListener("click", () => {
         const completed = li.classList.toggle("todo__item--completed")
         checkbox.classList.toggle("todo__checkbox--checked", completed)
         checkbox.innerHTML = completed ? CHECK_SVG : ""
+        saveTasks()
+        Stats.refreshTasks()
     })
 
     li.querySelector(".todo__remove").addEventListener("click", () => {
         li.remove()
-        const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
-        localStorage.setItem("tasks", JSON.stringify(tasks.filter(t => t !== text)))
+        saveTasks()
+        Stats.refreshTasks()
     })
 
     taskList.appendChild(li)
 }
 
-function saveTask(text) {
-    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
-    tasks.push(text)
-    localStorage.setItem("tasks", JSON.stringify(tasks))
+function saveTasks() {
+    const items = Array.from(taskList.querySelectorAll('.todo__item'))
+    const tasks = items.map(li => ({
+        text: li.querySelector('.todo__text').textContent,
+        done: li.classList.contains('todo__item--completed')
+    }))
+    localStorage.setItem('tasks', JSON.stringify(tasks))
 }
 
 document.getElementById("addTaskBtn").addEventListener("click", addTask)
@@ -127,10 +266,7 @@ let totalTime = FOCUS_TIME
 let interval  = null
 let isBreak   = false
 
-/* stats */
-let pomodoroCount       = 0
-let totalFocusedSeconds = 0
-let breakCount          = 0
+/* stats eliminadas — gestionadas por módulo Stats */
 
 const progressCircle = document.querySelector(".pomodoro__circle-progress")
 const pomodoroLabel  = document.querySelector(".pomodoro__label")
@@ -162,24 +298,22 @@ function startTimer() {
 
     interval = setInterval(() => {
         time--
-        if(!isBreak) totalFocusedSeconds++
+        if (!isBreak) Stats.addFocusedTime(1)
         updateTimerDisplay()
-        updateStats()
 
         if(time <= 0) {
             clearInterval(interval)
             interval = null
 
             if(!isBreak) {
-                pomodoroCount++
-                breakCount++
+                Stats.addPomodoro()
+                Stats.addBreak()
                 isBreak   = true
                 time      = BREAK_TIME
                 totalTime = BREAK_TIME
                 pomodoroLabel.textContent = "Break Time"
                 startBtn.textContent      = "Iniciar descanso"
-                updateStats()
-                alert(`Pomodoro #${pomodoroCount} completado! Toma 5 minutos.`)
+                alert(`Pomodoro #${Stats.getPomodoros()} completado! Toma 5 minutos.`)
             } else {
                 isBreak   = false
                 time      = FOCUS_TIME
@@ -208,21 +342,12 @@ function startBreak() {
     clearInterval(interval)
     interval  = null
     isBreak   = true
-    breakCount++
+    Stats.addBreak()
     time      = BREAK_TIME
     totalTime = BREAK_TIME
     pomodoroLabel.textContent = "Break Time"
     startBtn.textContent      = "Iniciar"
     updateTimerDisplay()
-    updateStats()
-}
-
-function updateStats() {
-    document.getElementById("statPomodoros").textContent = pomodoroCount
-    const h = Math.floor(totalFocusedSeconds / 3600)
-    const m = Math.floor((totalFocusedSeconds % 3600) / 60)
-    document.getElementById("statFocused").textContent = h > 0 ? `${h}h ${m}m` : `${m}m`
-    document.getElementById("statBreaks").textContent = breakCount
 }
 
 startBtn.addEventListener("click", startTimer)
@@ -230,7 +355,6 @@ resetBtn.addEventListener("click", resetTimer)
 breakBtn.addEventListener("click", startBreak)
 
 updateTimerDisplay()
-updateStats()
 
 /* =====================
    MUSIC PLAYER
@@ -364,3 +488,4 @@ const MusicPlayer = (() => {
 })()
 
 MusicPlayer.init()
+Stats.init()
