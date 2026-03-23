@@ -17,12 +17,15 @@ if(closeBtn) {
 /* colores guardados */
 const savedAccent = localStorage.getItem("accentColor")
 const savedText   = localStorage.getItem("textColor")
+const savedTheme  = localStorage.getItem("dashTheme") || "glass"
 if(savedAccent) document.documentElement.style.setProperty("--accent-color", savedAccent)
 if(savedText)   document.documentElement.style.setProperty("--text-color",   savedText)
+document.documentElement.setAttribute("data-theme", savedTheme)
 
-ipcRenderer.on("apply-colors", (event, { accentColor, textColor }) => {
+ipcRenderer.on("apply-colors", (event, { accentColor, textColor, theme }) => {
     if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
     if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
+    if(theme)       document.documentElement.setAttribute("data-theme", theme)
 })
 
 

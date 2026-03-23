@@ -8,6 +8,7 @@ const focusSel  = document.getElementById("focusDuration")
 const breakSel  = document.getElementById("breakDuration")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
+const themeCards    = document.querySelectorAll(".settings__theme-card")
 
 const colorNames = {
     "#3b82f6": "Azul",
@@ -31,6 +32,11 @@ const textColorNames = {
 
 let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
 let selectedTextColor = localStorage.getItem("textColor")   || "#ffffff"
+let selectedTheme     = localStorage.getItem("dashTheme")   || "glass"
+
+/* ---- Aplicar colores/tema al propio settings al abrir ---- */
+document.documentElement.style.setProperty("--accent-color", selectedColor)
+document.documentElement.setAttribute("data-theme", selectedTheme)
 
 /* ---- Restaurar valores al abrir ---- */
 const savedFocus = localStorage.getItem("focusDuration")
@@ -41,6 +47,7 @@ updateColorPreview(selectedColor)
 updateActiveSwatch(selectedColor)
 updateTextColorPreview(selectedTextColor)
 updateActiveTextSwatch(selectedTextColor)
+updateActiveThemeCard(selectedTheme)
 updateBars()
 
 /* ---- Preview bars en tiempo real ---- */
@@ -62,10 +69,25 @@ function updateBars() {
 swatches.forEach(btn => {
     btn.addEventListener("click", () => {
         selectedColor = btn.dataset.color
+        document.documentElement.style.setProperty("--accent-color", selectedColor)
         updateActiveSwatch(selectedColor)
         updateColorPreview(selectedColor)
     })
 })
+
+themeCards.forEach(card => {
+    card.addEventListener("click", () => {
+        selectedTheme = card.dataset.theme
+        document.documentElement.setAttribute("data-theme", selectedTheme)
+        updateActiveThemeCard(selectedTheme)
+    })
+})
+
+function updateActiveThemeCard(theme) {
+    themeCards.forEach(c => c.classList.remove("settings__theme-card--active"))
+    const active = document.querySelector(`.settings__theme-card[data-theme='${theme}']`)
+    if(active) active.classList.add("settings__theme-card--active")
+}
 
 function updateActiveSwatch(color) {
     swatches.forEach(b => b.classList.remove("settings__swatch--active"))
@@ -124,9 +146,11 @@ saveBtn.addEventListener("click", () => {
     localStorage.setItem("breakDuration",  breakSel.value)
     localStorage.setItem("accentColor",    selectedColor)
     localStorage.setItem("textColor",      selectedTextColor)
+    localStorage.setItem("dashTheme",      selectedTheme)
     ipcRenderer.send("save-settings", {
         accentColor: selectedColor,
-        textColor:   selectedTextColor
+        textColor:   selectedTextColor,
+        theme:       selectedTheme
     })
 })
 

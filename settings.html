@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="glass">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -163,13 +163,106 @@
                 </div>
             </div>
 
+            <!-- Panel full-width: Tema del Dashboard -->
+            <div class="settings__panel settings__panel--themes">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                        <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+                        <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                    </svg>
+                    Tema del Dashboard
+                </h3>
+                <p class="settings__panel-desc">Elige el diseño visual del widget. El cambio se aplica al instante.</p>
+
+                <div class="settings__theme-grid">
+
+                    <!-- Glass -->
+                    <button class="settings__theme-card settings__theme-card--active" data-theme="glass">
+                        <div class="settings__theme-preview settings__theme-preview--glass">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Glass</span>
+                    </button>
+
+                    <!-- Neon -->
+                    <button class="settings__theme-card" data-theme="neon">
+                        <div class="settings__theme-preview settings__theme-preview--neon">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Neon</span>
+                    </button>
+
+                    <!-- Minimal -->
+                    <button class="settings__theme-card" data-theme="minimal">
+                        <div class="settings__theme-preview settings__theme-preview--minimal">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Minimal</span>
+                    </button>
+
+                    <!-- Aurora -->
+                    <button class="settings__theme-card" data-theme="aurora">
+                        <div class="settings__theme-preview settings__theme-preview--aurora">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Aurora</span>
+                    </button>
+
+                    <!-- Obsidian -->
+                    <button class="settings__theme-card" data-theme="obsidian">
+                        <div class="settings__theme-preview settings__theme-preview--obsidian">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Obsidian</span>
+                    </button>
+
+                </div>
+            </div>
+
         </div>
 
         <div class="settings__divider"></div>
 
         <!-- Footer -->
         <div class="settings__footer">
-            <span class="settings__footer-note">Los cambios se aplican al reiniciar el widget.</span>
+            <span class="settings__footer-note">Los cambios se aplican al instante al guardar.</span>
             <div class="settings__footer-actions">
                 <button class="btn btn--secondary" id="cancelSettingsBtn">Cancelar</button>
                 <button class="btn btn--primary" id="saveSettingsBtn">

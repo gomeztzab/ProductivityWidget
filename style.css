@@ -3,8 +3,22 @@
    ====================== */
 
 :root {
+    /* Acento y texto (dinámicos vía settings) */
     --accent-color: #3b82f6;
     --text-color: #ffffff;
+
+    /* Tokens de tema - defaults = glass */
+    --dash-bg: #0f172ab3;
+    --dash-blur: blur(20px);
+    --dash-border: #ffffff1a;
+    --dash-shadow: 0 25px 50px -12px #00000080, inset 0 1px 0 #ffffff1a;
+    --dash-radius: 24px;
+    --card-bg: #ffffff0d;
+    --card-border: #ffffff1a;
+    --card-blur: blur(10px);
+    --card-radius: 16px;
+    --circle-glow: drop-shadow(0 0 10px #3b82f680);
+    --clock-glow: none;
 }
 
 /* ======================
@@ -42,14 +56,12 @@ body {
     max-width: 900px;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    background: #0f172ab3;
-    backdrop-filter: blur(20px);
-    border-radius: 24px;
-    border: 1px solid #ffffff1a;
+    background: var(--dash-bg);
+    backdrop-filter: var(--dash-blur);
+    border-radius: var(--dash-radius);
+    border: 1px solid var(--dash-border);
     padding: 32px;
-    box-shadow:
-        0 25px 50px -12px #00000080,
-        inset 0 1px 0 #ffffff1a;
+    box-shadow: var(--dash-shadow);
     position: relative;
     z-index: 1;
 }
@@ -120,10 +132,10 @@ body {
 .stats,
 .weather,
 .music {
-    background: #ffffff0d;
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 1px solid #ffffff1a;
+    background: var(--card-bg);
+    backdrop-filter: var(--card-blur);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-border);
     padding: 20px;
     -webkit-app-region: no-drag;
 }
@@ -143,6 +155,7 @@ body {
     letter-spacing: -2px;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+    text-shadow: var(--clock-glow);
 }
 
 .clock__period {
@@ -196,7 +209,7 @@ body {
     stroke-linecap: round;
     stroke-dasharray: 502;
     stroke-dashoffset: 0;
-    filter: drop-shadow(0 0 10px #3b82f680);
+    filter: var(--circle-glow);
 }
 
 .pomodoro__circle-label {
@@ -210,7 +223,7 @@ body {
 .pomodoro__time {
     font-size: 42px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .pomodoro__label {
@@ -288,7 +301,7 @@ body {
 .todo__title {
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .todo__header-icon {
@@ -354,7 +367,8 @@ body {
 .todo__text {
     flex: 1;
     font-size: 14px;
-    color: #ffffffcc;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 
 .todo__check-icon {
@@ -379,7 +393,7 @@ body {
     border: none;
     border-radius: 8px;
     background: #ffffff0d;
-    color: #ffffff;
+    color: var(--text-color);
     font-size: 13px;
     border: 1px solid #ffffff1a;
     outline: none;
@@ -429,7 +443,7 @@ body {
 .stats__title {
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .stats__dots {
@@ -468,7 +482,7 @@ body {
 .stats__item-value {
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .stats__item-label {
@@ -495,7 +509,7 @@ body {
 .weather__temp {
     font-size: 20px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .weather__condition {
@@ -547,7 +561,7 @@ body {
 }
 
 .music__track-name {
-    color: #ffffff;
+    color: var(--text-color);
     font-weight: 500;
 }
 
@@ -635,4 +649,149 @@ body {
     .stats__grid {
         flex-wrap: wrap;
     }
+}
+
+/* ======================
+   SCROLLBAR
+   ====================== */
+
+.dashboard::-webkit-scrollbar {
+    width: 5px;
+}
+
+.dashboard::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dashboard::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 99px;
+    opacity: 0.6;
+}
+
+.dashboard::-webkit-scrollbar-thumb:hover {
+    filter: brightness(1.2);
+}
+
+/* ======================
+   TEMAS
+   ====================== */
+
+/* Glass — glassmorfismo (defecto) */
+[data-theme="glass"] {
+    --dash-bg: #0f172ab3;
+    --dash-blur: blur(20px);
+    --dash-border: #ffffff1a;
+    --dash-shadow: 0 25px 50px -12px #00000080, inset 0 1px 0 #ffffff1a;
+    --dash-radius: 24px;
+    --card-bg: #ffffff0d;
+    --card-border: #ffffff1a;
+    --card-blur: blur(10px);
+    --card-radius: 16px;
+    --circle-glow: drop-shadow(0 0 10px #3b82f680);
+    --clock-glow: none;
+}
+
+/* Neon — Cyberpunk oscuro, bordes violeta con brillo */
+[data-theme="neon"] {
+    --dash-bg: #020408f0;
+    --dash-blur: blur(0px);
+    --dash-border: #7c3aed66;
+    --dash-shadow: 0 0 40px #7c3aed18, 0 20px 60px #00000090, inset 0 1px 0 #7c3aed33;
+    --dash-radius: 12px;
+    --card-bg: #0c0618cc;
+    --card-border: #7c3aed40;
+    --card-blur: blur(0px);
+    --card-radius: 8px;
+    --circle-glow: drop-shadow(0 0 16px #7c3aedcc);
+    --clock-glow: 0 0 20px #c084fc80, 0 0 40px #7c3aed40;
+}
+
+[data-theme="neon"] .dashboard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        #7c3aed05 3px,
+        #7c3aed05 4px
+    );
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Minimal — Plano, sin efectos, bordes definidos */
+[data-theme="minimal"] {
+    --dash-bg: #111827;
+    --dash-blur: blur(0px);
+    --dash-border: #374151;
+    --dash-shadow: none;
+    --dash-radius: 16px;
+    --card-bg: #1f2937;
+    --card-border: #374151;
+    --card-blur: blur(0px);
+    --card-radius: 10px;
+    --circle-glow: drop-shadow(0 0 6px #37415180);
+    --clock-glow: none;
+}
+
+/* Aurora — Espacio profundo, tintes teal */
+[data-theme="aurora"] {
+    --dash-bg: linear-gradient(135deg, #02061aee 0%, #071229ee 60%, #030b1fee 100%);
+    --dash-blur: blur(30px);
+    --dash-border: #22d3ee1a;
+    --dash-shadow: 0 30px 80px -10px #000000b0, 0 0 100px #0ea5e908, inset 0 1px 0 #22d3ee15;
+    --dash-radius: 32px;
+    --card-bg: #0a1628b3;
+    --card-border: #22d3ee18;
+    --card-blur: blur(20px);
+    --card-radius: 20px;
+    --circle-glow: drop-shadow(0 0 14px #22d3ee80);
+    --clock-glow: 0 0 18px #67e8f940, 0 0 35px #22d3ee20;
+}
+
+[data-theme="aurora"] .dashboard {
+    overflow: hidden;
+}
+
+[data-theme="aurora"] .dashboard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 55%;
+    height: 55%;
+    background: radial-gradient(ellipse, #0ea5e910 0%, transparent 65%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+[data-theme="aurora"] .dashboard::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40%;
+    height: 40%;
+    background: radial-gradient(ellipse, #7c3aed0c 0%, transparent 65%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Obsidian — Oscuro cálido, tintes ámbar */
+[data-theme="obsidian"] {
+    --dash-bg: #12100ae8;
+    --dash-blur: blur(8px);
+    --dash-border: #d9770625;
+    --dash-shadow: 0 20px 50px -10px #00000099, inset 0 1px 0 #d9770618;
+    --dash-radius: 20px;
+    --card-bg: #1a150d;
+    --card-border: #d9770620;
+    --card-blur: blur(0px);
+    --card-radius: 12px;
+    --circle-glow: drop-shadow(0 0 12px #d9770680);
+    --clock-glow: 0 0 15px #fbbf2440;
 }
