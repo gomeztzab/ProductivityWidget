@@ -1,52 +1,188 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
-
 <head>
-
-<meta charset="UTF-8">
-<title>Configuración</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuracion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="settings.css">
 </head>
+<body>
+    <div class="settings">
 
-<body class="settings-body">
+        <!-- Header -->
+        <div class="settings__header">
+            <div class="settings__header-left">
+                <svg class="settings__header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                <h2 class="settings__title">Configuracion</h2>
+            </div>
+            <button class="settings__close" id="closeSettingsBtn" title="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
 
-<div class="settings">
+        <!-- Grid de secciones -->
+        <div class="settings__grid">
 
-<h1 class="settings__title">⚙ Configuración</h1>
+            <!-- Columna izquierda: Pomodoro -->
+            <div class="settings__panel">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Pomodoro
+                </h3>
 
-<div class="settings__group">
+                <div class="settings__group">
+                    <div class="settings__group-info">
+                        <span class="settings__label">Duracion de enfoque</span>
+                        <span class="settings__hint">Tiempo de trabajo concentrado</span>
+                    </div>
+                    <div class="settings__select-wrapper">
+                        <select class="settings__select" id="focusDuration">
+                            <option value="15">15 minutos</option>
+                            <option value="20">20 minutos</option>
+                            <option value="25" selected>25 minutos</option>
+                            <option value="30">30 minutos</option>
+                            <option value="45">45 minutos</option>
+                            <option value="60">60 minutos</option>
+                        </select>
+                        <svg class="settings__select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
 
-<label class="settings__group-label">Color del widget</label>
-<input class="settings__group-input" type="color" id="widgetColor">
+                <div class="settings__group">
+                    <div class="settings__group-info">
+                        <span class="settings__label">Duracion de descanso</span>
+                        <span class="settings__hint">Tiempo de pausa entre sesiones</span>
+                    </div>
+                    <div class="settings__select-wrapper">
+                        <select class="settings__select" id="breakDuration">
+                            <option value="5" selected>5 minutos</option>
+                            <option value="10">10 minutos</option>
+                            <option value="15">15 minutos</option>
+                            <option value="20">20 minutos</option>
+                        </select>
+                        <svg class="settings__select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
 
-</div>
+                <!-- Preview visual del pomodoro -->
+                <div class="settings__pomodoro-preview">
+                    <div class="settings__pomodoro-bar">
+                        <div class="settings__pomodoro-bar-label">Enfoque</div>
+                        <div class="settings__pomodoro-bar-track">
+                            <div class="settings__pomodoro-bar-fill settings__pomodoro-bar-fill--focus" id="focusBar"></div>
+                        </div>
+                        <span class="settings__pomodoro-bar-val" id="focusPreview">25 min</span>
+                    </div>
+                    <div class="settings__pomodoro-bar">
+                        <div class="settings__pomodoro-bar-label">Descanso</div>
+                        <div class="settings__pomodoro-bar-track">
+                            <div class="settings__pomodoro-bar-fill settings__pomodoro-bar-fill--break" id="breakBar"></div>
+                        </div>
+                        <span class="settings__pomodoro-bar-val" id="breakPreview">5 min</span>
+                    </div>
+                </div>
+            </div>
 
-<div class="settings__group">
+            <!-- Columna derecha: Color de acento -->
+            <div class="settings__panel">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+                        <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+                        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+                    </svg>
+                    Color de acento
+                </h3>
 
-<label class="settings__group-label">Duración Pomodoro</label>
-<input class="settings__group-input" type="number" id="pomodoroTime" value="25" min="1">
+                <p class="settings__panel-desc">Elige el color principal del temporizador y botones.</p>
 
-</div>
+                <div class="settings__swatches" id="swatchGroup">
+                    <button class="settings__swatch settings__swatch--active" data-color="#3b82f6" style="background:#3b82f6" title="Azul"></button>
+                    <button class="settings__swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Violeta"></button>
+                    <button class="settings__swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cian"></button>
+                    <button class="settings__swatch" data-color="#10b981" style="background:#10b981" title="Verde"></button>
+                    <button class="settings__swatch" data-color="#f59e0b" style="background:#f59e0b" title="Ambar"></button>
+                    <button class="settings__swatch" data-color="#ef4444" style="background:#ef4444" title="Rojo"></button>
+                    <button class="settings__swatch" data-color="#ec4899" style="background:#ec4899" title="Rosa"></button>
+                    <button class="settings__swatch" data-color="#f97316" style="background:#f97316" title="Naranja"></button>
+                </div>
 
-<div class="settings__group">
+                <div class="settings__color-preview">
+                    <div class="settings__color-preview-circle" id="colorPreviewCircle"></div>
+                    <div class="settings__color-preview-info">
+                        <span class="settings__color-preview-name" id="colorPreviewName">Azul</span>
+                        <span class="settings__color-preview-hex" id="colorPreviewHex">#3b82f6</span>
+                    </div>
+                </div>
 
-<label class="settings__group-label">Siempre encima</label>
-<input class="settings__group-input" type="checkbox" id="alwaysOnTop" checked>
+                <div class="settings__divider"></div>
 
-</div>
+                <!-- Color de texto -->
+                <h3 class="settings__panel-title" style="margin-top:4px">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" y1="20" x2="15" y2="20"></line>
+                        <line x1="12" y1="4" x2="12" y2="20"></line>
+                    </svg>
+                    Color de texto
+                </h3>
 
-<div class="settings__buttons">
+                <p class="settings__panel-desc">Color del reloj y titulos principales.</p>
 
-<button class="btn btn--secondary" id="closeSettingsBtn">Cerrar</button>
-<button class="btn btn--danger" id="closeAppBtn">Cerrar Widget</button>
+                <div class="settings__swatches" id="textSwatchGroup">
+                    <button class="settings__swatch settings__swatch--text settings__swatch--active" data-color="#ffffff" style="background:#ffffff" title="Blanco"></button>
+                    <button class="settings__swatch settings__swatch--text" data-color="#e0f2fe" style="background:#e0f2fe" title="Azul claro"></button>
+                    <button class="settings__swatch settings__swatch--text" data-color="#f3e8ff" style="background:#f3e8ff" title="Lavanda"></button>
+                    <button class="settings__swatch settings__swatch--text" data-color="#d1fae5" style="background:#d1fae5" title="Menta"></button>
+                    <button class="settings__swatch settings__swatch--text" data-color="#fef3c7" style="background:#fef3c7" title="Crema"></button>
+                    <button class="settings__swatch settings__swatch--text" data-color="#fce7f3" style="background:#fce7f3" title="Rosa claro"></button>
+                </div>
 
-</div>
+                <div class="settings__color-preview">
+                    <div class="settings__color-preview-circle" id="textColorPreviewCircle" style="background:#ffffff;box-shadow:0 0 12px #ffffff40;border:1px solid #ffffff33"></div>
+                    <div class="settings__color-preview-info">
+                        <span class="settings__color-preview-name" id="textColorPreviewName">Blanco</span>
+                        <span class="settings__color-preview-hex" id="textColorPreviewHex">#ffffff</span>
+                    </div>
+                </div>
+            </div>
 
-</div>
+        </div>
 
-<script src="settings.js"></script>
+        <div class="settings__divider"></div>
 
+        <!-- Footer -->
+        <div class="settings__footer">
+            <span class="settings__footer-note">Los cambios se aplican al reiniciar el widget.</span>
+            <div class="settings__footer-actions">
+                <button class="btn btn--secondary" id="cancelSettingsBtn">Cancelar</button>
+                <button class="btn btn--primary" id="saveSettingsBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Guardar
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="settings.js"></script>
 </body>
 </html>

@@ -1,60 +1,159 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
-<meta charset="UTF-8">
-<title>Productivity Widget</title>
-
-<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Dashboard - Productivity App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <div class="dashboard">
 
-<div class="widget">
+    <!-- Controles de ventana -->
+    <div class="dashboard__controls">
+        <button class="dashboard__ctrl-btn" id="configBtn" title="Configuración">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
+        <button class="dashboard__ctrl-btn dashboard__ctrl-btn--close" id="closeBtn" title="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
 
-<button class="widget__config-btn" id="configBtn">⚙</button>
+    <div class="dashboard__grid">
 
-<!-- CLOCK -->
-<div class="widget__section">
+            <!-- Reloj -->
+            <div class="clock">
+                <div class="clock__time"><span id="clock">00:00</span><span class="clock__period" id="clockPeriod">AM</span></div>
+                <div class="clock__date" id="date"></div>
+            </div>
 
-<div class="widget__clock" id="clock">00:00:00</div>
-<div class="widget__date" id="date"></div>
+            <!-- Pomodoro Timer -->
+            <div class="pomodoro">
+                <div class="pomodoro__circle">
+                    <svg viewBox="0 0 180 180">
+                        <circle class="pomodoro__circle-track" cx="90" cy="90" r="80"></circle>
+                        <circle class="pomodoro__circle-progress" cx="90" cy="90" r="80"></circle>
+                    </svg>
+                    <div class="pomodoro__circle-label">
+                        <div class="pomodoro__time" id="timer">25:00</div>
+                        <div class="pomodoro__label">Focus Time</div>
+                    </div>
+                </div>
+                <div class="pomodoro__controls">
+                    <button class="btn btn--primary" id="startTimerBtn">Start</button>
+                    <button class="btn btn--secondary" id="breakBtn">Break</button>
+                    <button class="btn btn--danger" id="resetTimerBtn">Stop</button>
+                </div>
+            </div>
 
-</div>
+            <!-- Lista de tareas -->
+            <div class="todo">
+                <div class="todo__header">
+                    <h3 class="todo__title">To-Do List</h3>
+                    <svg class="todo__header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <div class="todo__input-row">
+                    <input class="todo__input" id="taskInput" type="text" placeholder="Nueva tarea...">
+                    <button class="btn btn--primary" id="addTaskBtn">+</button>
+                </div>
+                <ul class="todo__list" id="taskList"></ul>
+            </div>
 
-<!-- TODO -->
-<div class="widget__section">
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stats__header">
+                    <h3 class="stats__title">Today's Stats</h3>
+                    <div class="stats__dots">
+                        <div class="stats__dot stats__dot--active"></div>
+                        <div class="stats__dot"></div>
+                        <div class="stats__dot"></div>
+                    </div>
+                </div>
+                <div class="stats__grid">
+                    <div class="stats__item">
+                        <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span class="stats__item-value" id="statPomodoros">0</span>
+                        <span class="stats__item-label">Pomodoros</span>
+                    </div>
+                    <div class="stats__item">
+                        <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="12" x2="15" y2="14"></line>
+                        </svg>
+                        <span class="stats__item-value" id="statFocused">0m</span>
+                        <span class="stats__item-label">Focused</span>
+                    </div>
+                    <div class="stats__item">
+                        <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        </svg>
+                        <span class="stats__item-value" id="statBreaks">0</span>
+                        <span class="stats__item-label">Breaks</span>
+                    </div>
+                </div>
+            </div>
+    </div>
 
-<h2 class="widget__section-title">Lista de tareas</h2>
+        <!-- Fila inferior -->
+        <div class="dashboard__bottom">
 
-<input class="widget__input" id="taskInput" placeholder="Nueva tarea">
-<button class="btn" id="addTaskBtn">Agregar</button>
+            <!-- Clima -->
+            <div class="weather">
+                <div class="weather__icon">&#9925;</div>
+                <div class="weather__info">
+                    <div class="weather__temp">18° <span class="weather__condition">Sunny</span></div>
+                    <div class="weather__location">Mexico City</div>
+                </div>
+            </div>
 
-<ul class="widget__task-list" id="taskList"></ul>
+            <!-- Reproductor de música -->
+            <div class="music">
+                <div class="music__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="music__info">
+                    <div class="music__now-playing">Now Playing: <span class="music__track-name">Chill Beats</span></div>
+                    <div class="music__progress">
+                        <div class="music__progress-dot"></div>
+                    </div>
+                    <div class="music__time">01:45</div>
+                </div>
+                <div class="music__controls">
+                    <button class="music__btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line>
+                        </svg>
+                    </button>
+                    <button class="music__btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
-</div>
-
-<!-- POMODORO -->
-<div class="widget__section">
-
-<h2 class="widget__section-title">Pomodoro</h2>
-
-<div class="widget__timer" id="timer">25:00</div>
-
-<div class="widget__timer-controls">
-
-<button class="btn" id="startTimerBtn">Start</button>
-<button class="btn" id="resetTimerBtn">Reset</button>
-
-</div>
-
-</div>
-
-</div>
+        </div>
+    </div>
 
 <script src="renderer.js"></script>
-
 </body>
 </html>

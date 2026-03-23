@@ -1,145 +1,227 @@
+/* =====================
+   SETTINGS IPC (guard: el bot�n puede no existir en esta vista)
+   ===================== */
+
 const { ipcRenderer } = require('electron')
 
-document.getElementById("configBtn").addEventListener("click", openSettings)
+const configBtn = document.getElementById("configBtn")
+const closeBtn  = document.getElementById("closeBtn")
 
-function openSettings(){
-ipcRenderer.send("open-settings")
+if(configBtn) {
+    configBtn.addEventListener("click", () => ipcRenderer.send("open-settings"))
+}
+if(closeBtn) {
+    closeBtn.addEventListener("click", () => ipcRenderer.send("close-app"))
 }
 
-/* aplicar configuraciones guardadas */
+/* colores guardados */
+const savedAccent = localStorage.getItem("accentColor")
+const savedText   = localStorage.getItem("textColor")
+if(savedAccent) document.documentElement.style.setProperty("--accent-color", savedAccent)
+if(savedText)   document.documentElement.style.setProperty("--text-color",   savedText)
 
-const savedColor = localStorage.getItem("widgetColor")
+ipcRenderer.on("apply-colors", (event, { accentColor, textColor }) => {
+    if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
+    if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
+})
 
-if(savedColor){
-document.documentElement.style.setProperty("--widget-color", savedColor)
+
+/* =====================
+   CLOCK
+   ===================== */
+
+function updateClock() {
+    const now = new Date()
+    let h = now.getHours()
+    const period = h >= 12 ? "PM" : "AM"
+    h = h % 12 || 12
+    const m = String(now.getMinutes()).padStart(2, "0")
+    const s = String(now.getSeconds()).padStart(2, "0")
+
+    document.getElementById("clock").textContent = `${String(h).padStart(2,"0")}:${m}:${s}`
+    document.getElementById("clockPeriod").textContent = period
+    document.getElementById("date").textContent = now.toLocaleDateString("es-MX", {
+        weekday: "long", month: "long", day: "numeric"
+    })
 }
 
-const savedPomodoro = localStorage.getItem("pomodoroTime")
-
-if(savedPomodoro){
-time = savedPomodoro * 60
-updateTimer()
-}
-
-/* CLOCK */
-
-function updateClock(){
-
-const now = new Date()
-
-let h = String(now.getHours()).padStart(2,'0')
-let m = String(now.getMinutes()).padStart(2,'0')
-let s = String(now.getSeconds()).padStart(2,'0')
-
-document.getElementById("clock").innerText = `${h}:${m}:${s}`
-document.getElementById("date").innerText = now.toLocaleDateString()
-
-}
-
-setInterval(updateClock,1000)
+setInterval(updateClock, 1000)
 updateClock()
 
 
-/* TODO LIST */
+/* =====================
+   TODO LIST
+   ===================== */
 
-const list = document.getElementById("taskList")
+const taskList  = document.getElementById("taskList")
+const taskInput = document.getElementById("taskInput")
 
-function loadTasks(){
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
 
-let tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
-
-tasks.forEach(t => createTask(t))
-
+function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
+    tasks.forEach(t => appendTask(t))
 }
 
-function addTask(){
-
-let input = document.getElementById("taskInput")
-
-if(input.value.trim() === "") return
-
-createTask(input.value)
-saveTask(input.value)
-
-input.value=""
-
+function addTask() {
+    if(!taskInput || taskInput.value.trim() === "") return
+    const text = taskInput.value.trim()
+    appendTask(text)
+    saveTask(text)
+    taskInput.value = ""
 }
 
-function createTask(text){
+function appendTask(text) {
+    const li = document.createElement("li")
+    li.classList.add("todo__item")
+    li.innerHTML = `
+        <div class="todo__checkbox"></div>
+        <span class="todo__text">${text}</span>
+        <button class="todo__remove" title="Eliminar">&times;</button>
+    `
 
-let li = document.createElement("li")
-li.classList.add("widget__task")
-li.textContent=text
-li.onclick = () => li.remove()
+    const checkbox = li.querySelector(".todo__checkbox")
+    checkbox.addEventListener("click", () => {
+        const completed = li.classList.toggle("todo__item--completed")
+        checkbox.classList.toggle("todo__checkbox--checked", completed)
+        checkbox.innerHTML = completed ? CHECK_SVG : ""
+    })
 
-list.appendChild(li)
+    li.querySelector(".todo__remove").addEventListener("click", () => {
+        li.remove()
+        const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
+        localStorage.setItem("tasks", JSON.stringify(tasks.filter(t => t !== text)))
+    })
 
+    taskList.appendChild(li)
 }
 
-function saveTask(text){
-
-let tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
-
-tasks.push(text)
-
-localStorage.setItem("tasks", JSON.stringify(tasks))
-
+function saveTask(text) {
+    const tasks = JSON.parse(localStorage.getItem("tasks") || "[]")
+    tasks.push(text)
+    localStorage.setItem("tasks", JSON.stringify(tasks))
 }
 
 document.getElementById("addTaskBtn").addEventListener("click", addTask)
+taskInput.addEventListener("keydown", (e) => { if(e.key === "Enter") addTask() })
 
 loadTasks()
 
 
-/* POMODORO */
+/* =====================
+   POMODORO
+   ===================== */
 
-let time = 25*60
-let interval=null
+let FOCUS_TIME = (parseInt(localStorage.getItem("focusDuration")) || 25) * 60
+let BREAK_TIME = (parseInt(localStorage.getItem("breakDuration")) || 5)  * 60
+const CIRCUMFERENCE = 502   /* 2 * Math.PI * 80 */
 
-function updateTimer(){
+let time      = FOCUS_TIME
+let totalTime = FOCUS_TIME
+let interval  = null
+let isBreak   = false
 
-let m=Math.floor(time/60)
-let s=time%60
+/* stats */
+let pomodoroCount       = 0
+let totalFocusedSeconds = 0
+let breakCount          = 0
 
-document.getElementById("timer").innerText =
-`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+const progressCircle = document.querySelector(".pomodoro__circle-progress")
+const pomodoroLabel  = document.querySelector(".pomodoro__label")
+const startBtn       = document.getElementById("startTimerBtn")
+const resetBtn       = document.getElementById("resetTimerBtn")
+const breakBtn       = document.getElementById("breakBtn")
 
+function updateTimerDisplay() {
+    const m = Math.floor(time / 60)
+    const s = time % 60
+    document.getElementById("timer").textContent =
+        `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
+
+    /* animar c�rculo SVG */
+    const offset = CIRCUMFERENCE * (1 - time / totalTime)
+    progressCircle.style.strokeDashoffset = offset
 }
 
-function startTimer(){
+function startTimer() {
+    if(interval) {
+        /* PAUSAR */
+        clearInterval(interval)
+        interval = null
+        startBtn.textContent = "Reanudar"
+        return
+    }
 
-if(interval) return
+    startBtn.textContent = "Pausar"
 
-interval=setInterval(()=>{
+    interval = setInterval(() => {
+        time--
+        if(!isBreak) totalFocusedSeconds++
+        updateTimerDisplay()
+        updateStats()
 
-time--
-updateTimer()
+        if(time <= 0) {
+            clearInterval(interval)
+            interval = null
 
-if(time<=0){
-
-clearInterval(interval)
-interval=null
-
-alert("Pomodoro terminado")
-
+            if(!isBreak) {
+                pomodoroCount++
+                breakCount++
+                isBreak   = true
+                time      = BREAK_TIME
+                totalTime = BREAK_TIME
+                pomodoroLabel.textContent = "Break Time"
+                startBtn.textContent      = "Iniciar descanso"
+                updateStats()
+                alert(`Pomodoro #${pomodoroCount} completado! Toma 5 minutos.`)
+            } else {
+                isBreak   = false
+                time      = FOCUS_TIME
+                totalTime = FOCUS_TIME
+                pomodoroLabel.textContent = "Focus Time"
+                startBtn.textContent      = "Iniciar"
+                alert("Descanso terminado! A enfocarse.")
+            }
+            updateTimerDisplay()
+        }
+    }, 1000)
 }
 
-},1000)
-
+function resetTimer() {
+    clearInterval(interval)
+    interval  = null
+    isBreak   = false
+    time      = FOCUS_TIME
+    totalTime = FOCUS_TIME
+    pomodoroLabel.textContent = "Focus Time"
+    startBtn.textContent      = "Iniciar"
+    updateTimerDisplay()
 }
 
-function resetTimer(){
-
-clearInterval(interval)
-interval=null
-
-time=25*60
-
-updateTimer()
-
+function startBreak() {
+    clearInterval(interval)
+    interval  = null
+    isBreak   = true
+    breakCount++
+    time      = BREAK_TIME
+    totalTime = BREAK_TIME
+    pomodoroLabel.textContent = "Break Time"
+    startBtn.textContent      = "Iniciar"
+    updateTimerDisplay()
+    updateStats()
 }
 
-document.getElementById("startTimerBtn").addEventListener("click", startTimer)
-document.getElementById("resetTimerBtn").addEventListener("click", resetTimer)
+function updateStats() {
+    document.getElementById("statPomodoros").textContent = pomodoroCount
+    const h = Math.floor(totalFocusedSeconds / 3600)
+    const m = Math.floor((totalFocusedSeconds % 3600) / 60)
+    document.getElementById("statFocused").textContent = h > 0 ? `${h}h ${m}m` : `${m}m`
+    document.getElementById("statBreaks").textContent = breakCount
+}
 
-updateTimer()
+startBtn.addEventListener("click", startTimer)
+resetBtn.addEventListener("click", resetTimer)
+breakBtn.addEventListener("click", startBreak)
+
+updateTimerDisplay()
+updateStats()

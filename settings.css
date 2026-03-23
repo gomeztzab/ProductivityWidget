@@ -1,0 +1,443 @@
+﻿/* ======================
+   RESET
+   ====================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ======================
+   BASE
+   ====================== */
+
+body {
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+    -webkit-app-region: drag;
+}
+
+/* ======================
+   SETTINGS CARD
+   ====================== */
+
+.settings {
+    width: 100%;
+    max-width: 860px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: #0f172ab3;
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid #ffffff1a;
+    padding: 32px;
+    box-shadow:
+        0 25px 50px -12px #00000080,
+        inset 0 1px 0 #ffffff1a;
+    position: relative;
+    -webkit-app-region: no-drag;
+}
+
+/* ======================
+   HEADER
+   ====================== */
+
+.settings__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.settings__header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings__header-icon {
+    width: 24px;
+    height: 24px;
+    color: #3b82f6;
+}
+
+.settings__title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.settings__close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #ffffff1a;
+    background: #ffffff0d;
+    color: #ffffff66;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    -webkit-app-region: no-drag;
+    padding: 0;
+}
+
+.settings__close:hover {
+    background: #dc262666;
+    border-color: #dc2626;
+    color: #ffffff;
+}
+
+.settings__close svg {
+    width: 13px;
+    height: 13px;
+    display: block;
+}
+
+/* ======================
+   GRID DOS COLUMNAS
+   ====================== */
+
+.settings__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 8px;
+}
+
+/* ======================
+   PANEL (card interna)
+   ====================== */
+
+.settings__panel {
+    background: #ffffff0d;
+    border: 1px solid #ffffff1a;
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.settings__panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff80;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.settings__panel-icon {
+    width: 14px;
+    height: 14px;
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.settings__panel-desc {
+    font-size: 13px;
+    color: #ffffff66;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* ======================
+   GROUP
+   ====================== */
+
+.settings__group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #ffffff08;
+    gap: 16px;
+}
+
+.settings__group:last-of-type {
+    border-bottom: none;
+}
+
+.settings__group-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.settings__label {
+    font-size: 14px;
+    color: #ffffffcc;
+    font-weight: 500;
+}
+
+.settings__hint {
+    font-size: 12px;
+    color: #ffffff4d;
+}
+
+/* ======================
+   SELECT
+   ====================== */
+
+.settings__select-wrapper {
+    position: relative;
+    min-width: 150px;
+    flex-shrink: 0;
+}
+
+.settings__select {
+    width: 100%;
+    padding: 9px 32px 9px 14px;
+    background: #ffffff0d;
+    border: 1px solid #ffffff1a;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.settings__select:hover {
+    background: #ffffff1a;
+}
+
+.settings__select:focus {
+    border-color: #3b82f6;
+}
+
+.settings__select option {
+    background: #1e293b;
+    color: #ffffff;
+}
+
+.settings__select-arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    color: #ffffff4d;
+    pointer-events: none;
+}
+
+/* ======================
+   POMODORO PREVIEW BARS
+   ====================== */
+
+.settings__pomodoro-preview {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: #ffffff08;
+    border-radius: 10px;
+    border: 1px solid #ffffff0d;
+}
+
+.settings__pomodoro-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings__pomodoro-bar-label {
+    font-size: 11px;
+    color: #ffffff4d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 60px;
+}
+
+.settings__pomodoro-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #ffffff0d;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.settings__pomodoro-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.settings__pomodoro-bar-fill--focus {
+    background: #3b82f6;
+    width: 41.67%;
+}
+
+.settings__pomodoro-bar-fill--break {
+    background: #10b981;
+    width: 8.33%;
+}
+
+.settings__pomodoro-bar-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffffcc;
+    min-width: 44px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ======================
+   SWATCHES
+   ====================== */
+
+.settings__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    -webkit-app-region: no-drag;
+}
+
+.settings__swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-app-region: no-drag;
+}
+
+.settings__swatch:hover {
+    transform: scale(1.15);
+}
+
+.settings__swatch--active {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.settings__swatch--text {
+    border: 2px solid #ffffff1a;
+}
+
+.settings__swatch--text.settings__swatch--active {
+    border-color: #ffffff66;
+    box-shadow: 0 0 0 2px #ffffff80;
+}
+
+/* ======================
+   COLOR PREVIEW
+   ====================== */
+
+.settings__color-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: #ffffff08;
+    border-radius: 10px;
+    border: 1px solid #ffffff0d;
+}
+
+.settings__color-preview-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    box-shadow: 0 0 12px #3b82f680;
+}
+
+.settings__color-preview-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.settings__color-preview-hex {
+    display: block;
+    font-size: 12px;
+    color: #ffffff4d;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ======================
+   DIVIDER
+   ====================== */
+
+.settings__divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffffff1a, transparent);
+    margin: 20px 0;
+}
+
+/* ======================
+   FOOTER
+   ====================== */
+
+.settings__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings__footer-note {
+    font-size: 12px;
+    color: #ffffff33;
+}
+
+.settings__footer-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ======================
+   BUTTONS
+   ====================== */
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.btn--primary {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.btn--primary:hover {
+    background: #2563eb;
+}
+
+.btn--secondary {
+    background: #ffffff0d;
+    color: #ffffff;
+    border: 1px solid #ffffff1a;
+}
+
+.btn--secondary:hover {
+    background: #ffffff1a;
+}

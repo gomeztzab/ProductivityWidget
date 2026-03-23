@@ -1,28 +1,135 @@
-const { ipcRenderer } = require('electron')
+﻿const { ipcRenderer } = require('electron')
 
-document.getElementById("closeSettingsBtn").addEventListener("click", closeSettings)
-document.getElementById("closeAppBtn").addEventListener("click", closeApp)
+/* ---- IDs ---- */
+const closeBtn  = document.getElementById("closeSettingsBtn")
+const cancelBtn = document.getElementById("cancelSettingsBtn")
+const saveBtn   = document.getElementById("saveSettingsBtn")
+const focusSel  = document.getElementById("focusDuration")
+const breakSel  = document.getElementById("breakDuration")
+const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
+const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 
-function closeSettings(){
-ipcRenderer.send("close-settings")
+const colorNames = {
+    "#3b82f6": "Azul",
+    "#8b5cf6": "Violeta",
+    "#06b6d4": "Cian",
+    "#10b981": "Verde",
+    "#f59e0b": "Ambar",
+    "#ef4444": "Rojo",
+    "#ec4899": "Rosa",
+    "#f97316": "Naranja"
 }
 
-function closeApp(){
-ipcRenderer.send("close-app")
+const textColorNames = {
+    "#ffffff": "Blanco",
+    "#e0f2fe": "Azul claro",
+    "#f3e8ff": "Lavanda",
+    "#d1fae5": "Menta",
+    "#fef3c7": "Crema",
+    "#fce7f3": "Rosa claro"
 }
 
-/* guardar color */
+let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
+let selectedTextColor = localStorage.getItem("textColor")   || "#ffffff"
 
-document.getElementById("widgetColor").addEventListener("input",(e)=>{
+/* ---- Restaurar valores al abrir ---- */
+const savedFocus = localStorage.getItem("focusDuration")
+const savedBreak = localStorage.getItem("breakDuration")
+if(savedFocus) focusSel.value = savedFocus
+if(savedBreak) breakSel.value = savedBreak
+updateColorPreview(selectedColor)
+updateActiveSwatch(selectedColor)
+updateTextColorPreview(selectedTextColor)
+updateActiveTextSwatch(selectedTextColor)
+updateBars()
 
-localStorage.setItem("widgetColor", e.target.value)
+/* ---- Preview bars en tiempo real ---- */
+focusSel.addEventListener("change", updateBars)
+breakSel.addEventListener("change", updateBars)
 
+function updateBars() {
+    const focusVal = parseInt(focusSel.value)
+    const breakVal = parseInt(breakSel.value)
+    const maxFocus = 60
+
+    document.getElementById("focusBar").style.width = (focusVal / maxFocus * 100) + "%"
+    document.getElementById("breakBar").style.width = (breakVal / maxFocus * 100) + "%"
+    document.getElementById("focusPreview").textContent = focusVal + " min"
+    document.getElementById("breakPreview").textContent = breakVal + " min"
+}
+
+/* ---- Swatches ---- */
+swatches.forEach(btn => {
+    btn.addEventListener("click", () => {
+        selectedColor = btn.dataset.color
+        updateActiveSwatch(selectedColor)
+        updateColorPreview(selectedColor)
+    })
 })
 
-/* guardar pomodoro */
+function updateActiveSwatch(color) {
+    swatches.forEach(b => b.classList.remove("settings__swatch--active"))
+    const active = document.querySelector(`.settings__swatch[data-color='${color}']`)
+    if(active) {
+        active.classList.add("settings__swatch--active")
+        active.style.boxShadow = `0 0 0 2px ${color}`
+    }
+}
 
-document.getElementById("pomodoroTime").addEventListener("change",(e)=>{
-
-localStorage.setItem("pomodoroTime", e.target.value)
-
+textSwatches.forEach(btn => {
+    btn.addEventListener("click", () => {
+        selectedTextColor = btn.dataset.color
+        updateActiveTextSwatch(selectedTextColor)
+        updateTextColorPreview(selectedTextColor)
+    })
 })
+
+function updateActiveTextSwatch(color) {
+    textSwatches.forEach(b => b.classList.remove("settings__swatch--active"))
+    const active = document.querySelector(`#textSwatchGroup .settings__swatch--text[data-color='${color}']`)
+    if(active) {
+        active.classList.add("settings__swatch--active")
+        active.style.boxShadow = `0 0 0 2px ${color}`
+    }
+}
+
+function updateTextColorPreview(color) {
+    const circle = document.getElementById("textColorPreviewCircle")
+    if(circle) {
+        circle.style.background = color
+        circle.style.boxShadow  = `0 0 12px ${color}80`
+        circle.style.border     = `1px solid ${color}33`
+    }
+    const nameEl = document.getElementById("textColorPreviewName")
+    const hexEl  = document.getElementById("textColorPreviewHex")
+    if(nameEl) nameEl.textContent = textColorNames[color] || color
+    if(hexEl)  hexEl.textContent  = color
+}
+
+function updateColorPreview(color) {
+    const circle = document.getElementById("colorPreviewCircle")
+    if(circle) {
+        circle.style.background = color
+        circle.style.boxShadow = `0 0 12px ${color}80`
+    }
+    const nameEl = document.getElementById("colorPreviewName")
+    const hexEl  = document.getElementById("colorPreviewHex")
+    if(nameEl) nameEl.textContent = colorNames[color] || color
+    if(hexEl)  hexEl.textContent  = color
+}
+
+/* ---- Guardar ---- */
+saveBtn.addEventListener("click", () => {
+    localStorage.setItem("focusDuration",  focusSel.value)
+    localStorage.setItem("breakDuration",  breakSel.value)
+    localStorage.setItem("accentColor",    selectedColor)
+    localStorage.setItem("textColor",      selectedTextColor)
+    ipcRenderer.send("save-settings", {
+        accentColor: selectedColor,
+        textColor:   selectedTextColor
+    })
+})
+
+/* ---- Cancelar / Cerrar ---- */
+closeBtn.addEventListener("click",  () => ipcRenderer.send("close-settings"))
+cancelBtn.addEventListener("click", () => ipcRenderer.send("close-settings"))

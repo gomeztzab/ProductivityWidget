@@ -8,14 +8,14 @@ let settingsWindow
 
 function createWindow(){
 
-const bounds = store.get('windowBounds') || { x:100, y:100, width:350, height:500 }
+const position = store.get('windowPosition') || { x:100, y:100 }
 
 win = new BrowserWindow({
 
-x: bounds.x,
-y: bounds.y,
-width: bounds.width,
-height: bounds.height,
+x: position.x,
+y: position.y,
+width: 960,
+height: 740,
 
 frame:false,
 transparent:true,
@@ -34,7 +34,8 @@ win.loadFile('index.html')
 win.on('move', () => {
 
 if(win){
-store.set('windowBounds', win.getBounds())
+const { x, y } = win.getBounds()
+store.set('windowPosition', { x, y })
 }
 
 })
@@ -47,9 +48,12 @@ if(settingsWindow) return
 
 settingsWindow = new BrowserWindow({
 
-width:300,
-height:400,
-resizable:false,
+width: 960,
+height: 740,
+resizable: false,
+frame: false,
+transparent: true,
+alwaysOnTop: true,
 
 webPreferences:{
 nodeIntegration:true,
@@ -73,6 +77,13 @@ ipcMain.on('close-settings', () => {
 if(settingsWindow){
 settingsWindow.close()
 }
+
+})
+
+ipcMain.on('save-settings', (event, data) => {
+
+if(win) win.webContents.send('apply-colors', data)
+if(settingsWindow) settingsWindow.close()
 
 })
 

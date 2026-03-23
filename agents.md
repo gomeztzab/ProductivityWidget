@@ -77,6 +77,20 @@ Cada widget debe ser modular:
 - Espaciado consistente
 
 ---
+## 🎨 Estándares de escritura CSS (FORMATO OBLIGATORIO)
+
+### 📏 Indentación
+- Usar indentación consistente de 4 espacios o 1 tab
+- Cada propiedad debe ir en una nueva línea
+- No escribir propiedades en una sola línea
+
+### Ejemplo correcto:
+```css
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e293b;
+    color: #ffffff;
+}
 
 ## 🎯 Metodología CSS (OBLIGATORIO: BEM)
 
@@ -99,6 +113,7 @@ Cada widget debe ser modular:
 ### Reglas:
 - No usar IDs para estilos
 - Evitar estilos inline
+
 - Clases descriptivas
 - Mantener jerarquía clara
 
