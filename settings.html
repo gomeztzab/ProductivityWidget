@@ -49,6 +49,7 @@
                     </div>
                     <div class="settings__select-wrapper">
                         <select class="settings__select" id="focusDuration">
+                            <option value="15s">15 segundos (test)</option>
                             <option value="15">15 minutos</option>
                             <option value="20">20 minutos</option>
                             <option value="25" selected>25 minutos</option>
@@ -69,10 +70,15 @@
                     </div>
                     <div class="settings__select-wrapper">
                         <select class="settings__select" id="breakDuration">
+                            <option value="15s">15 segundos (test)</option>
                             <option value="5" selected>5 minutos</option>
                             <option value="10">10 minutos</option>
                             <option value="15">15 minutos</option>
                             <option value="20">20 minutos</option>
+                            <option value="25">25 minutos</option>
+                            <option value="30">30 minutos</option>
+                            <option value="35">35 minutos</option>
+                            <option value="40">40 minutos</option>
                         </select>
                         <svg class="settings__select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
@@ -95,6 +101,48 @@
                             <div class="settings__pomodoro-bar-fill settings__pomodoro-bar-fill--break" id="breakBar"></div>
                         </div>
                         <span class="settings__pomodoro-bar-val" id="breakPreview">5 min</span>
+                    </div>
+                </div>
+
+                <div class="settings__pomodoro-alerts">
+                    <div class="settings__pomodoro-alerts-head">
+                        <span class="settings__label">Recordatorios</span>
+                        <span class="settings__hint">Controla sonido, notificaciones y la intensidad del aviso.</span>
+                    </div>
+
+                    <label class="settings__toggle-row">
+                        <div class="settings__group-info">
+                            <span class="settings__label">Sonido</span>
+                            <span class="settings__hint">Reproduce un tono al terminar enfoque o descanso.</span>
+                        </div>
+                        <input class="settings__toggle-input" id="reminderSoundEnabled" type="checkbox">
+                        <span class="settings__toggle-ui" aria-hidden="true"></span>
+                    </label>
+
+                    <label class="settings__toggle-row">
+                        <div class="settings__group-info">
+                            <span class="settings__label">Notificaciones</span>
+                            <span class="settings__hint">Muestra una notificacion del sistema al completar cada bloque.</span>
+                        </div>
+                        <input class="settings__toggle-input" id="reminderNotificationsEnabled" type="checkbox">
+                        <span class="settings__toggle-ui" aria-hidden="true"></span>
+                    </label>
+
+                    <div class="settings__group settings__group--stacked">
+                        <div class="settings__group-info">
+                            <span class="settings__label">Intensidad del sonido</span>
+                            <span class="settings__hint">Elige un tono suave o uno mas marcado para pruebas.</span>
+                        </div>
+                        <div class="settings__select-wrapper settings__select-wrapper--full">
+                            <select class="settings__select" id="reminderSoundLevel">
+                                <option value="soft">Suave</option>
+                                <option value="medium">Media</option>
+                                <option value="strong">Fuerte</option>
+                            </select>
+                            <svg class="settings__select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,6 +175,7 @@
                     <button class="settings__swatch" data-color="#84cc16" style="background:#84cc16" title="Lima"></button>
                     <button class="settings__swatch" data-color="#e11d48" style="background:#e11d48" title="Carmesí"></button>
                     <button class="settings__swatch" data-color="#6366f1" style="background:#6366f1" title="Índigo"></button>
+                    <button class="settings__swatch settings__swatch--dark" data-color="#111111" style="background:#111111" title="Negro"></button>
                 </div>
 
                 <div class="settings__color-preview">
@@ -162,6 +211,7 @@
                     <button class="settings__swatch settings__swatch--text" data-color="#fde68a" style="background:#fde68a" title="Dorado suave"></button>
                     <button class="settings__swatch settings__swatch--text" data-color="#cffafe" style="background:#cffafe" title="Hielo"></button>
                     <button class="settings__swatch settings__swatch--text" data-color="#ddd6fe" style="background:#ddd6fe" title="Lila"></button>
+                    <button class="settings__swatch settings__swatch--text settings__swatch--dark" data-color="#111111" style="background:#111111" title="Negro"></button>
                 </div>
 
                 <div class="settings__color-preview">
@@ -201,6 +251,20 @@
                             </div>
                         </div>
                         <span class="settings__theme-card-name">Glass</span>
+                    </button>
+
+                    <button class="settings__theme-card" data-theme="light">
+                        <div class="settings__theme-preview settings__theme-preview--light">
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block"></div>
+                                <div class="settings__theme-preview-block"></div>
+                            </div>
+                            <div class="settings__theme-preview-row">
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                                <div class="settings__theme-preview-block settings__theme-preview-block--tall"></div>
+                            </div>
+                        </div>
+                        <span class="settings__theme-card-name">Light</span>
                     </button>
 
                     <!-- Neon -->

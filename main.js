@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Notification, screen } = require('electron')
 const Store = require('electron-store')
 const { spawn } = require('child_process')
 const os   = require('os')
@@ -9,6 +9,308 @@ const store = new Store()
 
 let win
 let settingsWindow
+let strictModeWindow
+let lockScreenWindow
+let interactionLockWindows = []
+let flashTimeout = null
+let forceQuit = false
+let forceCloseLockScreen = false
+let forceCloseInteractionLock = false
+let exitLockEnabled = store.get('strictExitLockEnabled', false)
+let screenLockEnabled = store.get('strictScreenLockEnabled', false)
+let interactionLockEnabled = store.get('strictInteractionLockEnabled', false)
+
+function broadcastExitLockState() {
+    const payload = { exitLockEnabled }
+    if (win && !win.isDestroyed()) win.webContents.send('strict-exit-lock-state', payload)
+    if (strictModeWindow && !strictModeWindow.isDestroyed()) strictModeWindow.webContents.send('strict-exit-lock-state', payload)
+}
+
+function broadcastScreenLockState() {
+    const payload = { screenLockEnabled }
+    if (strictModeWindow && !strictModeWindow.isDestroyed()) strictModeWindow.webContents.send('strict-screen-lock-state', payload)
+    if (lockScreenWindow && !lockScreenWindow.isDestroyed()) lockScreenWindow.webContents.send('strict-screen-lock-state', payload)
+}
+
+function broadcastInteractionLockState() {
+    const payload = { interactionLockEnabled }
+    if (win && !win.isDestroyed()) win.webContents.send('strict-interaction-lock-state', payload)
+    if (strictModeWindow && !strictModeWindow.isDestroyed()) strictModeWindow.webContents.send('strict-interaction-lock-state', payload)
+    interactionLockWindows = interactionLockWindows.filter(currentWindow => currentWindow && !currentWindow.isDestroyed())
+    interactionLockWindows.forEach(currentWindow => currentWindow.webContents.send('strict-interaction-lock-state', payload))
+}
+
+function closeLockScreenWindow() {
+    if (!lockScreenWindow || lockScreenWindow.isDestroyed()) return
+    forceCloseLockScreen = true
+    lockScreenWindow.close()
+}
+
+function closeInteractionLockWindow() {
+    interactionLockWindows = interactionLockWindows.filter(currentWindow => currentWindow && !currentWindow.isDestroyed())
+    if (!interactionLockWindows.length) return
+    forceCloseInteractionLock = true
+    interactionLockWindows.forEach(currentWindow => currentWindow.close())
+}
+
+function getDisplayIntersection(rectA, rectB) {
+    const x = Math.max(rectA.x, rectB.x)
+    const y = Math.max(rectA.y, rectB.y)
+    const right = Math.min(rectA.x + rectA.width, rectB.x + rectB.width)
+    const bottom = Math.min(rectA.y + rectA.height, rectB.y + rectB.height)
+    const width = right - x
+    const height = bottom - y
+
+    if (width <= 0 || height <= 0) return null
+    return { x, y, width, height }
+}
+
+function getInteractionLockRects() {
+    if (!win || win.isDestroyed()) return []
+
+    const mainBounds = win.getBounds()
+    return screen.getAllDisplays().flatMap(({ bounds }) => {
+        const hole = getDisplayIntersection(bounds, mainBounds)
+        if (!hole) return [bounds]
+
+        const rects = [
+            { x: bounds.x, y: bounds.y, width: bounds.width, height: hole.y - bounds.y },
+            { x: bounds.x, y: hole.y, width: hole.x - bounds.x, height: hole.height },
+            {
+                x: hole.x + hole.width,
+                y: hole.y,
+                width: bounds.x + bounds.width - (hole.x + hole.width),
+                height: hole.height
+            },
+            {
+                x: bounds.x,
+                y: hole.y + hole.height,
+                width: bounds.width,
+                height: bounds.y + bounds.height - (hole.y + hole.height)
+            }
+        ]
+
+        return rects.filter(rect => rect.width > 0 && rect.height > 0)
+    })
+}
+
+function createInteractionLockWindow() {
+    const currentWindow = new BrowserWindow({
+        show: false,
+        frame: false,
+        transparent: true,
+        resizable: false,
+        movable: false,
+        minimizable: false,
+        maximizable: false,
+        closable: true,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        focusable: true,
+        hasShadow: false,
+        backgroundColor: '#00000000',
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    })
+
+    currentWindow.setAlwaysOnTop(true, 'screen-saver')
+    currentWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    currentWindow.loadFile('interaction-lock.html')
+
+    currentWindow.webContents.once('did-finish-load', () => {
+        syncLockScreenTheme(currentWindow)
+        currentWindow.webContents.send('strict-interaction-lock-state', { interactionLockEnabled })
+    })
+
+    currentWindow.on('focus', () => {
+        if (!interactionLockEnabled || forceCloseInteractionLock) return
+        currentWindow.webContents.send('strict-interaction-lock-blocked')
+        if (win && !win.isDestroyed()) {
+            setTimeout(() => {
+                if (interactionLockEnabled && win && !win.isDestroyed()) win.focus()
+            }, 40)
+        }
+    })
+
+    currentWindow.on('close', (event) => {
+        if (!interactionLockEnabled || forceCloseInteractionLock) return
+        event.preventDefault()
+        currentWindow.webContents.send('strict-interaction-lock-blocked')
+        if (win && !win.isDestroyed()) win.focus()
+    })
+
+    currentWindow.on('closed', () => {
+        interactionLockWindows = interactionLockWindows.filter(windowRef => windowRef !== currentWindow && windowRef && !windowRef.isDestroyed())
+        if (!interactionLockWindows.length) {
+            forceCloseInteractionLock = false
+            if (interactionLockEnabled) {
+                interactionLockEnabled = false
+                store.set('strictInteractionLockEnabled', false)
+                broadcastInteractionLockState()
+            }
+        }
+    })
+
+    return currentWindow
+}
+
+function updateInteractionLockWindows() {
+    if (!interactionLockEnabled || !win || win.isDestroyed()) return
+
+    const rects = getInteractionLockRects()
+    interactionLockWindows = interactionLockWindows.filter(currentWindow => currentWindow && !currentWindow.isDestroyed())
+
+    while (interactionLockWindows.length < rects.length) {
+        interactionLockWindows.push(createInteractionLockWindow())
+    }
+
+    interactionLockWindows.forEach((currentWindow, index) => {
+        const rect = rects[index]
+        if (!rect) {
+            currentWindow.hide()
+            return
+        }
+
+        currentWindow.setBounds(rect)
+        currentWindow.showInactive()
+    })
+
+    if (win && !win.isDestroyed()) {
+        win.setAlwaysOnTop(true, 'screen-saver')
+        win.focus()
+    }
+}
+
+function disableOtherStrictModes(exceptMode) {
+    if (exceptMode !== 'exit' && exitLockEnabled) {
+        exitLockEnabled = false
+        store.set('strictExitLockEnabled', false)
+        broadcastExitLockState()
+    }
+
+    if (exceptMode !== 'screen' && screenLockEnabled) {
+        screenLockEnabled = false
+        store.set('strictScreenLockEnabled', false)
+        closeLockScreenWindow()
+        broadcastScreenLockState()
+    }
+
+    if (exceptMode !== 'interaction' && interactionLockEnabled) {
+        interactionLockEnabled = false
+        store.set('strictInteractionLockEnabled', false)
+        closeInteractionLockWindow()
+        broadcastInteractionLockState()
+    }
+}
+
+function setExitLockEnabled(enabled) {
+    if (enabled) disableOtherStrictModes('exit')
+    exitLockEnabled = Boolean(enabled)
+    store.set('strictExitLockEnabled', exitLockEnabled)
+    broadcastExitLockState()
+}
+
+function syncLockScreenTheme(targetWindow) {
+    if (!targetWindow || targetWindow.isDestroyed() || !win || win.isDestroyed()) return
+    const payload = {
+        accentColor: store.get('accentColor', '#3b82f6'),
+        textColor: store.get('textColor', '#ffffff'),
+        theme: store.get('dashTheme', 'glass'),
+        font: store.get('fontFamily', 'Inter')
+    }
+    targetWindow.webContents.send('apply-colors', payload)
+}
+
+function openLockScreenWindow() {
+    if (lockScreenWindow && !lockScreenWindow.isDestroyed()) {
+        lockScreenWindow.focus()
+        return
+    }
+
+    lockScreenWindow = new BrowserWindow({
+        fullscreen: true,
+        frame: false,
+        transparent: false,
+        resizable: false,
+        movable: false,
+        minimizable: false,
+        maximizable: false,
+        closable: true,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        backgroundColor: '#020617',
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    })
+
+    lockScreenWindow.setAlwaysOnTop(true, 'screen-saver')
+    lockScreenWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    lockScreenWindow.loadFile('lock-screen.html')
+
+    lockScreenWindow.webContents.once('did-finish-load', () => {
+        syncLockScreenTheme(lockScreenWindow)
+        broadcastScreenLockState()
+    })
+
+    lockScreenWindow.on('close', (event) => {
+        if (!screenLockEnabled || forceCloseLockScreen) return
+        event.preventDefault()
+        if (lockScreenWindow && !lockScreenWindow.isDestroyed()) {
+            lockScreenWindow.webContents.send('strict-screen-lock-blocked')
+            lockScreenWindow.focus()
+        }
+    })
+
+    lockScreenWindow.on('closed', () => {
+        lockScreenWindow = null
+        if (screenLockEnabled) {
+            screenLockEnabled = false
+            store.set('strictScreenLockEnabled', false)
+            broadcastScreenLockState()
+        }
+        forceCloseLockScreen = false
+    })
+}
+
+function setScreenLockEnabled(enabled) {
+    if (enabled) disableOtherStrictModes('screen')
+    screenLockEnabled = Boolean(enabled)
+    store.set('strictScreenLockEnabled', screenLockEnabled)
+
+    if (screenLockEnabled) {
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('strict-screen-lock-activated')
+        }
+        openLockScreenWindow()
+    } else if (lockScreenWindow && !lockScreenWindow.isDestroyed()) {
+        forceCloseLockScreen = true
+        lockScreenWindow.close()
+    }
+
+    broadcastScreenLockState()
+}
+
+function setInteractionLockEnabled(enabled) {
+    if (enabled) disableOtherStrictModes('interaction')
+    interactionLockEnabled = Boolean(enabled)
+    store.set('strictInteractionLockEnabled', interactionLockEnabled)
+
+    if (interactionLockEnabled) {
+        if (win && !win.isDestroyed()) {
+            win.webContents.send('strict-interaction-lock-activated')
+        }
+        updateInteractionLockWindows()
+    } else {
+        closeInteractionLockWindow()
+        if (win && !win.isDestroyed()) win.setAlwaysOnTop(true)
+    }
+
+    broadcastInteractionLockState()
+}
 
 function createWindow(){
 
@@ -35,15 +337,56 @@ contextIsolation:false
 
 win.loadFile('index.html')
 
-win.webContents.once('did-finish-load', () => { spawnPS() })
+win.webContents.once('did-finish-load', () => {
+    spawnPS()
+    broadcastExitLockState()
+    if (screenLockEnabled) {
+        win.webContents.send('strict-screen-lock-activated')
+        openLockScreenWindow()
+    }
+    if (interactionLockEnabled) {
+        win.webContents.send('strict-interaction-lock-activated')
+        updateInteractionLockWindows()
+    }
+})
 
 win.on('move', () => {
 
 if(win){
 const { x, y } = win.getBounds()
 store.set('windowPosition', { x, y })
+if (interactionLockEnabled) updateInteractionLockWindows()
 }
 
+})
+
+win.on('resize', () => {
+if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+win.on('focus', () => {
+    win.flashFrame(false)
+    if (flashTimeout) {
+        clearTimeout(flashTimeout)
+        flashTimeout = null
+    }
+    if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+win.on('blur', () => {
+    if (!interactionLockEnabled) return
+    setTimeout(() => {
+        if (interactionLockEnabled && win && !win.isDestroyed()) {
+            win.focus()
+            updateInteractionLockWindows()
+        }
+    }, 80)
+})
+
+win.on('close', (event) => {
+    if (!exitLockEnabled || forceQuit) return
+    event.preventDefault()
+    if (win && !win.isDestroyed()) win.webContents.send('strict-exit-lock-blocked')
 })
 
 }
@@ -76,7 +419,45 @@ settingsWindow = null
 
 }
 
+function openStrictMode(){
+
+if(strictModeWindow) {
+strictModeWindow.focus()
+return
+}
+
+strictModeWindow = new BrowserWindow({
+
+width: 540,
+height: 680,
+resizable: false,
+frame: false,
+transparent: true,
+alwaysOnTop: true,
+
+webPreferences:{
+nodeIntegration:true,
+contextIsolation:false
+}
+
+})
+
+strictModeWindow.loadFile("strict-mode.html")
+
+strictModeWindow.webContents.once('did-finish-load', () => {
+strictModeWindow.webContents.send('strict-exit-lock-state', { exitLockEnabled })
+strictModeWindow.webContents.send('strict-screen-lock-state', { screenLockEnabled })
+strictModeWindow.webContents.send('strict-interaction-lock-state', { interactionLockEnabled })
+})
+
+strictModeWindow.on('closed', () => {
+strictModeWindow = null
+})
+
+}
+
 ipcMain.on('open-settings', openSettings)
+ipcMain.on('open-strict-mode', openStrictMode)
 
 ipcMain.on('close-settings', () => {
 
@@ -86,14 +467,42 @@ settingsWindow.close()
 
 })
 
+ipcMain.on('close-strict-mode', () => {
+
+if(strictModeWindow){
+strictModeWindow.close()
+}
+
+})
+
+ipcMain.on('set-strict-exit-lock', (event, enabled) => {
+setExitLockEnabled(enabled)
+})
+
+ipcMain.on('set-strict-screen-lock', (event, enabled) => {
+setScreenLockEnabled(enabled)
+})
+
+ipcMain.on('set-strict-interaction-lock', (event, enabled) => {
+setInteractionLockEnabled(enabled)
+})
+
 ipcMain.on('save-settings', (event, data) => {
 
 if(win) win.webContents.send('apply-colors', data)
+if(strictModeWindow) strictModeWindow.webContents.send('apply-colors', data)
+if(lockScreenWindow) lockScreenWindow.webContents.send('apply-colors', data)
+interactionLockWindows = interactionLockWindows.filter(currentWindow => currentWindow && !currentWindow.isDestroyed())
+interactionLockWindows.forEach(currentWindow => currentWindow.webContents.send('apply-colors', data))
 if(settingsWindow) settingsWindow.close()
 
 })
 
 ipcMain.on('close-app', () => {
+if (exitLockEnabled) {
+if (win && !win.isDestroyed()) win.webContents.send('strict-exit-lock-blocked')
+return
+}
 app.quit()
 })
 
@@ -107,6 +516,31 @@ ipcMain.on('set-window-width', (event, width) => {
     const h = win.getSize()[1]
     win.setSize(w, h)
     store.set('windowWidth', w)
+    if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+ipcMain.on('focus-main-window', () => {
+    if (!win || win.isDestroyed()) return
+    win.focus()
+    if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+ipcMain.on('pomodoro-alert', (event, payload = {}) => {
+    const title = payload.title || 'Pomodoro'
+    const body  = payload.body || 'El temporizador terminó.'
+
+    if (Notification.isSupported()) {
+        new Notification({ title, body, silent: true }).show()
+    }
+
+    if (win && !win.isDestroyed()) {
+        win.flashFrame(true)
+        if (flashTimeout) clearTimeout(flashTimeout)
+        flashTimeout = setTimeout(() => {
+            if (win && !win.isDestroyed()) win.flashFrame(false)
+            flashTimeout = null
+        }, 6000)
+    }
 })
 
 /* =====================
@@ -218,6 +652,9 @@ ipcMain.on('media-control', (event, action) => {
 })
 
 app.on('before-quit', () => {
+    forceQuit = true
+    forceCloseLockScreen = true
+    forceCloseInteractionLock = true
     if (mediaPollInterval) { clearInterval(mediaPollInterval); mediaPollInterval = null }
     try { if (psProc) { psProc.kill(); psProc = null } } catch(_) {}
     try { fs.unlinkSync(scriptPath) } catch(_) {}

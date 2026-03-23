@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="glass">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lock Screen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lock-screen.css">
+</head>
+<body>
+    <div class="lock-screen">
+        <div class="lock-screen__ambient"></div>
+        <div class="lock-screen__content">
+            <div class="lock-screen__badge">Modo Estricto Activo</div>
+            <div class="lock-screen__clock" id="lockScreenClock">00:00</div>
+            <div class="lock-screen__date" id="lockScreenDate">Cargando fecha...</div>
+            <h1 class="lock-screen__title">Pantalla bloqueada para estudiar</h1>
+            <p class="lock-screen__subtitle">La app cubre toda la pantalla con una vista inmersiva, sin bordes y siempre encima. Usa este modo para sesiones donde necesitas cero distracciones visuales.</p>
+
+            <div class="lock-screen__panel">
+                <div class="lock-screen__panel-head">
+                    <span class="lock-screen__panel-kicker">Sesion protegida</span>
+                    <span class="lock-screen__panel-state" id="lockScreenState">Estado: activo</span>
+                </div>
+                <div class="lock-screen__panel-grid">
+                    <div class="lock-screen__metric">
+                        <span class="lock-screen__metric-label">Ventana</span>
+                        <strong class="lock-screen__metric-value">Fullscreen</strong>
+                    </div>
+                    <div class="lock-screen__metric">
+                        <span class="lock-screen__metric-label">Prioridad</span>
+                        <strong class="lock-screen__metric-value">Always On Top</strong>
+                    </div>
+                    <div class="lock-screen__metric lock-screen__metric--wide">
+                        <span class="lock-screen__metric-label">Cobertura</span>
+                        <strong class="lock-screen__metric-value">Toda la pantalla simulando una lock screen de estudio</strong>
+                    </div>
+                </div>
+            </div>
+
+            <button class="lock-screen__exit" id="lockScreenExitBtn">Desactivar pantalla lock</button>
+        </div>
+    </div>
+
+    <script src="lock-screen.js"></script>
+</body>
+</html>

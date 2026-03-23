@@ -36,6 +36,121 @@
     --clock-glow: none;
 }
 
+[data-theme="light"] {
+    --dash-bg: linear-gradient(135deg, #f8fbffed 0%, #eef4ffed 100%);
+    --dash-blur: blur(18px);
+    --dash-border: #d7e3f0cc;
+    --dash-shadow: 0 24px 60px -20px #93a7c333, inset 0 1px 0 #ffffffcc;
+    --dash-radius: 24px;
+    --card-bg: #ffffffd9;
+    --card-border: #d7e3f0cc;
+    --card-blur: blur(8px);
+    --card-radius: 16px;
+    --circle-glow: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-color) 32%, transparent));
+    --clock-glow: none;
+}
+
+[data-theme="light"] .dashboard__ctrl-btn {
+    border-color: #cbd5e1;
+    background: #ffffffd9;
+    color: #475569;
+}
+
+[data-theme="light"] .dashboard__ctrl-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+[data-theme="light"] .clock__date,
+[data-theme="light"] .pomodoro__label,
+[data-theme="light"] .todo__header-icon,
+[data-theme="light"] .todo__check-icon,
+[data-theme="light"] .todo__add,
+[data-theme="light"] .stats__item-icon,
+[data-theme="light"] .stats__item-label,
+[data-theme="light"] .weather__condition,
+[data-theme="light"] .weather__location,
+[data-theme="light"] .music__now-playing,
+[data-theme="light"] .music__time,
+[data-theme="light"] .music__btn,
+[data-theme="light"] .pomodoro__notice-body,
+[data-theme="light"] .pomodoro__notice-dismiss {
+    color: #475569;
+}
+
+[data-theme="light"] .pomodoro__circle-track {
+    stroke: #cbd5e1;
+}
+
+[data-theme="light"] .btn--secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+[data-theme="light"] .btn--secondary:hover {
+    background: #cbd5e1;
+}
+
+[data-theme="light"] .pomodoro__strict-btn {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 14%, #ffffff) 0%, #f8fafc 100%);
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+[data-theme="light"] .btn--danger {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+[data-theme="light"] .todo__item,
+[data-theme="light"] .stats__item,
+[data-theme="light"] .pomodoro__notice,
+[data-theme="light"] .todo__input,
+[data-theme="light"] .music__progress {
+    border-color: #d7e3f0;
+}
+
+[data-theme="light"] .todo__item {
+    background: #ffffffd6;
+}
+
+[data-theme="light"] .todo__checkbox {
+    border-color: #94a3b8;
+}
+
+[data-theme="light"] .todo__item--completed .todo__text,
+[data-theme="light"] .todo__remove {
+    color: #64748b;
+}
+
+[data-theme="light"] .todo__input {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+[data-theme="light"] .todo__input::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme="light"] .stats__dot {
+    background: #94a3b8;
+}
+
+[data-theme="light"] .music__progress {
+    background: #cbd5e1;
+}
+
+[data-theme="light"] .music__progress-dot {
+    background: #ffffff;
+}
+
+[data-theme="light"] .music__btn:hover,
+[data-theme="light"] .pomodoro__notice-dismiss:hover {
+    color: #0f172a;
+    background: #e2e8f0;
+}
+
 [data-theme="neon"] {
     --dash-bg: #020408f0;
     --dash-blur: blur(0px);
@@ -158,6 +273,8 @@ body {
     padding: 20px;
     overflow: hidden;
     -webkit-app-region: drag;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* ======================
@@ -178,6 +295,7 @@ body {
     box-shadow: var(--dash-shadow);
     position: relative;
     z-index: 1;
+    -webkit-app-region: no-drag;
 }
 
 .dashboard__controls {
@@ -188,7 +306,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
+    cursor: grab;
+}
+
+.dashboard__controls:active {
+    cursor: grabbing;
 }
 
 .dashboard__controls-group {
@@ -262,6 +385,7 @@ body {
     width: 100%;
     min-width: 0;
     -webkit-app-region: no-drag;
+    cursor: default;
 }
 
 /* ======================
@@ -366,6 +490,144 @@ body {
     margin-top: 24px;
 }
 
+.pomodoro__strict-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent-color) 30%, #ffffff10);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 18%, #0f172a) 0%, #ffffff08 100%);
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.pomodoro__strict-btn svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent-color);
+}
+
+.pomodoro__strict-btn:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent-color) 48%, transparent);
+    box-shadow: 0 12px 24px -18px color-mix(in srgb, var(--accent-color) 55%, transparent);
+}
+
+.pomodoro__strict-btn:active {
+    transform: translateY(0);
+}
+
+.pomodoro__strict-btn--active {
+    border-color: color-mix(in srgb, var(--accent-color) 58%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-color) 30%, transparent), 0 14px 28px -20px color-mix(in srgb, var(--accent-color) 65%, transparent);
+}
+
+.pomodoro__strict-btn--pulse {
+    animation: strict-btn-pulse 0.5s ease;
+}
+
+@keyframes strict-btn-pulse {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+.dashboard__ctrl-btn--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.82);
+}
+
+.pomodoro__notice {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 18%, #0f172a) 0%, #ffffff08 100%);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 36%, #ffffff12);
+    border-radius: 14px;
+    box-shadow: 0 14px 30px -18px color-mix(in srgb, var(--accent-color) 40%, transparent);
+    transition: opacity 0.22s ease, transform 0.22s ease, margin-top 0.22s ease, max-height 0.22s ease, padding 0.22s ease;
+    max-height: 180px;
+    overflow: hidden;
+}
+
+.pomodoro__notice--hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+}
+
+.pomodoro__notice-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.pomodoro__notice-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: color-mix(in srgb, var(--accent-color) 58%, #ffffff);
+}
+
+.pomodoro__notice-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.pomodoro__notice-body {
+    font-size: 12px;
+    color: #ffffffb3;
+    line-height: 1.45;
+}
+
+.pomodoro__notice-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.pomodoro__notice-dismiss {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ffffff1a;
+    border-radius: 10px;
+    background: #ffffff0a;
+    color: #ffffff99;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.pomodoro__notice-dismiss:hover {
+    background: #ffffff14;
+    color: #ffffff;
+    border-color: #ffffff30;
+}
+
 /* ======================
    BUTTONS
    ====================== */
@@ -379,6 +641,11 @@ body {
     transition: all 0.2s ease;
     border: none;
     -webkit-app-region: no-drag;
+}
+
+.btn--small {
+    padding: 9px 14px;
+    font-size: 12px;
 }
 
 .btn--primary {
@@ -407,6 +674,18 @@ body {
 
 .btn--danger:hover {
     background: #b91c1c;
+}
+
+@media (max-width: 768px) {
+    .pomodoro__notice {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pomodoro__notice-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
 
 /* ======================
@@ -498,6 +777,8 @@ body {
     color: var(--text-color);
     opacity: 0.8;
     overflow-wrap: anywhere;
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .todo__check-icon {
@@ -528,6 +809,8 @@ body {
     outline: none;
     min-width: 0;
     -webkit-app-region: no-drag;
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .todo__input:focus {
@@ -958,6 +1241,35 @@ body {
     --card-radius: 16px;
     --circle-glow: drop-shadow(0 0 10px #3b82f680);
     --clock-glow: none;
+}
+
+/* Light — claro, limpio y suave */
+[data-theme="light"] {
+    --dash-bg: linear-gradient(135deg, #f8fbffed 0%, #eef4ffed 100%);
+    --dash-blur: blur(18px);
+    --dash-border: #d7e3f0cc;
+    --dash-shadow: 0 24px 60px -20px #93a7c333, inset 0 1px 0 #ffffffcc;
+    --dash-radius: 24px;
+    --card-bg: #ffffffd9;
+    --card-border: #d7e3f0cc;
+    --card-blur: blur(8px);
+    --card-radius: 16px;
+    --circle-glow: drop-shadow(0 0 10px color-mix(in srgb, var(--accent-color) 32%, transparent));
+    --clock-glow: none;
+}
+
+[data-theme="light"] .dashboard {
+    overflow: hidden;
+}
+
+[data-theme="light"] .dashboard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at top left, #bfdbfe4f 0%, transparent 42%), radial-gradient(circle at bottom right, #c7d2fe3d 0%, transparent 38%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* Neon — Cyberpunk oscuro, bordes violeta con brillo */

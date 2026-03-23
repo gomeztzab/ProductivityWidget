@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="glass">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Estricto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Urbanist:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="strict-mode.css">
+</head>
+<body>
+    <div class="strict-mode">
+        <div class="strict-mode__header">
+            <div class="strict-mode__header-copy">
+                <div class="strict-mode__eyebrow">Modo Estricto</div>
+                <h1 class="strict-mode__title">Elige tu nivel de concentracion</h1>
+                <p class="strict-mode__subtitle">Cada modo aplica una restriccion distinta. Solo puede haber uno activo al mismo tiempo para evitar conflictos entre ventanas y reglas.</p>
+            </div>
+            <button class="strict-mode__close" id="strictModeCloseBtn" aria-label="Cerrar modo estricto">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="strict-mode__hero">
+            <div class="strict-mode__hero-badge">Preview visual</div>
+            <div class="strict-mode__hero-grid">
+                <div class="strict-mode__hero-panel"></div>
+                <div class="strict-mode__hero-panel strict-mode__hero-panel--accent"></div>
+                <div class="strict-mode__hero-panel strict-mode__hero-panel--wide"></div>
+            </div>
+        </div>
+
+        <div class="strict-mode__grid">
+            <article class="strict-mode__card strict-mode__card--primary">
+                <div class="strict-mode__card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3l7 3v6c0 4.5-2.9 8.5-7 9.8C7.9 20.5 5 16.5 5 12V6l7-3z"></path>
+                    </svg>
+                </div>
+                <div class="strict-mode__card-copy">
+                    <div class="strict-mode__card-kicker">Salida</div>
+                    <h2 class="strict-mode__card-title">Bloqueo de salida</h2>
+                    <p class="strict-mode__card-text">Impide cerrar la ventana principal: oculta el boton cerrar, ignora Alt + F4 y bloquea el evento de salida.</p>
+                </div>
+                <div class="strict-mode__card-footer">
+                    <div class="strict-mode__card-status" id="exitLockStatus">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="exitLockToggleBtn">Activar bloqueo</button>
+                </div>
+            </article>
+
+            <article class="strict-mode__card strict-mode__card--lock" id="screenLockCard">
+                <div class="strict-mode__card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                        <path d="M8 12h8"></path>
+                    </svg>
+                </div>
+                <div class="strict-mode__card-copy">
+                    <div class="strict-mode__card-kicker">Pantalla</div>
+                    <h2 class="strict-mode__card-title">Pantalla tipo Lock</h2>
+                    <p class="strict-mode__card-text">Abre una ventana fullscreen sin bordes, siempre encima y visualmente dominante para simular una pantalla bloqueada de estudio.</p>
+                </div>
+                <div class="strict-mode__card-footer">
+                    <div class="strict-mode__card-status" id="screenLockStatus">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="screenLockToggleBtn">Activar pantalla lock</button>
+                </div>
+            </article>
+
+            <article class="strict-mode__card" id="interactionLockCard">
+                <div class="strict-mode__card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M9 9l6 6"></path>
+                        <path d="M15 9l-6 6"></path>
+                    </svg>
+                </div>
+                <div class="strict-mode__card-copy">
+                    <div class="strict-mode__card-kicker">Interaccion</div>
+                    <h2 class="strict-mode__card-title">Bloqueo de interaccion</h2>
+                    <p class="strict-mode__card-text">Bloquea todo lo que rodea al widget y deja libre unicamente la ventana principal de Pomodoro para que sea la unica superficie interactiva.</p>
+                </div>
+                <div class="strict-mode__card-footer">
+                    <div class="strict-mode__card-status" id="interactionLockStatus">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="interactionLockToggleBtn">Activar bloqueo PRO</button>
+                </div>
+            </article>
+
+            <article class="strict-mode__card">
+                <div class="strict-mode__card-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M3 12h18"></path>
+                        <path d="M12 3a15 15 0 0 1 0 18"></path>
+                        <path d="M12 3a15 15 0 0 0 0 18"></path>
+                    </svg>
+                </div>
+                <div class="strict-mode__card-copy">
+                    <div class="strict-mode__card-kicker">Web</div>
+                    <h2 class="strict-mode__card-title">Bloqueo de sitios web</h2>
+                    <p class="strict-mode__card-text">Espacio reservado para una lista de dominios distractores, reglas por sesion y activacion selectiva por tarea.</p>
+                </div>
+                <div class="strict-mode__card-footer">
+                    <span class="strict-mode__pill">Diseno preparado</span>
+                </div>
+            </article>
+        </div>
+
+        <div class="strict-mode__footer">
+            <div class="strict-mode__footer-copy">
+                <strong>Etapa actual</strong>
+                <span>Los modos activos son excluyentes. Si enciendes uno, cualquier otro modo estricto activo se desactiva automaticamente.</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="strict-mode.js"></script>
+</body>
+</html>

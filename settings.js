@@ -6,6 +6,9 @@ const cancelBtn = document.getElementById("cancelSettingsBtn")
 const saveBtn   = document.getElementById("saveSettingsBtn")
 const focusSel  = document.getElementById("focusDuration")
 const breakSel  = document.getElementById("breakDuration")
+const reminderSoundToggle = document.getElementById("reminderSoundEnabled")
+const reminderNotificationsToggle = document.getElementById("reminderNotificationsEnabled")
+const reminderSoundLevelSel = document.getElementById("reminderSoundLevel")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 const themeCards    = document.querySelectorAll(".settings__theme-card")
@@ -23,7 +26,8 @@ const colorNames = {
     "#14b8a6": "Turquesa",
     "#84cc16": "Lima",
     "#e11d48": "Carmesí",
-    "#6366f1": "Índigo"
+    "#6366f1": "Índigo",
+    "#111111": "Negro"
 }
 
 const textColorNames = {
@@ -36,13 +40,17 @@ const textColorNames = {
     "#e5e7eb": "Plata",
     "#fde68a": "Dorado suave",
     "#cffafe": "Hielo",
-    "#ddd6fe": "Lila"
+    "#ddd6fe": "Lila",
+    "#111111": "Negro"
 }
 
 let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
 let selectedTextColor = localStorage.getItem("textColor")   || "#ffffff"
 let selectedTheme     = localStorage.getItem("dashTheme")   || "glass"
 let selectedFont      = localStorage.getItem("fontFamily")  || "Inter"
+let reminderSoundEnabled = localStorage.getItem("reminderSoundEnabled") !== "false"
+let reminderNotificationsEnabled = localStorage.getItem("reminderNotificationsEnabled") !== "false"
+let reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
 
 /* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
@@ -54,6 +62,9 @@ const savedFocus = localStorage.getItem("focusDuration")
 const savedBreak = localStorage.getItem("breakDuration")
 if(savedFocus) focusSel.value = savedFocus
 if(savedBreak) breakSel.value = savedBreak
+if(reminderSoundToggle) reminderSoundToggle.checked = reminderSoundEnabled
+if(reminderNotificationsToggle) reminderNotificationsToggle.checked = reminderNotificationsEnabled
+if(reminderSoundLevelSel) reminderSoundLevelSel.value = reminderSoundLevel
 updateColorPreview(selectedColor)
 updateActiveSwatch(selectedColor)
 updateTextColorPreview(selectedTextColor)
@@ -66,15 +77,30 @@ updateBars()
 focusSel.addEventListener("change", updateBars)
 breakSel.addEventListener("change", updateBars)
 
-function updateBars() {
-    const focusVal = parseInt(focusSel.value)
-    const breakVal = parseInt(breakSel.value)
-    const maxFocus = 60
+function parseDurationValue(value, defaultMinutes) {
+    if (typeof value === "string" && value.endsWith("s")) {
+        return { seconds: parseInt(value, 10) || defaultMinutes * 60, unit: "seconds" }
+    }
+    return { seconds: (parseInt(value, 10) || defaultMinutes) * 60, unit: "minutes" }
+}
 
-    document.getElementById("focusBar").style.width = (focusVal / maxFocus * 100) + "%"
-    document.getElementById("breakBar").style.width = (breakVal / maxFocus * 100) + "%"
-    document.getElementById("focusPreview").textContent = focusVal + " min"
-    document.getElementById("breakPreview").textContent = breakVal + " min"
+function formatDurationLabel(duration) {
+    if (duration.unit === "seconds" || duration.seconds < 60) {
+        return `${duration.seconds} s`
+    }
+    return `${Math.round(duration.seconds / 60)} min`
+}
+
+function updateBars() {
+    const focusVal = parseDurationValue(focusSel.value, 25)
+    const breakVal = parseDurationValue(breakSel.value, 5)
+    const maxFocus = 60
+    const maxBreak = 40
+
+    document.getElementById("focusBar").style.width = (focusVal.seconds / (maxFocus * 60) * 100) + "%"
+    document.getElementById("breakBar").style.width = (breakVal.seconds / (maxBreak * 60) * 100) + "%"
+    document.getElementById("focusPreview").textContent = formatDurationLabel(focusVal)
+    document.getElementById("breakPreview").textContent = formatDurationLabel(breakVal)
 }
 
 /* ---- Swatches ---- */
@@ -102,6 +128,24 @@ fontCards.forEach(card => {
         updateActiveFontCard(selectedFont)
     })
 })
+
+if (reminderSoundToggle) {
+    reminderSoundToggle.addEventListener("change", () => {
+        reminderSoundEnabled = reminderSoundToggle.checked
+    })
+}
+
+if (reminderNotificationsToggle) {
+    reminderNotificationsToggle.addEventListener("change", () => {
+        reminderNotificationsEnabled = reminderNotificationsToggle.checked
+    })
+}
+
+if (reminderSoundLevelSel) {
+    reminderSoundLevelSel.addEventListener("change", () => {
+        reminderSoundLevel = reminderSoundLevelSel.value
+    })
+}
 
 function updateActiveFontCard(font) {
     fontCards.forEach(c => c.classList.remove("settings__font-card--active"))
@@ -174,11 +218,19 @@ saveBtn.addEventListener("click", () => {
     localStorage.setItem("textColor",      selectedTextColor)
     localStorage.setItem("dashTheme",      selectedTheme)
     localStorage.setItem("fontFamily",     selectedFont)
+    localStorage.setItem("reminderSoundEnabled", String(reminderSoundEnabled))
+    localStorage.setItem("reminderNotificationsEnabled", String(reminderNotificationsEnabled))
+    localStorage.setItem("reminderSoundLevel", reminderSoundLevel)
     ipcRenderer.send("save-settings", {
         accentColor: selectedColor,
         textColor:   selectedTextColor,
         theme:       selectedTheme,
-        font:        selectedFont
+        font:        selectedFont,
+        focusDuration: focusSel.value,
+        breakDuration: breakSel.value,
+        reminderSoundEnabled,
+        reminderNotificationsEnabled,
+        reminderSoundLevel
     })
 })
 

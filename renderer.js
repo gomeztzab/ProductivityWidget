@@ -7,6 +7,44 @@ const { ipcRenderer } = require('electron')
 const configBtn = document.getElementById("configBtn")
 const minimizeBtn = document.getElementById("minimizeBtn")
 const closeBtn  = document.getElementById("closeBtn")
+const strictModeBtn = document.getElementById("strictModeBtn")
+const strictModeBtnLabel = strictModeBtn ? strictModeBtn.querySelector("span") : null
+const strictModeState = {
+    exit: false,
+    screen: false,
+    interaction: false
+}
+
+function syncStrictModeButtonState() {
+    if (!strictModeBtn) return
+    const active = strictModeState.exit || strictModeState.screen || strictModeState.interaction
+    strictModeBtn.classList.toggle('pomodoro__strict-btn--active', active)
+    if (strictModeBtnLabel) {
+        strictModeBtnLabel.textContent = strictModeState.interaction ? 'Desactivar PRO' : 'Modo Estricto'
+    }
+}
+
+function applyExitLockState({ exitLockEnabled } = {}) {
+    const locked = Boolean(exitLockEnabled)
+    strictModeState.exit = locked
+    document.body.classList.toggle('strict-exit-lock', locked)
+    if (closeBtn) {
+        closeBtn.classList.toggle('dashboard__ctrl-btn--hidden', locked)
+        closeBtn.setAttribute('aria-hidden', locked ? 'true' : 'false')
+        closeBtn.tabIndex = locked ? -1 : 0
+    }
+    syncStrictModeButtonState()
+}
+
+function applyScreenLockState({ screenLockEnabled } = {}) {
+    strictModeState.screen = Boolean(screenLockEnabled)
+    syncStrictModeButtonState()
+}
+
+function applyInteractionLockState({ interactionLockEnabled } = {}) {
+    strictModeState.interaction = Boolean(interactionLockEnabled)
+    syncStrictModeButtonState()
+}
 
 if(configBtn) {
     configBtn.addEventListener("click", () => ipcRenderer.send("open-settings"))
@@ -16,6 +54,15 @@ if(minimizeBtn) {
 }
 if(closeBtn) {
     closeBtn.addEventListener("click", () => ipcRenderer.send("close-app"))
+}
+if(strictModeBtn) {
+    strictModeBtn.addEventListener("click", () => {
+        if (strictModeState.interaction) {
+            ipcRenderer.send('set-strict-interaction-lock', false)
+            return
+        }
+        ipcRenderer.send("open-strict-mode")
+    })
 }
 
 /* colores/tema/fuente guardados */
@@ -85,12 +132,34 @@ if (document.fonts?.ready) {
     document.fonts.ready.then(() => scheduleWindowWidthSync())
 }
 
-ipcRenderer.on("apply-colors", (event, { accentColor, textColor, theme, font }) => {
+ipcRenderer.on("apply-colors", (event, payload = {}) => {
+    const { accentColor, textColor, theme, font, focusDuration, breakDuration } = payload
     if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
     if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
     if(theme)       document.documentElement.setAttribute("data-theme", theme)
     if(font)        applyFont(font)
+    if (focusDuration || breakDuration) applyPomodoroDurations(focusDuration, breakDuration)
+    applyReminderSettings(payload)
     scheduleWindowWidthSync()
+})
+
+ipcRenderer.on('strict-exit-lock-state', (_, payload) => {
+    applyExitLockState(payload)
+})
+
+ipcRenderer.on('strict-screen-lock-state', (_, payload) => {
+    applyScreenLockState(payload)
+})
+
+ipcRenderer.on('strict-interaction-lock-state', (_, payload) => {
+    applyInteractionLockState(payload)
+})
+
+ipcRenderer.on('strict-exit-lock-blocked', () => {
+    if (strictModeBtn) {
+        strictModeBtn.classList.add('pomodoro__strict-btn--pulse')
+        setTimeout(() => strictModeBtn.classList.remove('pomodoro__strict-btn--pulse'), 520)
+    }
 })
 
 
@@ -319,8 +388,66 @@ loadTasks()
    POMODORO
    ===================== */
 
-let FOCUS_TIME = (parseInt(localStorage.getItem("focusDuration")) || 25) * 60
-let BREAK_TIME = (parseInt(localStorage.getItem("breakDuration")) || 5)  * 60
+function parseStoredDuration(value, defaultMinutes) {
+    if (typeof value === "string" && value.endsWith("s")) {
+        return parseInt(value, 10) || defaultMinutes * 60
+    }
+    return (parseInt(value, 10) || defaultMinutes) * 60
+}
+
+function formatDurationText(seconds) {
+    if (seconds < 60) return `${seconds} segundos`
+    const minutes = Math.round(seconds / 60)
+    return `${minutes} min`
+}
+
+function normalizeReminderFlag(value, fallback) {
+    if (typeof value === "boolean") return value
+    if (typeof value === "string") return value !== "false"
+    return fallback
+}
+
+function readBooleanSetting(key, defaultValue = true) {
+    const value = localStorage.getItem(key)
+    return value == null ? defaultValue : value !== "false"
+}
+
+let reminderSoundEnabled = readBooleanSetting("reminderSoundEnabled", true)
+let reminderNotificationsEnabled = readBooleanSetting("reminderNotificationsEnabled", true)
+let reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
+
+function applyReminderSettings(settings = {}) {
+    reminderSoundEnabled = Object.prototype.hasOwnProperty.call(settings, "reminderSoundEnabled")
+        ? normalizeReminderFlag(settings.reminderSoundEnabled, true)
+        : readBooleanSetting("reminderSoundEnabled", true)
+
+    reminderNotificationsEnabled = Object.prototype.hasOwnProperty.call(settings, "reminderNotificationsEnabled")
+        ? normalizeReminderFlag(settings.reminderNotificationsEnabled, true)
+        : readBooleanSetting("reminderNotificationsEnabled", true)
+
+    if (settings.reminderSoundLevel) {
+        reminderSoundLevel = settings.reminderSoundLevel
+    } else {
+        reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
+    }
+}
+
+function refreshReminderSettingsFromStorage() {
+    applyReminderSettings({
+        reminderSoundEnabled: localStorage.getItem("reminderSoundEnabled"),
+        reminderNotificationsEnabled: localStorage.getItem("reminderNotificationsEnabled"),
+        reminderSoundLevel: localStorage.getItem("reminderSoundLevel") || reminderSoundLevel
+    })
+}
+
+function applyPomodoroDurations(focusDuration, breakDuration) {
+    FOCUS_TIME = parseStoredDuration(focusDuration ?? localStorage.getItem("focusDuration"), 25)
+    BREAK_TIME = parseStoredDuration(breakDuration ?? localStorage.getItem("breakDuration"), 5)
+    resetTimer()
+}
+
+let FOCUS_TIME = parseStoredDuration(localStorage.getItem("focusDuration"), 25)
+let BREAK_TIME = parseStoredDuration(localStorage.getItem("breakDuration"), 5)
 const CIRCUMFERENCE = 502   /* 2 * Math.PI * 80 */
 
 let time      = FOCUS_TIME
@@ -335,6 +462,96 @@ const pomodoroLabel  = document.querySelector(".pomodoro__label")
 const startBtn       = document.getElementById("startTimerBtn")
 const resetBtn       = document.getElementById("resetTimerBtn")
 const breakBtn       = document.getElementById("breakBtn")
+const pomodoroNotice = document.getElementById("pomodoroNotice")
+const pomodoroNoticeKicker = document.getElementById("pomodoroNoticeKicker")
+const pomodoroNoticeTitle = document.getElementById("pomodoroNoticeTitle")
+const pomodoroNoticeBody = document.getElementById("pomodoroNoticeBody")
+const pomodoroNoticeActionBtn = document.getElementById("pomodoroNoticeAction")
+const pomodoroNoticeDismissBtn = document.getElementById("pomodoroNoticeDismiss")
+let reminderAudioCtx = null
+let pomodoroNoticeAction = null
+
+applyReminderSettings()
+
+function showPomodoroNotice({ kicker, title, body, actionLabel, action }) {
+    if (!pomodoroNotice) return
+    pomodoroNoticeAction = typeof action === "function" ? action : null
+    if (pomodoroNoticeKicker) pomodoroNoticeKicker.textContent = kicker
+    if (pomodoroNoticeTitle) pomodoroNoticeTitle.textContent = title
+    if (pomodoroNoticeBody) pomodoroNoticeBody.textContent = body
+    if (pomodoroNoticeActionBtn) pomodoroNoticeActionBtn.textContent = actionLabel || "Continuar"
+    pomodoroNotice.classList.remove("pomodoro__notice--hidden")
+}
+
+function hidePomodoroNotice() {
+    pomodoroNoticeAction = null
+    if (pomodoroNotice) pomodoroNotice.classList.add("pomodoro__notice--hidden")
+}
+
+function getReminderAudioCtx() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return null
+    if (!reminderAudioCtx) reminderAudioCtx = new AudioCtx()
+    if (reminderAudioCtx.state === "suspended") reminderAudioCtx.resume().catch(() => {})
+    return reminderAudioCtx
+}
+
+function playReminderSound(kind) {
+    if (!reminderSoundEnabled) return
+
+    const ctx = getReminderAudioCtx()
+    if (!ctx) return
+
+    const soundPalettes = {
+        soft: {
+            focus: { notes: [659, 880], gain: 0.12, type: "sine", length: 0.2, spacing: 0.18 },
+            break: { notes: [523, 659, 784], gain: 0.14, type: "triangle", length: 0.2, spacing: 0.18 }
+        },
+        medium: {
+            focus: { notes: [784, 988, 1174], gain: 0.26, type: "triangle", length: 0.24, spacing: 0.16 },
+            break: { notes: [659, 784, 988], gain: 0.28, type: "triangle", length: 0.24, spacing: 0.16 }
+        },
+        strong: {
+            focus: { notes: [988, 1318, 1568, 1760], gain: 0.52, type: "square", length: 0.3, spacing: 0.14 },
+            break: { notes: [880, 1174, 1568, 1976], gain: 0.56, type: "square", length: 0.32, spacing: 0.14 }
+        }
+    }
+    const level = soundPalettes[reminderSoundLevel] ? reminderSoundLevel : "soft"
+    const soundPalette = soundPalettes[level]
+    const preset = kind === "focus" ? soundPalette.focus : soundPalette.break
+    const notes = preset.notes
+    const now = ctx.currentTime + 0.02
+
+    const master = ctx.createGain()
+    master.gain.setValueAtTime(level === "strong" ? 1 : 0.92, now)
+    master.connect(ctx.destination)
+
+    notes.forEach((frequency, index) => {
+        const start = now + index * preset.spacing
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = preset.type
+        osc.frequency.setValueAtTime(frequency, start)
+        gain.gain.setValueAtTime(0.0001, start)
+        gain.gain.exponentialRampToValueAtTime(preset.gain, start + 0.015)
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + preset.length)
+
+        osc.connect(gain)
+        gain.connect(master)
+        osc.start(start)
+        osc.stop(start + preset.length + 0.02)
+    })
+}
+
+function sendPomodoroReminder(kind, title, body, noticeConfig) {
+    refreshReminderSettingsFromStorage()
+    playReminderSound(kind)
+    if (reminderNotificationsEnabled) {
+        ipcRenderer.send("pomodoro-alert", { title, body })
+    }
+    showPomodoroNotice(noticeConfig)
+}
 
 function updateTimerDisplay() {
     const m = Math.floor(time / 60)
@@ -347,6 +564,13 @@ function updateTimerDisplay() {
     progressCircle.style.strokeDashoffset = offset
 }
 
+function ensurePomodoroRunning(trigger = "manual") {
+    if (interval) return false
+    hidePomodoroNotice()
+    startTimer()
+    return true
+}
+
 function startTimer() {
     if(interval) {
         /* PAUSAR */
@@ -356,6 +580,7 @@ function startTimer() {
         return
     }
 
+    hidePomodoroNotice()
     startBtn.textContent = "Pausar"
 
     interval = setInterval(() => {
@@ -375,14 +600,36 @@ function startTimer() {
                 totalTime = BREAK_TIME
                 pomodoroLabel.textContent = "Break Time"
                 startBtn.textContent      = "Iniciar descanso"
-                alert(`Pomodoro #${Stats.getPomodoros()} completado! Toma 5 minutos.`)
+                sendPomodoroReminder(
+                    "focus",
+                    "Focus terminado",
+                    `Pomodoro #${Stats.getPomodoros()} completado. Toma ${formatDurationText(BREAK_TIME)} de descanso.`,
+                    {
+                        kicker: "Focus completado",
+                        title: "Tu descanso esta listo",
+                        body: `Pomodoro #${Stats.getPomodoros()} listo. Empieza un descanso de ${formatDurationText(BREAK_TIME)} cuando quieras.`,
+                        actionLabel: "Iniciar descanso",
+                        action: () => startTimer()
+                    }
+                )
             } else {
                 isBreak   = false
                 time      = FOCUS_TIME
                 totalTime = FOCUS_TIME
                 pomodoroLabel.textContent = "Focus Time"
                 startBtn.textContent      = "Iniciar"
-                alert("Descanso terminado! A enfocarse.")
+                sendPomodoroReminder(
+                    "break",
+                    "Descanso terminado",
+                    `Vuelve al enfoque por ${formatDurationText(FOCUS_TIME)}.`,
+                    {
+                        kicker: "Break completado",
+                        title: "Listo para volver al enfoque",
+                        body: `Tu siguiente bloque es de ${formatDurationText(FOCUS_TIME)}.`,
+                        actionLabel: "Comenzar enfoque",
+                        action: () => startTimer()
+                    }
+                )
             }
             updateTimerDisplay()
         }
@@ -390,6 +637,7 @@ function startTimer() {
 }
 
 function resetTimer() {
+    hidePomodoroNotice()
     clearInterval(interval)
     interval  = null
     isBreak   = false
@@ -401,6 +649,7 @@ function resetTimer() {
 }
 
 function startBreak() {
+    hidePomodoroNotice()
     clearInterval(interval)
     interval  = null
     isBreak   = true
@@ -412,9 +661,27 @@ function startBreak() {
     updateTimerDisplay()
 }
 
+ipcRenderer.on('strict-screen-lock-activated', () => {
+    ensurePomodoroRunning('screen-lock')
+})
+
+ipcRenderer.on('strict-interaction-lock-activated', () => {
+    ensurePomodoroRunning('interaction-lock')
+})
+
 startBtn.addEventListener("click", startTimer)
 resetBtn.addEventListener("click", resetTimer)
 breakBtn.addEventListener("click", startBreak)
+if (pomodoroNoticeActionBtn) {
+    pomodoroNoticeActionBtn.addEventListener("click", () => {
+        const action = pomodoroNoticeAction
+        hidePomodoroNotice()
+        if (action) action()
+    })
+}
+if (pomodoroNoticeDismissBtn) {
+    pomodoroNoticeDismissBtn.addEventListener("click", hidePomodoroNotice)
+}
 
 updateTimerDisplay()
 

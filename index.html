@@ -62,6 +62,24 @@
                     <button class="btn btn--secondary" id="breakBtn">Break</button>
                     <button class="btn btn--danger" id="resetTimerBtn">Stop</button>
                 </div>
+                <button class="pomodoro__strict-btn" id="strictModeBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3l7 3v6c0 4.5-2.9 8.5-7 9.8C7.9 20.5 5 16.5 5 12V6l7-3z"></path>
+                        <path d="M9.5 12.5l1.8 1.8 3.7-4.3"></path>
+                    </svg>
+                    <span>Modo Estricto</span>
+                </button>
+                <div class="pomodoro__notice pomodoro__notice--hidden" id="pomodoroNotice" aria-live="polite">
+                    <div class="pomodoro__notice-copy">
+                        <span class="pomodoro__notice-kicker" id="pomodoroNoticeKicker">Recordatorio</span>
+                        <strong class="pomodoro__notice-title" id="pomodoroNoticeTitle">Tiempo completado</strong>
+                        <span class="pomodoro__notice-body" id="pomodoroNoticeBody">Tu siguiente bloque ya esta listo.</span>
+                    </div>
+                    <div class="pomodoro__notice-actions">
+                        <button class="btn btn--primary btn--small" id="pomodoroNoticeAction">Continuar</button>
+                        <button class="pomodoro__notice-dismiss" id="pomodoroNoticeDismiss" aria-label="Cerrar aviso">&times;</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Lista de tareas -->
