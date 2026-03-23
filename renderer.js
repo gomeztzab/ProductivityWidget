@@ -5,15 +5,112 @@
 const { ipcRenderer } = require('electron')
 
 const configBtn = document.getElementById("configBtn")
+const viewModesBtn = document.getElementById("viewModesBtn")
+const viewModesPanel = document.getElementById("viewModesPanel")
+const viewModesCloseBtn = document.getElementById("viewModesCloseBtn")
+const viewModesCurrentLabel = document.getElementById("viewModesCurrentLabel")
+const viewModeOptions = Array.from(document.querySelectorAll('.view-modes__option'))
+const collapsedExpandBtn = document.getElementById('collapsedExpandBtn')
 const minimizeBtn = document.getElementById("minimizeBtn")
 const closeBtn  = document.getElementById("closeBtn")
 const strictModeBtn = document.getElementById("strictModeBtn")
 const strictModeBtnLabel = strictModeBtn ? strictModeBtn.querySelector("span") : null
+const expandViewModeBtn = document.getElementById('expandViewModeBtn')
+const clockCard = document.querySelector('.clock')
+const clockTimeWrap = document.querySelector('.clock__time')
+const clockValue = document.getElementById('clock')
+const clockPeriod = document.getElementById('clockPeriod')
+const VIEW_MODE_STORAGE_KEY = 'dashboardViewModeDraft'
+const VIEW_MODE_LABELS = {
+    full: 'Modo completo',
+    compact: 'Modo compacto',
+    mini: 'Modo mini',
+    bar: 'Modo barra',
+    collapsed: 'Modo colapsado'
+}
+const VIEW_MODE_WIDTHS = {
+    full: null,
+    compact: 432,
+    mini: 210,
+    bar: 760,
+    collapsed: 82
+}
+const VIEW_MODE_HEIGHTS = {
+    full: 740,
+    compact: 360,
+    mini: 196,
+    bar: 178,
+    collapsed: 82
+}
+let selectedViewMode = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || 'full'
+let collapsedDragState = null
 const strictModeState = {
     exit: false,
     screen: false,
     interaction: false,
     website: false
+}
+
+function setViewModesPanelOpen(open) {
+    if (!viewModesPanel) return
+    viewModesPanel.classList.toggle('view-modes--hidden', !open)
+    viewModesPanel.setAttribute('aria-hidden', open ? 'false' : 'true')
+    if (viewModesBtn) viewModesBtn.classList.toggle('dashboard__ctrl-btn--active', open)
+}
+
+function renderViewModeSelection(mode = selectedViewMode) {
+    selectedViewMode = VIEW_MODE_LABELS[mode] ? mode : 'full'
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, selectedViewMode)
+    document.body.dataset.viewModeDraft = selectedViewMode
+
+    viewModeOptions.forEach(option => {
+        const selected = option.dataset.mode === selectedViewMode
+        option.classList.toggle('view-modes__option--selected', selected)
+        option.setAttribute('aria-pressed', selected ? 'true' : 'false')
+    })
+
+    if (viewModesCurrentLabel) {
+        viewModesCurrentLabel.textContent = VIEW_MODE_LABELS[selectedViewMode] || VIEW_MODE_LABELS.full
+    }
+
+    if (expandViewModeBtn) {
+        expandViewModeBtn.hidden = !['compact', 'mini', 'bar'].includes(selectedViewMode)
+    }
+
+    fitBarClockTime()
+    scheduleWindowWidthSync()
+}
+
+function fitBarClockTime() {
+    if (!clockCard || !clockTimeWrap || !clockPeriod) return
+
+    if (selectedViewMode !== 'bar') {
+        clockTimeWrap.style.fontSize = ''
+        clockTimeWrap.style.letterSpacing = ''
+        clockPeriod.style.fontSize = ''
+        clockPeriod.style.marginLeft = ''
+        return
+    }
+
+    const availableWidth = Math.max(96, Math.floor(clockCard.clientWidth - 32))
+    let fontSize = 34
+    let letterSpacing = -0.4
+    let periodSize = 11
+
+    clockTimeWrap.style.fontSize = `${fontSize}px`
+    clockTimeWrap.style.letterSpacing = `${letterSpacing}px`
+    clockPeriod.style.fontSize = `${periodSize}px`
+    clockPeriod.style.marginLeft = '2px'
+
+    while (clockTimeWrap.scrollWidth > availableWidth && fontSize > 20) {
+        fontSize -= 1
+        letterSpacing = Math.max(-0.8, letterSpacing - 0.02)
+        periodSize = Math.max(9, periodSize - 0.2)
+
+        clockTimeWrap.style.fontSize = `${fontSize}px`
+        clockTimeWrap.style.letterSpacing = `${letterSpacing}px`
+        clockPeriod.style.fontSize = `${periodSize}px`
+    }
 }
 
 function syncStrictModeButtonState() {
@@ -55,6 +152,41 @@ function applyWebsiteLockState({ websiteLockEnabled } = {}) {
 if(configBtn) {
     configBtn.addEventListener("click", () => ipcRenderer.send("open-settings"))
 }
+if(viewModesBtn) {
+    viewModesBtn.addEventListener('click', () => {
+        const shouldOpen = viewModesPanel?.classList.contains('view-modes--hidden')
+        setViewModesPanelOpen(shouldOpen)
+    })
+}
+if(viewModesCloseBtn) {
+    viewModesCloseBtn.addEventListener('click', () => setViewModesPanelOpen(false))
+}
+viewModeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        renderViewModeSelection(option.dataset.mode)
+        setViewModesPanelOpen(false)
+    })
+})
+if(expandViewModeBtn) {
+    expandViewModeBtn.addEventListener('click', () => renderViewModeSelection('full'))
+}
+if(collapsedExpandBtn) {
+    collapsedExpandBtn.addEventListener('mousedown', async event => {
+        if (selectedViewMode !== 'collapsed' || event.button !== 0) return
+        event.preventDefault()
+
+        const startPosition = await ipcRenderer.invoke('get-window-position')
+        collapsedDragState = {
+            startMouseX: event.screenX,
+            startMouseY: event.screenY,
+            startWindowX: startPosition.x,
+            startWindowY: startPosition.y,
+            dragged: false
+        }
+
+        collapsedExpandBtn.classList.add('collapsed-view--dragging')
+    })
+}
 if(minimizeBtn) {
     minimizeBtn.addEventListener("click", () => ipcRenderer.send("minimize-app"))
 }
@@ -70,6 +202,48 @@ if(strictModeBtn) {
         ipcRenderer.send("open-strict-mode")
     })
 }
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && viewModesPanel && !viewModesPanel.classList.contains('view-modes--hidden')) {
+        setViewModesPanelOpen(false)
+    }
+})
+
+document.addEventListener('click', event => {
+    if (!viewModesPanel || viewModesPanel.classList.contains('view-modes--hidden')) return
+    if (viewModesPanel.contains(event.target) || viewModesBtn?.contains(event.target)) return
+    setViewModesPanelOpen(false)
+})
+
+document.addEventListener('mousemove', event => {
+    if (!collapsedDragState || selectedViewMode !== 'collapsed') return
+
+    const deltaX = event.screenX - collapsedDragState.startMouseX
+    const deltaY = event.screenY - collapsedDragState.startMouseY
+
+    if (!collapsedDragState.dragged && Math.hypot(deltaX, deltaY) >= 4) {
+        collapsedDragState.dragged = true
+    }
+
+    if (!collapsedDragState.dragged) return
+
+    ipcRenderer.send('set-window-position', {
+        x: collapsedDragState.startWindowX + deltaX,
+        y: collapsedDragState.startWindowY + deltaY
+    })
+})
+
+document.addEventListener('mouseup', () => {
+    if (!collapsedDragState) return
+
+    const dragged = collapsedDragState.dragged
+    collapsedDragState = null
+    collapsedExpandBtn?.classList.remove('collapsed-view--dragging')
+
+    if (!dragged && selectedViewMode === 'collapsed') {
+        renderViewModeSelection('full')
+    }
+})
 
 /* colores/tema/fuente guardados */
 const savedAccent = localStorage.getItem("accentColor")
@@ -105,11 +279,19 @@ function syncWindowWidth() {
     const bodyPaddingX =
         (parseFloat(bodyStyles.paddingLeft) || 0) +
         (parseFloat(bodyStyles.paddingRight) || 0)
+    const bodyPaddingY =
+        (parseFloat(bodyStyles.paddingTop) || 0) +
+        (parseFloat(bodyStyles.paddingBottom) || 0)
+    const baseWidth = VIEW_MODE_WIDTHS[selectedViewMode] || FONT_WIDTHS[savedFont] || 960
     const desiredWidth = Math.max(
-        FONT_WIDTHS[savedFont] || 960,
+        baseWidth,
         Math.ceil(dashboardWidth + bodyPaddingX + 6)
     )
-    ipcRenderer.send("set-window-width", desiredWidth)
+    const desiredHeight = Math.max(
+        VIEW_MODE_HEIGHTS[selectedViewMode] || 740,
+        Math.ceil(dashboardEl.scrollHeight + bodyPaddingY + 8)
+    )
+    ipcRenderer.send("set-window-size", { width: desiredWidth, height: desiredHeight })
 }
 
 function scheduleWindowWidthSync() {
@@ -123,19 +305,31 @@ function scheduleWindowWidthSync() {
 function applyFont(font) {
     savedFont = font
     document.documentElement.style.setProperty('--font-family', `'${font}', sans-serif`)
+    fitBarClockTime()
     scheduleWindowWidthSync()
 }
 applyFont(savedFont)
+renderViewModeSelection(selectedViewMode)
+setViewModesPanelOpen(false)
 
 if (dashboardEl && typeof ResizeObserver !== "undefined") {
-    const resizeObserver = new ResizeObserver(() => scheduleWindowWidthSync())
+    const resizeObserver = new ResizeObserver(() => {
+        fitBarClockTime()
+        scheduleWindowWidthSync()
+    })
     resizeObserver.observe(dashboardEl)
 }
 
-window.addEventListener("resize", scheduleWindowWidthSync)
+window.addEventListener("resize", () => {
+    fitBarClockTime()
+    scheduleWindowWidthSync()
+})
 
 if (document.fonts?.ready) {
-    document.fonts.ready.then(() => scheduleWindowWidthSync())
+    document.fonts.ready.then(() => {
+        fitBarClockTime()
+        scheduleWindowWidthSync()
+    })
 }
 
 ipcRenderer.on("apply-colors", (event, payload = {}) => {
@@ -185,11 +379,13 @@ function updateClock() {
     const m = String(now.getMinutes()).padStart(2, "0")
     const s = String(now.getSeconds()).padStart(2, "0")
 
-    document.getElementById("clock").textContent = `${String(h).padStart(2,"0")}:${m}:${s}`
-    document.getElementById("clockPeriod").textContent = period
+    if (clockValue) clockValue.textContent = `${String(h).padStart(2,"0")}:${m}:${s}`
+    if (clockPeriod) clockPeriod.textContent = period
     document.getElementById("date").textContent = now.toLocaleDateString("es-MX", {
         weekday: "long", month: "long", day: "numeric"
     })
+
+    fitBarClockTime()
 }
 
 setInterval(updateClock, 1000)

@@ -15,6 +15,13 @@
     <!-- Controles de ventana -->
     <div class="dashboard__controls">
         <div class="dashboard__controls-group dashboard__controls-group--left">
+            <button class="dashboard__ctrl-btn dashboard__ctrl-btn--mode" id="viewModesBtn" title="Modos de ventana">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="4" y="5" width="16" height="4" rx="1.5"></rect>
+                    <rect x="4" y="10" width="10" height="9" rx="1.5"></rect>
+                    <rect x="15.5" y="10" width="4.5" height="9" rx="1.5"></rect>
+                </svg>
+            </button>
             <button class="dashboard__ctrl-btn" id="configBtn" title="Configuración">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -36,6 +43,11 @@
             </button>
         </div>
     </div>
+
+    <button class="collapsed-view" id="collapsedExpandBtn" type="button" aria-label="Expandir widget">
+        <span class="collapsed-view__core"></span>
+        <span class="collapsed-view__halo"></span>
+    </button>
 
     <div class="dashboard__grid">
 
@@ -69,6 +81,7 @@
                     </svg>
                     <span>Modo Estricto</span>
                 </button>
+                <button class="pomodoro__expand-btn btn btn--secondary btn--small" id="expandViewModeBtn" type="button">Expandir a modo completo</button>
                 <div class="pomodoro__notice pomodoro__notice--hidden" id="pomodoroNotice" aria-live="polite">
                     <div class="pomodoro__notice-copy">
                         <span class="pomodoro__notice-kicker" id="pomodoroNoticeKicker">Recordatorio</span>
@@ -253,6 +266,74 @@
             </div>
 
         </div>
+
+        <section class="view-modes view-modes--hidden" id="viewModesPanel" aria-labelledby="viewModesTitle" aria-hidden="true">
+            <div class="view-modes__header">
+                <div class="view-modes__header-copy">
+                    <span class="view-modes__eyebrow">Window Modes</span>
+                    <h2 class="view-modes__title" id="viewModesTitle">Modos de empleo de la ventana</h2>
+                    <p class="view-modes__subtitle">Elige una vista para reorganizar el widget segun tu contexto: completa para trabajo extendido o reducida para mantenerlo presente sin invadir pantalla.</p>
+                </div>
+                <button class="view-modes__close" id="viewModesCloseBtn" aria-label="Cerrar panel de modos">&times;</button>
+            </div>
+
+            <div class="view-modes__active-strip">
+                <span class="view-modes__active-label">Modo seleccionado</span>
+                <strong class="view-modes__active-value" id="viewModesCurrentLabel">Modo completo</strong>
+            </div>
+
+            <div class="view-modes__grid" id="viewModesGrid">
+                <button class="view-modes__option view-modes__option--selected" data-mode="full" type="button">
+                    <span class="view-modes__option-preview view-modes__option-preview--full">
+                        <span></span><span></span><span></span><span></span>
+                    </span>
+                    <span class="view-modes__option-copy">
+                        <strong class="view-modes__option-title">Modo completo</strong>
+                        <span class="view-modes__option-text">Mantiene el dashboard con toda la informacion y densidad actual.</span>
+                    </span>
+                </button>
+
+                <button class="view-modes__option" data-mode="compact" type="button">
+                    <span class="view-modes__option-preview view-modes__option-preview--compact">
+                        <span></span><span></span><span></span>
+                    </span>
+                    <span class="view-modes__option-copy">
+                        <strong class="view-modes__option-title">Modo compacto</strong>
+                        <span class="view-modes__option-text">Reduce aire visual y concentra los modulos sin perder lectura.</span>
+                    </span>
+                </button>
+
+                <button class="view-modes__option" data-mode="mini" type="button">
+                    <span class="view-modes__option-preview view-modes__option-preview--mini">
+                        <span></span><span></span>
+                    </span>
+                    <span class="view-modes__option-copy">
+                        <strong class="view-modes__option-title">Modo mini</strong>
+                        <span class="view-modes__option-text">Version corta pensada para ocupar menos espacio sin desaparecer.</span>
+                    </span>
+                </button>
+
+                <button class="view-modes__option" data-mode="bar" type="button">
+                    <span class="view-modes__option-preview view-modes__option-preview--bar">
+                        <span></span>
+                    </span>
+                    <span class="view-modes__option-copy">
+                        <strong class="view-modes__option-title">Modo barra</strong>
+                        <span class="view-modes__option-text">Formato longitudinal para una lectura rapida y continua.</span>
+                    </span>
+                </button>
+
+                <button class="view-modes__option" data-mode="collapsed" type="button">
+                    <span class="view-modes__option-preview view-modes__option-preview--collapsed">
+                        <span></span>
+                    </span>
+                    <span class="view-modes__option-copy">
+                        <strong class="view-modes__option-title">Modo colapsado</strong>
+                        <span class="view-modes__option-text">Presencia minima lista para expandirse cuando haga falta.</span>
+                    </span>
+                </button>
+            </div>
+        </section>
     </div>
 
 <script src="renderer.js"></script>

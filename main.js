@@ -410,7 +410,7 @@ win = new BrowserWindow({
 x: position.x,
 y: position.y,
 width: store.get('windowWidth') || 960,
-height: 740,
+height: store.get('windowHeight') || 740,
 
 frame:false,
 transparent:true,
@@ -630,10 +630,39 @@ if(win && !win.isDestroyed()) win.minimize()
 
 ipcMain.on('set-window-width', (event, width) => {
     if (!win || win.isDestroyed()) return
-    const w = Math.max(900, Math.min(1300, Math.round(width)))
+    const w = Math.max(72, Math.min(1300, Math.round(width)))
     const h = win.getSize()[1]
     win.setSize(w, h)
     store.set('windowWidth', w)
+    if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+ipcMain.on('set-window-size', (event, size = {}) => {
+    if (!win || win.isDestroyed()) return
+    const currentSize = win.getSize()
+    const nextWidth = Number.isFinite(size.width) ? size.width : currentSize[0]
+    const nextHeight = Number.isFinite(size.height) ? size.height : currentSize[1]
+    const w = Math.max(72, Math.min(1300, Math.round(nextWidth)))
+    const h = Math.max(72, Math.min(900, Math.round(nextHeight)))
+    win.setSize(w, h)
+    store.set('windowWidth', w)
+    store.set('windowHeight', h)
+    if (interactionLockEnabled) updateInteractionLockWindows()
+})
+
+ipcMain.handle('get-window-position', () => {
+    if (!win || win.isDestroyed()) return { x: 0, y: 0 }
+    const [x, y] = win.getPosition()
+    return { x, y }
+})
+
+ipcMain.on('set-window-position', (event, position = {}) => {
+    if (!win || win.isDestroyed()) return
+    const currentBounds = win.getBounds()
+    const nextX = Number.isFinite(position.x) ? Math.round(position.x) : currentBounds.x
+    const nextY = Number.isFinite(position.y) ? Math.round(position.y) : currentBounds.y
+    win.setPosition(nextX, nextY)
+    store.set('windowPosition', { x: nextX, y: nextY })
     if (interactionLockEnabled) updateInteractionLockWindows()
 })
 
