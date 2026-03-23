@@ -19,6 +19,8 @@ let forceCloseLockScreen = false
 let forceCloseInteractionLock = false
 let websiteLockCleanupInProgress = false
 let persistBoundsTimeout = null
+let snapMoveTimeout = null
+let suppressMoveSnap = false
 let exitLockEnabled = store.get('strictExitLockEnabled', false)
 let screenLockEnabled = store.get('strictScreenLockEnabled', false)
 let interactionLockEnabled = store.get('strictInteractionLockEnabled', false)
@@ -224,6 +226,67 @@ function normalizeWindowBounds(rawBounds = {}) {
     }
 
     return centerBoundsInWorkArea(clampedBounds, screen.getPrimaryDisplay().workArea)
+}
+
+function getSnappedBounds(rawBounds, threshold = 18) {
+    const safeBounds = normalizeWindowBounds(rawBounds)
+    const workArea = screen.getDisplayMatching(safeBounds).workArea
+    const distances = {
+        left: Math.abs(safeBounds.x - workArea.x),
+        right: Math.abs((safeBounds.x + safeBounds.width) - (workArea.x + workArea.width)),
+        top: Math.abs(safeBounds.y - workArea.y),
+        bottom: Math.abs((safeBounds.y + safeBounds.height) - (workArea.y + workArea.height))
+    }
+
+    let nextX = safeBounds.x
+    let nextY = safeBounds.y
+
+    if (distances.left <= threshold || distances.right <= threshold) {
+        nextX = distances.left <= distances.right
+            ? workArea.x
+            : workArea.x + workArea.width - safeBounds.width
+    }
+
+    if (distances.top <= threshold || distances.bottom <= threshold) {
+        nextY = distances.top <= distances.bottom
+            ? workArea.y
+            : workArea.y + workArea.height - safeBounds.height
+    }
+
+    return {
+        ...safeBounds,
+        x: nextX,
+        y: nextY
+    }
+}
+
+function applySnapToMainWindow(delay = 140) {
+    if (!win || win.isDestroyed()) return
+    if (snapMoveTimeout) clearTimeout(snapMoveTimeout)
+
+    snapMoveTimeout = setTimeout(() => {
+        snapMoveTimeout = null
+        if (!win || win.isDestroyed()) return
+
+        const currentBounds = win.getBounds()
+        const snappedBounds = getSnappedBounds(currentBounds)
+        const didChange = (
+            snappedBounds.x !== currentBounds.x ||
+            snappedBounds.y !== currentBounds.y ||
+            snappedBounds.width !== currentBounds.width ||
+            snappedBounds.height !== currentBounds.height
+        )
+
+        if (!didChange) return
+
+        suppressMoveSnap = true
+        win.setBounds(snappedBounds)
+        schedulePersistWindowBounds(snappedBounds)
+        if (interactionLockEnabled) updateInteractionLockWindows()
+        setTimeout(() => {
+            suppressMoveSnap = false
+        }, 0)
+    }, delay)
 }
 
 function persistWindowBounds(bounds) {
@@ -573,6 +636,7 @@ if(win){
 const { x, y, width, height } = win.getBounds()
 schedulePersistWindowBounds({ x, y, width, height })
 if (interactionLockEnabled) updateInteractionLockWindows()
+if (!suppressMoveSnap) applySnapToMainWindow()
 }
 
 })
@@ -992,6 +1056,10 @@ app.on('before-quit', (event) => {
     if (persistBoundsTimeout) {
         clearTimeout(persistBoundsTimeout)
         persistBoundsTimeout = null
+    }
+    if (snapMoveTimeout) {
+        clearTimeout(snapMoveTimeout)
+        snapMoveTimeout = null
     }
     if (win && !win.isDestroyed()) persistWindowBounds(win.getBounds())
     if (mediaPollInterval) { clearInterval(mediaPollInterval); mediaPollInterval = null }
