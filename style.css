@@ -6,6 +6,7 @@
     /* Acento y texto (dinámicos vía settings) */
     --accent-color: #3b82f6;
     --text-color: #ffffff;
+    --font-family: 'Inter', sans-serif;
 
     /* Tokens de tema - defaults = glass */
     --dash-bg: #0f172ab3;
@@ -36,7 +37,7 @@
    ====================== */
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-family);
     height: 100vh;
     background: transparent;
     display: flex;

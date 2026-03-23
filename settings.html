@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuracion</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="settings.css">
 </head>
 <body>
@@ -251,6 +253,53 @@
                             </div>
                         </div>
                         <span class="settings__theme-card-name">Obsidian</span>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Panel full-width: Tipografía -->
+            <div class="settings__panel settings__panel--fonts">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" y1="20" x2="15" y2="20"></line>
+                        <line x1="12" y1="4" x2="12" y2="20"></line>
+                    </svg>
+                    Tipografía
+                </h3>
+                <p class="settings__panel-desc">Elige la fuente del widget. Todas tienen métricas similares y no modifican el tamaño de la ventana.</p>
+
+                <div class="settings__font-grid">
+
+                    <button class="settings__font-card settings__font-card--active" data-font="Inter">
+                        <span class="settings__font-card-sample" style="font-family:'Inter',sans-serif">Aa</span>
+                        <span class="settings__font-card-name">Inter</span>
+                        <span class="settings__font-card-desc">Default</span>
+                    </button>
+
+                    <button class="settings__font-card" data-font="Outfit">
+                        <span class="settings__font-card-sample" style="font-family:'Outfit',sans-serif">Aa</span>
+                        <span class="settings__font-card-name">Outfit</span>
+                        <span class="settings__font-card-desc">Moderna</span>
+                    </button>
+
+                    <button class="settings__font-card" data-font="DM Sans">
+                        <span class="settings__font-card-sample" style="font-family:'DM Sans',sans-serif">Aa</span>
+                        <span class="settings__font-card-name">DM Sans</span>
+                        <span class="settings__font-card-desc">Orgánica</span>
+                    </button>
+
+                    <button class="settings__font-card" data-font="Nunito">
+                        <span class="settings__font-card-sample" style="font-family:'Nunito',sans-serif">Aa</span>
+                        <span class="settings__font-card-name">Nunito</span>
+                        <span class="settings__font-card-desc">Redondeada</span>
+                    </button>
+
+                    <button class="settings__font-card" data-font="Sora">
+                        <span class="settings__font-card-sample" style="font-family:'Sora',sans-serif">Aa</span>
+                        <span class="settings__font-card-name">Sora</span>
+                        <span class="settings__font-card-desc">Técnica</span>
                     </button>
 
                 </div>

@@ -14,18 +14,21 @@ if(closeBtn) {
     closeBtn.addEventListener("click", () => ipcRenderer.send("close-app"))
 }
 
-/* colores guardados */
+/* colores/tema/fuente guardados */
 const savedAccent = localStorage.getItem("accentColor")
 const savedText   = localStorage.getItem("textColor")
 const savedTheme  = localStorage.getItem("dashTheme") || "glass"
+const savedFont   = localStorage.getItem("fontFamily") || "Inter"
 if(savedAccent) document.documentElement.style.setProperty("--accent-color", savedAccent)
 if(savedText)   document.documentElement.style.setProperty("--text-color",   savedText)
 document.documentElement.setAttribute("data-theme", savedTheme)
+document.documentElement.style.setProperty("--font-family", `'${savedFont}', sans-serif`)
 
-ipcRenderer.on("apply-colors", (event, { accentColor, textColor, theme }) => {
+ipcRenderer.on("apply-colors", (event, { accentColor, textColor, theme, font }) => {
     if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
     if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
     if(theme)       document.documentElement.setAttribute("data-theme", theme)
+    if(font)        document.documentElement.style.setProperty("--font-family", `'${font}', sans-serif`)
 })
 
 

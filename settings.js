@@ -9,6 +9,7 @@ const breakSel  = document.getElementById("breakDuration")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 const themeCards    = document.querySelectorAll(".settings__theme-card")
+const fontCards     = document.querySelectorAll(".settings__font-card")
 
 const colorNames = {
     "#3b82f6": "Azul",
@@ -33,10 +34,12 @@ const textColorNames = {
 let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
 let selectedTextColor = localStorage.getItem("textColor")   || "#ffffff"
 let selectedTheme     = localStorage.getItem("dashTheme")   || "glass"
+let selectedFont      = localStorage.getItem("fontFamily")  || "Inter"
 
-/* ---- Aplicar colores/tema al propio settings al abrir ---- */
+/* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
 document.documentElement.setAttribute("data-theme", selectedTheme)
+document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`)
 
 /* ---- Restaurar valores al abrir ---- */
 const savedFocus = localStorage.getItem("focusDuration")
@@ -48,6 +51,7 @@ updateActiveSwatch(selectedColor)
 updateTextColorPreview(selectedTextColor)
 updateActiveTextSwatch(selectedTextColor)
 updateActiveThemeCard(selectedTheme)
+updateActiveFontCard(selectedFont)
 updateBars()
 
 /* ---- Preview bars en tiempo real ---- */
@@ -82,6 +86,20 @@ themeCards.forEach(card => {
         updateActiveThemeCard(selectedTheme)
     })
 })
+
+fontCards.forEach(card => {
+    card.addEventListener("click", () => {
+        selectedFont = card.dataset.font
+        document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`)
+        updateActiveFontCard(selectedFont)
+    })
+})
+
+function updateActiveFontCard(font) {
+    fontCards.forEach(c => c.classList.remove("settings__font-card--active"))
+    const active = document.querySelector(`.settings__font-card[data-font='${font}']`)
+    if(active) active.classList.add("settings__font-card--active")
+}
 
 function updateActiveThemeCard(theme) {
     themeCards.forEach(c => c.classList.remove("settings__theme-card--active"))
@@ -147,10 +165,12 @@ saveBtn.addEventListener("click", () => {
     localStorage.setItem("accentColor",    selectedColor)
     localStorage.setItem("textColor",      selectedTextColor)
     localStorage.setItem("dashTheme",      selectedTheme)
+    localStorage.setItem("fontFamily",     selectedFont)
     ipcRenderer.send("save-settings", {
         accentColor: selectedColor,
         textColor:   selectedTextColor,
-        theme:       selectedTheme
+        theme:       selectedTheme,
+        font:        selectedFont
     })
 })
 

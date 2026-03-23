@@ -4,6 +4,7 @@
 
 :root {
     --accent-color: #3b82f6;
+    --font-family: 'Inter', sans-serif;
     /* Tokens de tema — defaults = glass */
     --dash-bg: #0f172ab3;
     --dash-blur: blur(20px);
@@ -31,7 +32,7 @@
    ====================== */
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-family);
     height: 100vh;
     background: transparent;
     display: flex;
@@ -679,4 +680,62 @@ body {
 
 .settings::-webkit-scrollbar-thumb:hover {
     filter: brightness(1.2);
+}
+
+/* =====================
+   FONT CARDS
+   ===================== */
+.settings__panel--fonts {
+    grid-column: 1 / -1;
+}
+
+.settings__font-grid {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    -webkit-app-region: no-drag;
+}
+
+.settings__font-card {
+    flex: 1;
+    min-width: 110px;
+    background: #ffffff08;
+    border: 2px solid #ffffff15;
+    border-radius: 12px;
+    padding: 14px 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+}
+
+.settings__font-card:hover {
+    transform: translateY(-2px);
+    border-color: #ffffff30;
+}
+
+.settings__font-card--active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px var(--accent-color), 0 4px 20px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.settings__font-card-sample {
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-color, #ffffff);
+    line-height: 1;
+}
+
+.settings__font-card-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffffcc;
+}
+
+.settings__font-card-desc {
+    font-size: 11px;
+    color: #ffffff4d;
 }
