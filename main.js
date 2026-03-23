@@ -18,7 +18,7 @@ win = new BrowserWindow({
 
 x: position.x,
 y: position.y,
-width: 960,
+width: store.get('windowWidth') || 960,
 height: 740,
 
 frame:false,
@@ -95,6 +95,18 @@ if(settingsWindow) settingsWindow.close()
 
 ipcMain.on('close-app', () => {
 app.quit()
+})
+
+ipcMain.on('minimize-app', () => {
+if(win && !win.isDestroyed()) win.minimize()
+})
+
+ipcMain.on('set-window-width', (event, width) => {
+    if (!win || win.isDestroyed()) return
+    const w = Math.max(900, Math.min(1300, Math.round(width)))
+    const h = win.getSize()[1]
+    win.setSize(w, h)
+    store.set('windowWidth', w)
 })
 
 /* =====================
@@ -198,7 +210,7 @@ function startMediaPolling() {
                 if (win && !win.isDestroyed()) win.webContents.send('media-info', data)
             } catch(_) {}
         })
-    }, 2000)
+    }, 1000)
 }
 
 ipcMain.on('media-control', (event, action) => {

@@ -19,7 +19,11 @@ const colorNames = {
     "#f59e0b": "Ambar",
     "#ef4444": "Rojo",
     "#ec4899": "Rosa",
-    "#f97316": "Naranja"
+    "#f97316": "Naranja",
+    "#14b8a6": "Turquesa",
+    "#84cc16": "Lima",
+    "#e11d48": "Carmesí",
+    "#6366f1": "Índigo"
 }
 
 const textColorNames = {
@@ -28,7 +32,11 @@ const textColorNames = {
     "#f3e8ff": "Lavanda",
     "#d1fae5": "Menta",
     "#fef3c7": "Crema",
-    "#fce7f3": "Rosa claro"
+    "#fce7f3": "Rosa claro",
+    "#e5e7eb": "Plata",
+    "#fde68a": "Dorado suave",
+    "#cffafe": "Hielo",
+    "#ddd6fe": "Lila"
 }
 
 let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
