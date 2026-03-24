@@ -837,6 +837,10 @@ app.quit()
 })
 
 ipcMain.on('minimize-app', () => {
+if (exitLockEnabled) {
+if (win && !win.isDestroyed()) win.webContents.send('strict-exit-lock-blocked')
+return
+}
 if(win && !win.isDestroyed()) win.minimize()
 })
 

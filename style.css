@@ -61,6 +61,19 @@
     color: #0f172a;
 }
 
+[data-theme="light"] .dashboard__ctrl-btn:disabled,
+[data-theme="light"] .dashboard__ctrl-btn--disabled {
+    background: #ffffffb8;
+    color: #94a3b8;
+    border-color: #d7e3f0;
+}
+
+[data-theme="light"] .dashboard__ctrl-btn:disabled:hover,
+[data-theme="light"] .dashboard__ctrl-btn--disabled:hover {
+    background: #ffffffb8;
+    color: #94a3b8;
+}
+
 [data-theme="light"] .dashboard__ctrl-btn--active {
     background: linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 12%, #ffffff) 0%, #f8fafc 100%);
     border-color: #cbd5e1;
@@ -127,6 +140,25 @@
 
 [data-theme="light"] .view-modes {
     background: linear-gradient(180deg, #fffffffa 0%, #f8fbfffa 100%);
+}
+
+[data-theme="light"] .view-modes {
+    scrollbar-color: color-mix(in srgb, var(--accent-color) 60%, #cbd5e1) transparent;
+}
+
+[data-theme="light"] .view-modes::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, #e2e8f080 0%, #ffffff66 100%);
+}
+
+[data-theme="light"] .view-modes::-webkit-scrollbar-thumb {
+    box-shadow: inset 0 0 0 1px #ffffff80;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 62%, #ffffff) 0%, color-mix(in srgb, var(--accent-color) 42%, #cbd5e1) 100%);
+    background-clip: padding-box;
+}
+
+[data-theme="light"] .view-modes::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 74%, #ffffff) 0%, color-mix(in srgb, var(--accent-color) 52%, #cbd5e1) 100%);
+    background-clip: padding-box;
 }
 
 [data-theme="light"] .view-modes__option,
@@ -379,6 +411,22 @@ body {
     color: #ffffff;
 }
 
+.dashboard__ctrl-btn:disabled,
+.dashboard__ctrl-btn--disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+    color: #ffffff4d;
+    border-color: #ffffff12;
+    background: #ffffff08;
+    box-shadow: none;
+}
+
+.dashboard__ctrl-btn:disabled:hover,
+.dashboard__ctrl-btn--disabled:hover {
+    background: #ffffff08;
+    color: #ffffff4d;
+}
+
 .dashboard__ctrl-btn--active {
     background: color-mix(in srgb, var(--accent-color) 22%, #ffffff12);
     border-color: color-mix(in srgb, var(--accent-color) 35%, transparent);
@@ -409,14 +457,49 @@ body {
     top: 52px;
     left: 22px;
     width: min(420px, calc(100% - 44px));
+    max-height: calc(100vh - 120px);
     padding: 18px;
     border-radius: 22px;
     background: linear-gradient(180deg, color-mix(in srgb, var(--dash-bg) 92%, #08101f) 0%, color-mix(in srgb, var(--dash-bg) 98%, #030712) 100%);
     backdrop-filter: blur(22px);
     border: 1px solid color-mix(in srgb, var(--accent-color) 18%, var(--dash-border));
     box-shadow: 0 30px 70px -26px #000000b3, inset 0 1px 0 #ffffff12;
+    overflow-y: auto;
+    overflow-x: hidden;
     z-index: 30;
     -webkit-app-region: no-drag;
+}
+
+.view-modes {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--accent-color) 72%, #ffffff18) transparent;
+}
+
+.view-modes::-webkit-scrollbar {
+    width: 10px;
+}
+
+.view-modes::-webkit-scrollbar-track {
+    margin: 12px 6px 12px 0;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff08 0%, #ffffff03 100%);
+}
+
+.view-modes::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 78%, #ffffff24) 0%, color-mix(in srgb, var(--accent-color) 46%, #0f172a) 100%);
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px #ffffff10;
+}
+
+.view-modes::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 88%, #ffffff36) 0%, color-mix(in srgb, var(--accent-color) 58%, #0f172a) 100%);
+    background-clip: padding-box;
+}
+
+.view-modes::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 .view-modes--hidden {

@@ -62,9 +62,26 @@ const strictModeState = {
 
 function setViewModesPanelOpen(open) {
     if (!viewModesPanel) return
-    viewModesPanel.classList.toggle('view-modes--hidden', !open)
-    viewModesPanel.setAttribute('aria-hidden', open ? 'false' : 'true')
-    if (viewModesBtn) viewModesBtn.classList.toggle('dashboard__ctrl-btn--active', open)
+    const canOpen = selectedViewMode === 'full'
+    const shouldOpen = open && canOpen
+
+    viewModesPanel.classList.toggle('view-modes--hidden', !shouldOpen)
+    viewModesPanel.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true')
+    if (viewModesBtn) viewModesBtn.classList.toggle('dashboard__ctrl-btn--active', shouldOpen)
+}
+
+function syncViewModesButtonState() {
+    if (!viewModesBtn) return
+
+    const enabled = selectedViewMode === 'full'
+    viewModesBtn.disabled = !enabled
+    viewModesBtn.setAttribute('aria-disabled', enabled ? 'false' : 'true')
+    viewModesBtn.classList.toggle('dashboard__ctrl-btn--disabled', !enabled)
+    viewModesBtn.title = enabled ? 'Modos de ventana' : 'Disponible solo en modo completo'
+
+    if (!enabled) {
+        setViewModesPanelOpen(false)
+    }
 }
 
 function renderViewModeSelection(mode = selectedViewMode) {
@@ -86,6 +103,7 @@ function renderViewModeSelection(mode = selectedViewMode) {
         expandViewModeBtn.hidden = !['compact', 'mini', 'bar'].includes(selectedViewMode)
     }
 
+    syncViewModesButtonState()
     fitBarClockTime()
     scheduleWindowWidthSync()
 }
@@ -135,6 +153,11 @@ function applyExitLockState({ exitLockEnabled } = {}) {
     const locked = Boolean(exitLockEnabled)
     strictModeState.exit = locked
     document.body.classList.toggle('strict-exit-lock', locked)
+    if (minimizeBtn) {
+        minimizeBtn.classList.toggle('dashboard__ctrl-btn--hidden', locked)
+        minimizeBtn.setAttribute('aria-hidden', locked ? 'true' : 'false')
+        minimizeBtn.tabIndex = locked ? -1 : 0
+    }
     if (closeBtn) {
         closeBtn.classList.toggle('dashboard__ctrl-btn--hidden', locked)
         closeBtn.setAttribute('aria-hidden', locked ? 'true' : 'false')
@@ -163,6 +186,7 @@ if(configBtn) {
 }
 if(viewModesBtn) {
     viewModesBtn.addEventListener('click', () => {
+        if (selectedViewMode !== 'full') return
         const shouldOpen = viewModesPanel?.classList.contains('view-modes--hidden')
         setViewModesPanelOpen(shouldOpen)
     })
@@ -197,7 +221,10 @@ if(collapsedExpandBtn) {
     })
 }
 if(minimizeBtn) {
-    minimizeBtn.addEventListener("click", () => ipcRenderer.send("minimize-app"))
+    minimizeBtn.addEventListener("click", () => {
+        if (strictModeState.exit) return
+        ipcRenderer.send("minimize-app")
+    })
 }
 if(closeBtn) {
     closeBtn.addEventListener("click", () => ipcRenderer.send("close-app"))
@@ -283,7 +310,10 @@ const FONT_WIDTHS = {
     Manrope: 976,
     'Plus Jakarta Sans': 1012,
     'Space Grotesk': 1036,
-    Urbanist: 992
+    Urbanist: 992,
+    'Playfair Display': 1088,
+    'JetBrains Mono': 1110,
+    'Bricolage Grotesque': 1024
 }
 const dashboardEl = document.querySelector(".dashboard")
 let widthSyncRaf = 0
