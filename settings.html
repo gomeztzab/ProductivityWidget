@@ -461,6 +461,83 @@
                 </div>
             </div>
 
+            <div class="settings__panel settings__panel--license">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3l7 4v5c0 4.5-2.9 7.9-7 9-4.1-1.1-7-4.5-7-9V7l7-4z"></path>
+                        <path d="M9.5 12.5l1.7 1.7 3.3-4"></path>
+                    </svg>
+                    <span data-i18n="settings.license">Licencia / Focus Pro</span>
+                </h3>
+                <p class="settings__panel-desc" data-i18n="settings.license.desc">Activa tu licencia para desbloquear funciones avanzadas y eliminar limites de personalizacion y bloqueo.</p>
+
+                <div class="settings__license-layout">
+                    <div class="settings__license-main">
+                        <div class="settings__license-status" id="licenseStatusCard">
+                            <div class="settings__license-status-head">
+                                <span class="settings__license-badge settings__license-badge--free" id="licenseBadge" data-i18n="settings.license.badge.free">Free</span>
+                                <div class="settings__license-plan-wrap">
+                                    <strong class="settings__license-plan" id="licensePlanName">Free</strong>
+                                    <span class="settings__license-state" id="licenseStateText">Estas usando la version Free.</span>
+                                </div>
+                            </div>
+                            <div class="settings__license-meta">
+                                <span class="settings__license-meta-line" id="licenseKeyMasked" data-i18n="settings.license.key.none">Sin codigo activo</span>
+                                <span class="settings__license-meta-line" id="licenseActivationMeta" data-i18n="settings.license.machine">Activacion por maquina</span>
+                            </div>
+                        </div>
+
+                        <div class="settings__group settings__group--stacked settings__license-activation">
+                            <div class="settings__group-info">
+                                <span class="settings__label" data-i18n="settings.license.input">Codigo de licencia</span>
+                                <span class="settings__hint" data-i18n="settings.license.helper">Tu codigo se valida online una sola vez y queda activo en esta maquina.</span>
+                            </div>
+                            <div class="settings__license-input-row">
+                                <input
+                                    class="settings__license-input"
+                                    id="licenseKeyInput"
+                                    type="text"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    data-i18n-placeholder="settings.license.input.placeholder"
+                                    placeholder="Pega aqui tu codigo de Gumroad"
+                                >
+                                <button class="btn btn--primary settings__license-activate" id="activateLicenseBtn" type="button" data-i18n="settings.license.activate">Activar Pro</button>
+                            </div>
+                            <div class="settings__license-message" id="licenseMessage" aria-live="polite"></div>
+                        </div>
+
+                        <div class="settings__license-actions">
+                            <button class="btn btn--secondary" id="toggleTrialLicenseBtn" type="button" data-i18n="settings.license.trial.activate">Activar prueba Pro</button>
+                            <button class="btn btn--secondary" id="buyFocusProBtn" type="button" data-i18n="settings.license.buy">Comprar Focus Pro</button>
+                            <button class="btn btn--secondary" id="licenseHelpBtn" type="button" data-i18n="settings.license.help">Necesito ayuda</button>
+                        </div>
+                    </div>
+
+                    <div class="settings__license-side">
+                        <div class="settings__license-benefits">
+                            <h4 class="settings__license-subtitle" data-i18n="settings.license.benefits">Beneficios Pro</h4>
+                            <ul class="settings__license-benefit-list">
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.bar">Modo barra</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.collapsed">Modo colapsado</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.sound">Sonidos de Pomodoro</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.intensity">Intensidad del sonido</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.customization">Temas, colores y tipografias premium</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.screenLock">Screen lock</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.interactionLock">Interaction lock</li>
+                                <li class="settings__license-benefit" data-i18n="settings.license.benefit.websiteBlocker">Website blocker</li>
+                            </ul>
+                        </div>
+
+                        <div class="settings__license-tech">
+                            <span class="settings__license-tech-line" data-i18n="settings.license.limit">Cada licencia permite hasta 2 maquinas.</span>
+                            <span class="settings__license-tech-line" data-i18n="settings.license.machine">Activacion por maquina</span>
+                            <span class="settings__license-tech-line" data-i18n="settings.license.internet">Requiere internet solo para la activacion inicial.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Panel: Idioma -->
             <div class="settings__panel settings__panel--language">
                 <h3 class="settings__panel-title">

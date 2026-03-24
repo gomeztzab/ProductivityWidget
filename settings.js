@@ -1,4 +1,11 @@
-﻿const { ipcRenderer } = require('electron')
+﻿const { ipcRenderer, shell } = require('electron')
+
+const GUMROAD_PRODUCT_URL = process.env.FOCUS_PRO_GUMROAD_URL || process.env.GUMROAD_PRODUCT_URL || "https://gumroad.com"
+const SUPPORT_URL = process.env.FOCUS_PRO_SUPPORT_URL || process.env.SUPPORT_URL || "https://example.com/support"
+const FREE_ACCENT_COLORS = new Set(["#3b82f6", "#10b981", "#111111"])
+const FREE_TEXT_COLORS = new Set(["#ffffff", "#e0f2fe", "#e5e7eb", "#111111"])
+const FREE_THEMES = new Set(["glass", "light"])
+const FREE_FONTS = new Set(["Inter", "Nunito"])
 
 /* ---- IDs ---- */
 const closeBtn  = document.getElementById("closeSettingsBtn")
@@ -11,6 +18,20 @@ const reminderNotificationsToggle = document.getElementById("reminderNotificatio
 const reminderSoundLevelSel = document.getElementById("reminderSoundLevel")
 const launchAtStartupToggle = document.getElementById("launchAtStartupToggle")
 const launchAtStartupHint = document.getElementById("launchAtStartupHint")
+const reminderSoundRow = reminderSoundToggle ? reminderSoundToggle.closest(".settings__toggle-row") : null
+const reminderSoundLevelGroup = reminderSoundLevelSel ? reminderSoundLevelSel.closest(".settings__group") : null
+const licensePanel = document.querySelector(".settings__panel--license")
+const licenseKeyInput = document.getElementById("licenseKeyInput")
+const activateLicenseBtn = document.getElementById("activateLicenseBtn")
+const licenseBadge = document.getElementById("licenseBadge")
+const licensePlanName = document.getElementById("licensePlanName")
+const licenseStateText = document.getElementById("licenseStateText")
+const licenseKeyMasked = document.getElementById("licenseKeyMasked")
+const licenseActivationMeta = document.getElementById("licenseActivationMeta")
+const licenseMessage = document.getElementById("licenseMessage")
+const toggleTrialLicenseBtn = document.getElementById("toggleTrialLicenseBtn")
+const buyFocusProBtn = document.getElementById("buyFocusProBtn")
+const licenseHelpBtn = document.getElementById("licenseHelpBtn")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 const themeCards    = document.querySelectorAll(".settings__theme-card")
@@ -56,6 +77,10 @@ let reminderNotificationsEnabled = localStorage.getItem("reminderNotificationsEn
 let reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
 let launchAtStartupEnabled = localStorage.getItem("launchAtStartupEnabled") === "true"
 let selectedLanguage  = localStorage.getItem("appLanguage") || "es"
+let currentLicenseState = createEmptyLicenseState()
+let licenseFeedback = { tone: "", text: "" }
+let licenseActivationPending = false
+let trialLicenseEnabled = false
 
 /* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
@@ -80,7 +105,12 @@ updateActiveFontCard(selectedFont)
 updateActiveLangCard(selectedLanguage)
 updateBars()
 i18n.applyPage()
+renderLicensePanel()
+setupExternalLicenseActions()
+setupLockedSettingsInteractions()
+setupPremiumBadges()
 void syncLaunchAtStartupState()
+void syncLicenseState()
 
 /* ---- Preview bars en tiempo real ---- */
 focusSel.addEventListener("change", updateBars)
@@ -115,6 +145,10 @@ function updateBars() {
 /* ---- Swatches ---- */
 swatches.forEach(btn => {
     btn.addEventListener("click", () => {
+        if (isAccentColorLocked(btn.dataset.color)) {
+            showPremiumAccessMessage()
+            return
+        }
         selectedColor = btn.dataset.color
         document.documentElement.style.setProperty("--accent-color", selectedColor)
         updateActiveSwatch(selectedColor)
@@ -124,6 +158,10 @@ swatches.forEach(btn => {
 
 themeCards.forEach(card => {
     card.addEventListener("click", () => {
+        if (isThemeLocked(card.dataset.theme)) {
+            showPremiumAccessMessage()
+            return
+        }
         selectedTheme = card.dataset.theme
         document.documentElement.setAttribute("data-theme", selectedTheme)
         updateActiveThemeCard(selectedTheme)
@@ -132,6 +170,10 @@ themeCards.forEach(card => {
 
 fontCards.forEach(card => {
     card.addEventListener("click", () => {
+        if (isFontLocked(card.dataset.font)) {
+            showPremiumAccessMessage()
+            return
+        }
         selectedFont = card.dataset.font
         document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`)
         updateActiveFontCard(selectedFont)
@@ -146,11 +188,61 @@ langCards.forEach(card => {
         i18n.applyPage()
         updateColorPreview(selectedColor)
         updateTextColorPreview(selectedTextColor)
+        renderLicensePanel()
     })
+})
+
+if (licenseKeyInput) {
+    licenseKeyInput.addEventListener("input", () => {
+        if (licenseFeedback.tone === "error") {
+            licenseFeedback = { tone: "", text: "" }
+            renderLicensePanel()
+        }
+    })
+
+    licenseKeyInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault()
+            void handleLicenseActivation()
+        }
+    })
+}
+
+if (activateLicenseBtn) {
+    activateLicenseBtn.addEventListener("click", () => {
+        void handleLicenseActivation()
+    })
+}
+
+if (toggleTrialLicenseBtn) {
+    toggleTrialLicenseBtn.addEventListener("click", () => {
+        void handleTrialLicenseToggle()
+    })
+}
+
+ipcRenderer.on("license-state-updated", (_event, payload) => {
+    currentLicenseState = normalizeLicenseState(payload)
+    enforceLicenseSelections()
+    applyFeatureGating()
+    if (currentLicenseState.isPro) {
+        licenseFeedback = {
+            tone: "success",
+            text: i18n.t(currentLicenseState.isTrial
+                ? "settings.license.message.trialActivated"
+                : "settings.license.message.success")
+        }
+    }
+    renderLicensePanel()
 })
 
 if (reminderSoundToggle) {
     reminderSoundToggle.addEventListener("change", () => {
+        if (!hasLicenseFeature("pomodoroSound")) {
+            reminderSoundEnabled = false
+            reminderSoundToggle.checked = false
+            showPremiumAccessMessage()
+            return
+        }
         reminderSoundEnabled = reminderSoundToggle.checked
     })
 }
@@ -163,6 +255,12 @@ if (reminderNotificationsToggle) {
 
 if (reminderSoundLevelSel) {
     reminderSoundLevelSel.addEventListener("change", () => {
+        if (!hasLicenseFeature("pomodoroSoundIntensity")) {
+            reminderSoundLevel = "soft"
+            reminderSoundLevelSel.value = reminderSoundLevel
+            showPremiumAccessMessage()
+            return
+        }
         reminderSoundLevel = reminderSoundLevelSel.value
     })
 }
@@ -191,6 +289,409 @@ async function syncLaunchAtStartupState() {
     } catch (_) {
         launchAtStartupToggle.checked = launchAtStartupEnabled
     }
+}
+
+function createEmptyLicenseState() {
+    return {
+        planCode: "free",
+        planName: "Free",
+        status: "inactive",
+        isPro: false,
+        isTrial: false,
+        licenseKeyMasked: "",
+        deviceFingerprint: "",
+        activatedAt: null,
+        features: {}
+    }
+}
+
+function normalizeLicenseState(payload) {
+    return {
+        ...createEmptyLicenseState(),
+        ...(payload || {}),
+        features: {
+            ...((payload && payload.features) || {})
+        }
+    }
+}
+
+async function syncLicenseState() {
+    try {
+        const trialState = await ipcRenderer.invoke("get-trial-license-availability")
+        trialLicenseEnabled = Boolean(trialState?.enabled)
+        const payload = await ipcRenderer.invoke("get-license-state")
+        currentLicenseState = normalizeLicenseState(payload)
+        enforceLicenseSelections()
+        applyFeatureGating()
+        renderLicensePanel()
+    } catch (_) {
+        licenseFeedback = {
+            tone: "error",
+            text: i18n.t("settings.license.message.generic")
+        }
+        renderLicensePanel()
+    }
+}
+
+function hasLicenseFeature(featureKey) {
+    return Boolean(currentLicenseState?.isPro && currentLicenseState?.features?.[featureKey])
+}
+
+function isAccentColorLocked(color) {
+    return !hasLicenseFeature("customAccentColors") && !FREE_ACCENT_COLORS.has(color)
+}
+
+function isTextColorLocked(color) {
+    return !hasLicenseFeature("customTextColors") && !FREE_TEXT_COLORS.has(color)
+}
+
+function isThemeLocked(theme) {
+    return !hasLicenseFeature("customThemes") && !FREE_THEMES.has(theme)
+}
+
+function isFontLocked(font) {
+    return !hasLicenseFeature("customFonts") && !FREE_FONTS.has(font)
+}
+
+function ensureAllowedAccentColor(color) {
+    return isAccentColorLocked(color) ? "#3b82f6" : color
+}
+
+function ensureAllowedTextColor(color) {
+    return isTextColorLocked(color) ? "#ffffff" : color
+}
+
+function ensureAllowedTheme(theme) {
+    return isThemeLocked(theme) ? "glass" : theme
+}
+
+function ensureAllowedFont(font) {
+    return isFontLocked(font) ? "Inter" : font
+}
+
+function showPremiumAccessMessage() {
+    licenseFeedback = {
+        tone: "info",
+        text: i18n.t("premium.unlock")
+    }
+    renderLicensePanel()
+    if (licensePanel) {
+        licensePanel.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+}
+
+function setupPremiumBadges() {
+    ensurePremiumPill(reminderSoundRow)
+    ensurePremiumPill(reminderSoundLevelGroup)
+}
+
+function ensurePremiumPill(target) {
+    if (!target) return null
+    const groupInfo = target.querySelector(".settings__group-info")
+    if (!groupInfo) return null
+    groupInfo.classList.add("settings__group-info--with-pill")
+
+    let pill = groupInfo.querySelector(".settings__pro-pill")
+    if (!pill) {
+        pill = document.createElement("span")
+        pill.className = "settings__pro-pill"
+        groupInfo.appendChild(pill)
+    }
+
+    pill.textContent = i18n.t("premium.badge")
+    return pill
+}
+
+function setLockedState(target, locked, lockedClass) {
+    if (!target) return
+    target.classList.toggle(lockedClass, locked)
+    target.dataset.lockLabel = locked ? i18n.t("premium.badge") : ""
+    target.setAttribute("aria-disabled", locked ? "true" : "false")
+    target.title = locked ? i18n.t("premium.availableInPro") : ""
+}
+
+function applyFeatureGating() {
+    swatches.forEach(button => {
+        setLockedState(button, isAccentColorLocked(button.dataset.color), "settings__swatch--locked")
+    })
+
+    textSwatches.forEach(button => {
+        setLockedState(button, isTextColorLocked(button.dataset.color), "settings__swatch--locked")
+    })
+
+    themeCards.forEach(card => {
+        setLockedState(card, isThemeLocked(card.dataset.theme), "settings__theme-card--locked")
+    })
+
+    fontCards.forEach(card => {
+        setLockedState(card, isFontLocked(card.dataset.font), "settings__font-card--locked")
+    })
+
+    if (reminderSoundRow) {
+        reminderSoundRow.classList.toggle("settings__toggle-row--locked", !hasLicenseFeature("pomodoroSound"))
+    }
+
+    if (reminderSoundLevelGroup) {
+        reminderSoundLevelGroup.classList.toggle("settings__group--locked", !hasLicenseFeature("pomodoroSoundIntensity"))
+        reminderSoundLevelSel.disabled = !hasLicenseFeature("pomodoroSoundIntensity")
+    }
+}
+
+function setupLockedSettingsInteractions() {
+    if (reminderSoundRow) {
+        reminderSoundRow.addEventListener("click", (event) => {
+            if (!hasLicenseFeature("pomodoroSound")) {
+                event.preventDefault()
+                showPremiumAccessMessage()
+            }
+        })
+    }
+
+    if (reminderSoundLevelGroup) {
+        reminderSoundLevelGroup.addEventListener("click", (event) => {
+            if (!hasLicenseFeature("pomodoroSoundIntensity")) {
+                event.preventDefault()
+                showPremiumAccessMessage()
+            }
+        })
+    }
+}
+
+function enforceLicenseSelections() {
+    selectedColor = ensureAllowedAccentColor(selectedColor)
+    selectedTextColor = ensureAllowedTextColor(selectedTextColor)
+    selectedTheme = ensureAllowedTheme(selectedTheme)
+    selectedFont = ensureAllowedFont(selectedFont)
+
+    if (!hasLicenseFeature("pomodoroSound")) {
+        reminderSoundEnabled = false
+    }
+
+    if (!hasLicenseFeature("pomodoroSoundIntensity")) {
+        reminderSoundLevel = "soft"
+    }
+
+    document.documentElement.style.setProperty("--accent-color", selectedColor)
+    document.documentElement.setAttribute("data-theme", selectedTheme)
+    document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`)
+
+    if (reminderSoundToggle) reminderSoundToggle.checked = reminderSoundEnabled
+    if (reminderSoundLevelSel) reminderSoundLevelSel.value = reminderSoundLevel
+
+    updateActiveSwatch(selectedColor)
+    updateColorPreview(selectedColor)
+    updateActiveTextSwatch(selectedTextColor)
+    updateTextColorPreview(selectedTextColor)
+    updateActiveThemeCard(selectedTheme)
+    updateActiveFontCard(selectedFont)
+}
+
+function translateLicenseError(code) {
+    switch (code) {
+        case "MISSING_LICENSE_KEY":
+        case "MISSING_FIELDS":
+            return i18n.t("settings.license.message.required")
+        case "LICENSE_NOT_FOUND":
+            return i18n.t("settings.license.message.invalid")
+        case "LICENSE_NOT_ACTIVE":
+            return i18n.t("settings.license.message.inactive")
+        case "DEVICE_LIMIT_REACHED":
+            return i18n.t("settings.license.message.limit")
+        case "NETWORK_ERROR":
+            return i18n.t("settings.license.message.network")
+        default:
+            return i18n.t("settings.license.message.generic")
+    }
+}
+
+async function handleLicenseActivation() {
+    if (!licenseKeyInput || !activateLicenseBtn) return
+
+    const licenseKey = licenseKeyInput.value.trim()
+    if (!licenseKey) {
+        licenseFeedback = {
+            tone: "error",
+            text: i18n.t("settings.license.message.required")
+        }
+        renderLicensePanel()
+        return
+    }
+
+    licenseActivationPending = true
+    licenseFeedback = { tone: "info", text: i18n.t("settings.license.status.loading") }
+    renderLicensePanel()
+
+    try {
+        const result = await ipcRenderer.invoke("activate-license", { licenseKey })
+
+        if (result?.ok) {
+            currentLicenseState = normalizeLicenseState(result.license)
+            licenseFeedback = {
+                tone: "success",
+                text: i18n.t("settings.license.message.success")
+            }
+            licenseKeyInput.value = ""
+        } else {
+            licenseFeedback = {
+                tone: "error",
+                text: translateLicenseError(result?.code)
+            }
+        }
+    } catch (_) {
+        licenseFeedback = {
+            tone: "error",
+            text: i18n.t("settings.license.message.network")
+        }
+    } finally {
+        licenseActivationPending = false
+        renderLicensePanel()
+    }
+}
+
+async function handleTrialLicenseToggle() {
+    if (!toggleTrialLicenseBtn || licenseActivationPending) return
+
+    if (!trialLicenseEnabled) {
+        licenseFeedback = {
+            tone: "error",
+            text: i18n.t("settings.license.trial.unavailable")
+        }
+        renderLicensePanel()
+        return
+    }
+
+    licenseActivationPending = true
+    licenseFeedback = { tone: "info", text: i18n.t("settings.license.status.loading") }
+    renderLicensePanel()
+
+    try {
+        const result = currentLicenseState?.isTrial
+            ? await ipcRenderer.invoke("deactivate-trial-license")
+            : await ipcRenderer.invoke("activate-trial-license")
+
+        if (result?.ok) {
+            currentLicenseState = normalizeLicenseState(result.license)
+            licenseFeedback = {
+                tone: "success",
+                text: i18n.t(currentLicenseState.isTrial
+                    ? "settings.license.message.trialActivated"
+                    : "settings.license.message.trialDeactivated")
+            }
+        } else {
+            licenseFeedback = {
+                tone: "error",
+                text: result?.message || i18n.t("settings.license.message.generic")
+            }
+        }
+    } catch (_) {
+        licenseFeedback = {
+            tone: "error",
+            text: i18n.t("settings.license.message.generic")
+        }
+    } finally {
+        licenseActivationPending = false
+        enforceLicenseSelections()
+        applyFeatureGating()
+        renderLicensePanel()
+    }
+}
+
+function setupExternalLicenseActions() {
+    if (buyFocusProBtn) {
+        buyFocusProBtn.disabled = !GUMROAD_PRODUCT_URL
+        if (GUMROAD_PRODUCT_URL) {
+            buyFocusProBtn.addEventListener("click", () => {
+                void shell.openExternal(GUMROAD_PRODUCT_URL)
+            })
+        }
+    }
+
+    if (licenseHelpBtn) {
+        licenseHelpBtn.disabled = !SUPPORT_URL
+        if (SUPPORT_URL) {
+            licenseHelpBtn.addEventListener("click", () => {
+                void shell.openExternal(SUPPORT_URL)
+            })
+        }
+    }
+}
+
+function getLicenseBadgeKey(tone) {
+    if (tone === "pro") return "settings.license.badge.pro"
+    if (tone === "error") return "settings.license.badge.error"
+    if (tone === "loading") return "settings.license.badge.loading"
+    return "settings.license.badge.free"
+}
+
+function getLicenseStatusKey(tone) {
+    if (tone === "pro") return "settings.license.status.pro"
+    if (tone === "error") return "settings.license.status.error"
+    if (tone === "loading") return "settings.license.status.loading"
+    return "settings.license.status.free"
+}
+
+function renderLicensePanel() {
+    if (!licenseBadge || !licensePlanName || !licenseStateText || !licenseKeyMasked || !licenseActivationMeta || !licenseMessage || !licenseKeyInput || !activateLicenseBtn) {
+        return
+    }
+
+    const isPro = Boolean(currentLicenseState?.isPro)
+    const isTrial = Boolean(currentLicenseState?.isTrial)
+    const tone = licenseActivationPending ? "loading" : licenseFeedback.tone === "error" ? "error" : isPro ? "pro" : "free"
+
+    licenseBadge.className = `settings__license-badge settings__license-badge--${tone}`
+    licenseBadge.textContent = i18n.t(getLicenseBadgeKey(tone))
+    licensePlanName.textContent = isPro
+        ? (currentLicenseState.planName || i18n.t("settings.license.plan.pro"))
+        : i18n.t("settings.license.plan.free")
+    licenseStateText.textContent = i18n.t(getLicenseStatusKey(tone))
+
+    licenseKeyMasked.textContent = currentLicenseState?.licenseKeyMasked
+        ? i18n.t("settings.license.key.active", { key: currentLicenseState.licenseKeyMasked })
+        : i18n.t("settings.license.key.none")
+
+    licenseActivationMeta.textContent = currentLicenseState?.activatedAt
+        ? i18n.t("settings.license.activatedAt", { date: formatLicenseDate(currentLicenseState.activatedAt) })
+        : i18n.t("settings.license.machine")
+
+    licenseMessage.className = "settings__license-message"
+    if (licenseFeedback.text) {
+        licenseMessage.textContent = licenseFeedback.text
+        licenseMessage.classList.add(`settings__license-message--${licenseFeedback.tone || "info"}`)
+    } else {
+        licenseMessage.textContent = ""
+    }
+
+    licenseKeyInput.disabled = licenseActivationPending || isPro
+    activateLicenseBtn.disabled = licenseActivationPending || isPro
+    activateLicenseBtn.textContent = licenseActivationPending
+        ? i18n.t("settings.license.activating")
+        : isPro
+            ? i18n.t("settings.license.badge.pro")
+            : i18n.t("settings.license.activate")
+
+    if (buyFocusProBtn) {
+        buyFocusProBtn.hidden = isPro
+    }
+
+    if (toggleTrialLicenseBtn) {
+        toggleTrialLicenseBtn.hidden = !trialLicenseEnabled || (isPro && !isTrial)
+        toggleTrialLicenseBtn.disabled = licenseActivationPending
+        toggleTrialLicenseBtn.textContent = i18n.t(
+            isTrial ? "settings.license.trial.deactivate" : "settings.license.trial.activate"
+        )
+    }
+}
+
+function formatLicenseDate(value) {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+
+    return new Intl.DateTimeFormat(selectedLanguage === "en" ? "en-US" : "es-ES", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    }).format(date)
 }
 
 function updateActiveLangCard(lang) {
@@ -222,7 +723,12 @@ function updateActiveSwatch(color) {
 
 textSwatches.forEach(btn => {
     btn.addEventListener("click", () => {
+        if (isTextColorLocked(btn.dataset.color)) {
+            showPremiumAccessMessage()
+            return
+        }
         selectedTextColor = btn.dataset.color
+        document.documentElement.style.setProperty("--text-color", selectedTextColor)
         updateActiveTextSwatch(selectedTextColor)
         updateTextColorPreview(selectedTextColor)
     })
@@ -264,6 +770,8 @@ function updateColorPreview(color) {
 
 /* ---- Guardar ---- */
 saveBtn.addEventListener("click", async () => {
+    enforceLicenseSelections()
+
     localStorage.setItem("focusDuration",  focusSel.value)
     localStorage.setItem("breakDuration",  breakSel.value)
     localStorage.setItem("accentColor",    selectedColor)

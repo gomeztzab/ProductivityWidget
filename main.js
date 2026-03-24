@@ -1,12 +1,18 @@
 const { app, BrowserWindow, ipcMain, Notification, screen } = require('electron')
 const Store = require('electron-store')
-const { spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
+const { createHash, randomUUID } = require('crypto')
 const os   = require('os')
 const path = require('path')
 const fs   = require('fs')
 const { HOSTS_PATH, applyWebsiteBlock, normalizeWebsiteDomains, restoreWebsiteBlock } = require('./website-blocker')
 
 const store = new Store()
+const ACTIVATE_LICENSE_URL = process.env.ACTIVATE_LICENSE_URL || 'https://kcysjrjllelgcrwuwwuy.functions.supabase.co/activate-license'
+const ENABLE_FOCUS_PRO_TRIAL_BUTTON = process.env.ENABLE_FOCUS_PRO_TRIAL_BUTTON !== 'false'
+const LICENSE_STORE_KEY = 'license'
+const DEVICE_FINGERPRINT_STORE_KEY = 'deviceFingerprint'
+let cachedDeviceFingerprint = null
 
 let win
 let settingsWindow
@@ -29,6 +35,216 @@ let websiteLockDomains = normalizeWebsiteDomains(store.get('strictWebsiteLockDom
 let websiteLockError = ''
 let launchAtStartupEnabled = store.get('launchAtStartupEnabled', false)
 const hostsBackupPath = path.join(app.getPath('userData'), 'hosts.strict-mode.backup')
+
+function createDefaultFeatureState() {
+    return {
+        windowModeBar: false,
+        windowModeCollapsed: false,
+        pomodoroSound: false,
+        pomodoroSoundIntensity: false,
+        customAccentColors: false,
+        customTextColors: false,
+        customThemes: false,
+        customFonts: false,
+        strictScreenLock: false,
+        strictInteractionLock: false,
+        strictWebsiteBlock: false
+    }
+}
+
+function createDefaultLicenseState() {
+    return {
+        planCode: 'free',
+        planName: 'Free',
+        status: 'inactive',
+        isPro: false,
+        isTrial: false,
+        licenseKeyMasked: '',
+        deviceFingerprint: '',
+        activatedAt: null,
+        features: createDefaultFeatureState()
+    }
+}
+
+function getStoredLicenseState() {
+    const storedLicense = store.get(LICENSE_STORE_KEY, {}) || {}
+    return {
+        ...createDefaultLicenseState(),
+        ...storedLicense,
+        features: {
+            ...createDefaultFeatureState(),
+            ...(storedLicense.features || {})
+        }
+    }
+}
+
+function saveLicenseState(nextState) {
+    const normalizedLicenseState = {
+        ...createDefaultLicenseState(),
+        ...nextState,
+        features: {
+            ...createDefaultFeatureState(),
+            ...((nextState && nextState.features) || {})
+        }
+    }
+    store.set(LICENSE_STORE_KEY, normalizedLicenseState)
+    return normalizedLicenseState
+}
+
+function broadcastLicenseState() {
+    const payload = getStoredLicenseState()
+    if (win && !win.isDestroyed()) win.webContents.send('license-state-updated', payload)
+    if (settingsWindow && !settingsWindow.isDestroyed()) settingsWindow.webContents.send('license-state-updated', payload)
+    if (strictModeWindow && !strictModeWindow.isDestroyed()) strictModeWindow.webContents.send('license-state-updated', payload)
+    if (lockScreenWindow && !lockScreenWindow.isDestroyed()) lockScreenWindow.webContents.send('license-state-updated', payload)
+    interactionLockWindows = interactionLockWindows.filter(currentWindow => currentWindow && !currentWindow.isDestroyed())
+    interactionLockWindows.forEach(currentWindow => currentWindow.webContents.send('license-state-updated', payload))
+}
+
+function readWindowsMachineGuid() {
+    if (process.platform !== 'win32') return ''
+
+    try {
+        const query = spawnSync('reg', ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid'], {
+            encoding: 'utf8',
+            windowsHide: true
+        })
+
+        if (query.error || query.status !== 0 || !query.stdout) return ''
+
+        const match = query.stdout.match(/MachineGuid\s+REG_SZ\s+([^\r\n]+)/i)
+        return match ? String(match[1]).trim() : ''
+    } catch (_) {
+        return ''
+    }
+}
+
+function resolveFallbackDeviceSeed() {
+    let fallbackSeed = store.get(DEVICE_FINGERPRINT_STORE_KEY, '')
+    if (fallbackSeed) return fallbackSeed
+
+    fallbackSeed = randomUUID()
+    store.set(DEVICE_FINGERPRINT_STORE_KEY, fallbackSeed)
+    return fallbackSeed
+}
+
+function getDeviceFingerprint() {
+    if (cachedDeviceFingerprint) return cachedDeviceFingerprint
+
+    const machineGuid = readWindowsMachineGuid()
+    const seed = machineGuid || resolveFallbackDeviceSeed()
+    cachedDeviceFingerprint = createHash('sha256').update(seed).digest('hex')
+    store.set(DEVICE_FINGERPRINT_STORE_KEY, cachedDeviceFingerprint)
+    return cachedDeviceFingerprint
+}
+
+function maskLicenseKey(licenseKey) {
+    if (typeof licenseKey !== 'string' || !licenseKey.trim()) return ''
+    if (licenseKey.length <= 8) return licenseKey
+    return `${licenseKey.slice(0, 4)}-****-****-${licenseKey.slice(-4)}`
+}
+
+function createFocusProTrialLicenseState(deviceFingerprint) {
+    return saveLicenseState({
+        planCode: 'focus_pro',
+        planName: 'Focus Pro Trial',
+        status: 'active',
+        isPro: true,
+        isTrial: true,
+        licenseKeyMasked: 'TRIAL',
+        deviceFingerprint,
+        activatedAt: new Date().toISOString(),
+        features: {
+            windowModeBar: true,
+            windowModeCollapsed: true,
+            pomodoroSound: true,
+            pomodoroSoundIntensity: true,
+            customAccentColors: true,
+            customTextColors: true,
+            customThemes: true,
+            customFonts: true,
+            strictScreenLock: true,
+            strictInteractionLock: true,
+            strictWebsiteBlock: true
+        }
+    })
+}
+
+function clearLicenseState() {
+    return saveLicenseState({
+        ...createDefaultLicenseState(),
+        deviceFingerprint: getDeviceFingerprint()
+    })
+}
+
+async function activateFocusProLicense(payload = {}) {
+    const licenseKey = typeof payload.licenseKey === 'string' ? payload.licenseKey.trim() : ''
+
+    if (!licenseKey) {
+        return {
+            ok: false,
+            code: 'MISSING_LICENSE_KEY',
+            message: 'El codigo de licencia es obligatorio.'
+        }
+    }
+
+    const requestBody = {
+        licenseKey,
+        deviceFingerprint: getDeviceFingerprint(),
+        deviceName: os.hostname(),
+        osName: os.platform(),
+        osVersion: os.release(),
+        appVersion: app.getVersion()
+    }
+
+    try {
+        const response = await fetch(ACTIVATE_LICENSE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        })
+
+        const result = await response.json().catch(() => ({}))
+
+        if (!response.ok || result?.ok === false) {
+            return {
+                ok: false,
+                code: result?.code || 'ACTIVATION_FAILED',
+                message: result?.message || 'No se pudo activar Focus Pro.'
+            }
+        }
+
+        const nextLicenseState = saveLicenseState({
+            planCode: result?.plan?.code || 'focus_pro',
+            planName: result?.plan?.name || 'Focus Pro',
+            status: result?.license?.status || 'active',
+            isPro: true,
+            licenseKeyMasked: result?.license?.licenseKeyMasked || maskLicenseKey(licenseKey),
+            deviceFingerprint: requestBody.deviceFingerprint,
+            activatedAt: result?.activation?.activatedAt || new Date().toISOString(),
+            features: {
+                ...createDefaultFeatureState(),
+                ...(result?.features || {})
+            }
+        })
+
+        broadcastLicenseState()
+
+        return {
+            ok: true,
+            message: result?.message || 'PRO activado correctamente',
+            license: nextLicenseState
+        }
+    } catch (error) {
+        return {
+            ok: false,
+            code: 'NETWORK_ERROR',
+            message: error?.message || 'No se pudo conectar con el servidor de activacion.'
+        }
+    }
+}
 
 function getLoginItemSettingsPayload(enabled) {
     const payload = {
@@ -476,7 +692,8 @@ function syncLockScreenTheme(targetWindow) {
         accentColor: store.get('accentColor', '#3b82f6'),
         textColor: store.get('textColor', '#ffffff'),
         theme: store.get('dashTheme', 'glass'),
-        font: store.get('fontFamily', 'Inter')
+        font: store.get('fontFamily', 'Inter'),
+        license: getStoredLicenseState()
     }
     targetWindow.webContents.send('apply-colors', payload)
 }
@@ -618,6 +835,7 @@ win.once('ready-to-show', () => {
 win.webContents.once('did-finish-load', () => {
     ensureMainWindowVisible()
     spawnPS()
+    broadcastLicenseState()
     broadcastExitLockState()
     broadcastWebsiteLockState()
     if (screenLockEnabled) {
@@ -696,6 +914,10 @@ contextIsolation:false
 
 settingsWindow.loadFile("settings.html")
 
+settingsWindow.webContents.once('did-finish-load', () => {
+settingsWindow.webContents.send('license-state-updated', getStoredLicenseState())
+})
+
 settingsWindow.on('closed', () => {
 settingsWindow = null
 })
@@ -728,6 +950,7 @@ contextIsolation:false
 strictModeWindow.loadFile("strict-mode.html")
 
 strictModeWindow.webContents.once('did-finish-load', () => {
+strictModeWindow.webContents.send('license-state-updated', getStoredLicenseState())
 strictModeWindow.webContents.send('strict-exit-lock-state', { exitLockEnabled })
 strictModeWindow.webContents.send('strict-screen-lock-state', { screenLockEnabled })
 strictModeWindow.webContents.send('strict-interaction-lock-state', { interactionLockEnabled })
@@ -807,6 +1030,58 @@ interactionLockWindows = interactionLockWindows.filter(currentWindow => currentW
 interactionLockWindows.forEach(currentWindow => currentWindow.webContents.send('apply-colors', data))
 if(settingsWindow) settingsWindow.close()
 
+})
+
+ipcMain.handle('get-license-state', () => {
+    const currentLicenseState = getStoredLicenseState()
+    if (!currentLicenseState.deviceFingerprint) {
+        currentLicenseState.deviceFingerprint = getDeviceFingerprint()
+        saveLicenseState(currentLicenseState)
+    }
+    return currentLicenseState
+})
+
+ipcMain.handle('activate-license', async (event, payload = {}) => {
+    return activateFocusProLicense(payload)
+})
+
+ipcMain.handle('get-trial-license-availability', () => {
+    return {
+        enabled: ENABLE_FOCUS_PRO_TRIAL_BUTTON
+    }
+})
+
+ipcMain.handle('activate-trial-license', () => {
+    if (!ENABLE_FOCUS_PRO_TRIAL_BUTTON) {
+        return {
+            ok: false,
+            message: 'La prueba Pro esta desactivada en esta build.'
+        }
+    }
+
+    const nextLicenseState = createFocusProTrialLicenseState(getDeviceFingerprint())
+    broadcastLicenseState()
+    return {
+        ok: true,
+        license: nextLicenseState
+    }
+})
+
+ipcMain.handle('deactivate-trial-license', () => {
+    const currentLicenseState = getStoredLicenseState()
+    if (!currentLicenseState.isTrial) {
+        return {
+            ok: false,
+            message: 'No hay una prueba Pro activa para desactivar.'
+        }
+    }
+
+    const nextLicenseState = clearLicenseState()
+    broadcastLicenseState()
+    return {
+        ok: true,
+        license: nextLicenseState
+    }
 })
 
 ipcMain.handle('get-launch-at-startup', () => {

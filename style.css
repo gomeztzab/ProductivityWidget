@@ -599,6 +599,40 @@ body {
     transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
+.view-modes__badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #0f172acc;
+    border: 1px solid #ffffff1a;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.view-modes__option--locked {
+    position: relative;
+    border-style: dashed;
+}
+
+.view-modes__option--locked .view-modes__option-preview,
+.view-modes__option--locked .view-modes__option-copy {
+    opacity: 0.78;
+}
+
+.view-modes__option--locked:hover {
+    background: color-mix(in srgb, var(--accent-color) 6%, #ffffff08);
+}
+
 .view-modes__option:hover {
     transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--accent-color) 36%, transparent);
@@ -689,6 +723,12 @@ body {
     font-size: 12px;
     line-height: 1.5;
     color: color-mix(in srgb, var(--text-color) 70%, transparent);
+}
+
+[data-theme="light"] .view-modes__badge {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #334155;
 }
 
 .collapsed-view {

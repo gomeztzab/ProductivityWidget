@@ -4,12 +4,75 @@ const exitBtn = document.getElementById('lockScreenExitBtn')
 const clockEl = document.getElementById('lockScreenClock')
 const dateEl = document.getElementById('lockScreenDate')
 const stateEl = document.getElementById('lockScreenState')
+const FREE_ACCENT_COLORS = new Set(['#3b82f6', '#10b981', '#111111'])
+const FREE_TEXT_COLORS = new Set(['#ffffff', '#e0f2fe', '#e5e7eb', '#111111'])
+const FREE_THEMES = new Set(['glass', 'light'])
+const FREE_FONTS = new Set(['Inter', 'Nunito'])
+let currentLicenseState = createEmptyLicenseState()
+
+function createEmptyLicenseState() {
+    return {
+        planCode: 'free',
+        planName: 'Free',
+        status: 'inactive',
+        isPro: false,
+        licenseKeyMasked: '',
+        deviceFingerprint: '',
+        activatedAt: null,
+        features: {}
+    }
+}
+
+function normalizeLicenseState(payload) {
+    return {
+        ...createEmptyLicenseState(),
+        ...(payload || {}),
+        features: {
+            ...((payload && payload.features) || {})
+        }
+    }
+}
+
+function hasLicenseFeature(featureKey) {
+    return Boolean(currentLicenseState?.isPro && currentLicenseState?.features?.[featureKey])
+}
+
+function ensureAllowedAccentColor(color) {
+    return !hasLicenseFeature('customAccentColors') && !FREE_ACCENT_COLORS.has(color) ? '#3b82f6' : color
+}
+
+function ensureAllowedTextColor(color) {
+    return !hasLicenseFeature('customTextColors') && !FREE_TEXT_COLORS.has(color) ? '#ffffff' : color
+}
+
+function ensureAllowedTheme(theme) {
+    return !hasLicenseFeature('customThemes') && !FREE_THEMES.has(theme) ? 'glass' : theme
+}
+
+function ensureAllowedFont(font) {
+    return !hasLicenseFeature('customFonts') && !FREE_FONTS.has(font) ? 'Inter' : font
+}
+
+async function syncLicenseState() {
+    try {
+        const payload = await ipcRenderer.invoke('get-license-state')
+        currentLicenseState = normalizeLicenseState(payload)
+    } catch (_) {
+        currentLicenseState = createEmptyLicenseState()
+    }
+
+    applyLockTheme()
+}
 
 function applyLockTheme(payload = {}) {
-    const accentColor = payload.accentColor || localStorage.getItem('accentColor') || '#3b82f6'
-    const textColor = payload.textColor || localStorage.getItem('textColor') || '#ffffff'
-    const theme = payload.theme || localStorage.getItem('dashTheme') || 'glass'
-    const font = payload.font || localStorage.getItem('fontFamily') || 'Inter'
+    if (payload.license) {
+        currentLicenseState = normalizeLicenseState(payload.license)
+    }
+
+    const accentColor = ensureAllowedAccentColor(payload.accentColor || localStorage.getItem('accentColor') || '#3b82f6')
+    const textColor = ensureAllowedTextColor(payload.textColor || localStorage.getItem('textColor') || '#ffffff')
+    const theme = ensureAllowedTheme(payload.theme || localStorage.getItem('dashTheme') || 'glass')
+    const font = ensureAllowedFont(payload.font || localStorage.getItem('fontFamily') || 'Inter')
 
     document.documentElement.style.setProperty('--accent-color', accentColor)
     document.documentElement.style.setProperty('--text-color', textColor)
@@ -35,6 +98,7 @@ applyLockTheme()
 i18n.applyPage()
 updateLockClock()
 setInterval(updateLockClock, 1000)
+void syncLicenseState()
 
 ipcRenderer.on('apply-colors', (_, payload) => {
     applyLockTheme(payload)
@@ -43,6 +107,11 @@ ipcRenderer.on('apply-colors', (_, payload) => {
         i18n.applyPage()
         updateLockClock()
     }
+})
+
+ipcRenderer.on('license-state-updated', (_, payload = {}) => {
+    currentLicenseState = normalizeLicenseState(payload)
+    applyLockTheme()
 })
 
 ipcRenderer.on('strict-screen-lock-state', (_, payload = {}) => {

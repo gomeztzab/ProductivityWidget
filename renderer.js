@@ -59,6 +59,127 @@ const strictModeState = {
     interaction: false,
     website: false
 }
+const FREE_ACCENT_COLORS = new Set(['#3b82f6', '#10b981', '#111111'])
+const FREE_TEXT_COLORS = new Set(['#ffffff', '#e0f2fe', '#e5e7eb', '#111111'])
+const FREE_THEMES = new Set(['glass', 'light'])
+const FREE_FONTS = new Set(['Inter', 'Nunito'])
+const PREMIUM_VIEW_MODE_FEATURES = {
+    bar: 'windowModeBar',
+    collapsed: 'windowModeCollapsed'
+}
+let currentLicenseState = createEmptyLicenseState()
+
+function createEmptyLicenseState() {
+    return {
+        planCode: 'free',
+        planName: 'Free',
+        status: 'inactive',
+        isPro: false,
+        licenseKeyMasked: '',
+        deviceFingerprint: '',
+        activatedAt: null,
+        features: {}
+    }
+}
+
+function normalizeLicenseState(payload) {
+    return {
+        ...createEmptyLicenseState(),
+        ...(payload || {}),
+        features: {
+            ...((payload && payload.features) || {})
+        }
+    }
+}
+
+function hasLicenseFeature(featureKey) {
+    return Boolean(currentLicenseState?.isPro && currentLicenseState?.features?.[featureKey])
+}
+
+function canUseViewMode(mode) {
+    const featureKey = PREMIUM_VIEW_MODE_FEATURES[mode]
+    return !featureKey || hasLicenseFeature(featureKey)
+}
+
+function ensureAllowedAccentColor(color) {
+    return !hasLicenseFeature('customAccentColors') && !FREE_ACCENT_COLORS.has(color) ? '#3b82f6' : color
+}
+
+function ensureAllowedTextColor(color) {
+    return !hasLicenseFeature('customTextColors') && !FREE_TEXT_COLORS.has(color) ? '#ffffff' : color
+}
+
+function ensureAllowedTheme(theme) {
+    return !hasLicenseFeature('customThemes') && !FREE_THEMES.has(theme) ? 'glass' : theme
+}
+
+function ensureAllowedFont(font) {
+    return !hasLicenseFeature('customFonts') && !FREE_FONTS.has(font) ? 'Inter' : font
+}
+
+function ensureAllowedViewMode(mode) {
+    return canUseViewMode(mode) ? mode : 'full'
+}
+
+function openLicenseSettings() {
+    ipcRenderer.send('open-settings')
+}
+
+function ensureViewModePremiumBadge(option) {
+    let badge = option.querySelector('.view-modes__badge')
+    if (!badge) {
+        badge = document.createElement('span')
+        badge.className = 'view-modes__badge'
+        option.appendChild(badge)
+    }
+    badge.textContent = i18n.t('premium.badge')
+    return badge
+}
+
+function syncViewModeAccess() {
+    viewModeOptions.forEach(option => {
+        const locked = !canUseViewMode(option.dataset.mode)
+        const badge = ensureViewModePremiumBadge(option)
+
+        option.classList.toggle('view-modes__option--locked', locked)
+        option.setAttribute('aria-disabled', locked ? 'true' : 'false')
+        option.title = locked ? i18n.t('premium.availableInPro') : ''
+        badge.hidden = !locked
+    })
+}
+
+function sanitizeDashboardPremiumState() {
+    const allowedAccent = ensureAllowedAccentColor(localStorage.getItem('accentColor') || '#3b82f6')
+    const allowedText = ensureAllowedTextColor(localStorage.getItem('textColor') || '#ffffff')
+    const allowedTheme = ensureAllowedTheme(localStorage.getItem('dashTheme') || 'glass')
+    const allowedFont = ensureAllowedFont(localStorage.getItem('fontFamily') || 'Inter')
+    const allowedViewMode = ensureAllowedViewMode(localStorage.getItem(VIEW_MODE_STORAGE_KEY) || selectedViewMode || 'full')
+
+    localStorage.setItem('accentColor', allowedAccent)
+    localStorage.setItem('textColor', allowedText)
+    localStorage.setItem('dashTheme', allowedTheme)
+    localStorage.setItem('fontFamily', allowedFont)
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, allowedViewMode)
+
+    document.documentElement.style.setProperty('--accent-color', allowedAccent)
+    document.documentElement.style.setProperty('--text-color', allowedText)
+    document.documentElement.setAttribute('data-theme', allowedTheme)
+    applyFont(allowedFont)
+    renderViewModeSelection(allowedViewMode)
+    applyReminderSettings()
+}
+
+async function syncLicenseState() {
+    try {
+        const payload = await ipcRenderer.invoke('get-license-state')
+        currentLicenseState = normalizeLicenseState(payload)
+    } catch (_) {
+        currentLicenseState = createEmptyLicenseState()
+    }
+
+    sanitizeDashboardPremiumState()
+    syncViewModeAccess()
+}
 
 function setViewModesPanelOpen(open) {
     if (!viewModesPanel) return
@@ -85,7 +206,8 @@ function syncViewModesButtonState() {
 }
 
 function renderViewModeSelection(mode = selectedViewMode) {
-    selectedViewMode = VIEW_MODE_LABELS[mode] ? mode : 'full'
+    const normalizedMode = VIEW_MODE_LABELS[mode] ? mode : 'full'
+    selectedViewMode = ensureAllowedViewMode(normalizedMode)
     localStorage.setItem(VIEW_MODE_STORAGE_KEY, selectedViewMode)
     document.body.dataset.viewModeDraft = selectedViewMode
 
@@ -104,6 +226,7 @@ function renderViewModeSelection(mode = selectedViewMode) {
     }
 
     syncViewModesButtonState()
+    syncViewModeAccess()
     fitBarClockTime()
     scheduleWindowWidthSync()
 }
@@ -196,6 +319,10 @@ if(viewModesCloseBtn) {
 }
 viewModeOptions.forEach(option => {
     option.addEventListener('click', () => {
+        if (!canUseViewMode(option.dataset.mode)) {
+            openLicenseSettings()
+            return
+        }
         renderViewModeSelection(option.dataset.mode)
         setViewModesPanelOpen(false)
     })
@@ -292,10 +419,10 @@ document.addEventListener('mouseup', () => {
 })
 
 /* colores/tema/fuente guardados */
-const savedAccent = localStorage.getItem("accentColor")
-const savedText   = localStorage.getItem("textColor")
-const savedTheme  = localStorage.getItem("dashTheme") || "glass"
-let savedFont     = localStorage.getItem("fontFamily") || "Inter"
+const savedAccent = ensureAllowedAccentColor(localStorage.getItem("accentColor") || '#3b82f6')
+const savedText   = ensureAllowedTextColor(localStorage.getItem("textColor") || '#ffffff')
+const savedTheme  = ensureAllowedTheme(localStorage.getItem("dashTheme") || "glass")
+let savedFont     = ensureAllowedFont(localStorage.getItem("fontFamily") || "Inter")
 if(savedAccent) document.documentElement.style.setProperty("--accent-color", savedAccent)
 if(savedText)   document.documentElement.style.setProperty("--text-color",   savedText)
 document.documentElement.setAttribute("data-theme", savedTheme)
@@ -401,6 +528,8 @@ function applyFont(font) {
 applyFont(savedFont)
 renderViewModeSelection(selectedViewMode)
 setViewModesPanelOpen(false)
+syncViewModeAccess()
+void syncLicenseState()
 
 if (dashboardEl && typeof ResizeObserver !== "undefined") {
     const resizeObserver = new ResizeObserver(() => {
@@ -424,10 +553,10 @@ if (document.fonts?.ready) {
 
 ipcRenderer.on("apply-colors", (event, payload = {}) => {
     const { accentColor, textColor, theme, font, focusDuration, breakDuration, language } = payload
-    if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
-    if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
-    if(theme)       document.documentElement.setAttribute("data-theme", theme)
-    if(font)        applyFont(font)
+    if(accentColor) document.documentElement.style.setProperty("--accent-color", ensureAllowedAccentColor(accentColor))
+    if(textColor)   document.documentElement.style.setProperty("--text-color",   ensureAllowedTextColor(textColor))
+    if(theme)       document.documentElement.setAttribute("data-theme", ensureAllowedTheme(theme))
+    if(font)        applyFont(ensureAllowedFont(font))
     if (focusDuration || breakDuration) applyPomodoroDurations(focusDuration, breakDuration)
     applyReminderSettings(payload)
     if (language) {
@@ -451,6 +580,12 @@ ipcRenderer.on('strict-interaction-lock-state', (_, payload) => {
 
 ipcRenderer.on('strict-website-lock-state', (_, payload) => {
     applyWebsiteLockState(payload)
+})
+
+ipcRenderer.on('license-state-updated', (_, payload = {}) => {
+    currentLicenseState = normalizeLicenseState(payload)
+    sanitizeDashboardPremiumState()
+    syncViewModeAccess()
 })
 
 ipcRenderer.on('strict-exit-lock-blocked', () => {
@@ -1093,6 +1228,14 @@ function applyReminderSettings(settings = {}) {
         reminderSoundLevel = settings.reminderSoundLevel
     } else {
         reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
+    }
+
+    if (!hasLicenseFeature('pomodoroSound')) {
+        reminderSoundEnabled = false
+    }
+
+    if (!hasLicenseFeature('pomodoroSoundIntensity')) {
+        reminderSoundLevel = 'soft'
     }
 }
 
