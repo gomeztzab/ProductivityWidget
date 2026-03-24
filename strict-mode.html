@@ -13,11 +13,11 @@
     <div class="strict-mode">
         <div class="strict-mode__header">
             <div class="strict-mode__header-copy">
-                <div class="strict-mode__eyebrow">Modo Estricto</div>
-                <h1 class="strict-mode__title">Elige tu nivel de concentracion</h1>
-                <p class="strict-mode__subtitle">Cada modo aplica una restriccion distinta. Solo puede haber uno activo al mismo tiempo para evitar conflictos entre ventanas y reglas.</p>
+                <div class="strict-mode__eyebrow" data-i18n="strict.eyebrow">Modo Estricto</div>
+                <h1 class="strict-mode__title" data-i18n="strict.title">Elige tu nivel de concentracion</h1>
+                <p class="strict-mode__subtitle" data-i18n="strict.subtitle">Cada modo aplica una restriccion distinta. Solo puede haber uno activo al mismo tiempo para evitar conflictos entre ventanas y reglas.</p>
             </div>
-            <button class="strict-mode__close" id="strictModeCloseBtn" aria-label="Cerrar modo estricto">
+            <button class="strict-mode__close" id="strictModeCloseBtn" aria-label="Cerrar modo estricto" data-i18n-aria="strict.closeAriaLabel">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -26,23 +26,23 @@
         </div>
 
         <div class="strict-mode__hero">
-            <div class="strict-mode__hero-badge" id="strictModeHeroBadge">Panel en espera</div>
+            <div class="strict-mode__hero-badge" id="strictModeHeroBadge" data-i18n="strict.heroBadge.idle">Panel en espera</div>
             <div class="strict-mode__hero-copy">
-                <h2 class="strict-mode__hero-title" id="strictModeHeroTitle">Ningun modo activo</h2>
-                <p class="strict-mode__hero-text" id="strictModeHeroText">Selecciona una restriccion para ver aqui el alcance real que tendra sobre la app, la pantalla o los sitios configurados.</p>
+                <h2 class="strict-mode__hero-title" id="strictModeHeroTitle" data-i18n="strict.heroTitle.idle">Ningun modo activo</h2>
+                <p class="strict-mode__hero-text" id="strictModeHeroText" data-i18n="strict.heroText.idle">Selecciona una restriccion para ver aqui el alcance real que tendra sobre la app, la pantalla o los sitios configurados.</p>
             </div>
             <div class="strict-mode__hero-metrics">
                 <div class="strict-mode__hero-metric">
-                    <span class="strict-mode__hero-metric-label">Alcance</span>
-                    <strong class="strict-mode__hero-metric-value" id="strictModeHeroScope">Sin bloqueo</strong>
+                    <span class="strict-mode__hero-metric-label" data-i18n="strict.heroScope.label">Alcance</span>
+                    <strong class="strict-mode__hero-metric-value" id="strictModeHeroScope" data-i18n="strict.heroScope.idle">Sin bloqueo</strong>
                 </div>
                 <div class="strict-mode__hero-metric">
-                    <span class="strict-mode__hero-metric-label">Dominios</span>
+                    <span class="strict-mode__hero-metric-label" data-i18n="strict.heroDomains.label">Dominios</span>
                     <strong class="strict-mode__hero-metric-value" id="strictModeHeroDomains">0 listos</strong>
                 </div>
             </div>
             <div class="strict-mode__hero-tags" id="strictModeHeroTags">
-                <span class="strict-mode__hero-tag strict-mode__hero-tag--muted">Sin dominios cargados</span>
+                <span class="strict-mode__hero-tag strict-mode__hero-tag--muted" data-i18n="strict.heroTags.none">Sin dominios cargados</span>
             </div>
         </div>
 
@@ -54,13 +54,13 @@
                     </svg>
                 </div>
                 <div class="strict-mode__card-copy">
-                    <div class="strict-mode__card-kicker">Salida</div>
-                    <h2 class="strict-mode__card-title">Bloqueo de salida</h2>
-                    <p class="strict-mode__card-text">Impide cerrar la ventana principal: oculta el boton cerrar, ignora Alt + F4 y bloquea el evento de salida.</p>
+                    <div class="strict-mode__card-kicker" data-i18n="strict.exit.kicker">Salida</div>
+                    <h2 class="strict-mode__card-title" data-i18n="strict.exit.title">Bloqueo de salida</h2>
+                    <p class="strict-mode__card-text" data-i18n="strict.exit.text">Impide cerrar la ventana principal: oculta el boton cerrar, ignora Alt + F4 y bloquea el evento de salida.</p>
                 </div>
                 <div class="strict-mode__card-footer">
-                    <div class="strict-mode__card-status" id="exitLockStatus">Estado: inactivo</div>
-                    <button class="strict-mode__action" id="exitLockToggleBtn">Activar bloqueo</button>
+                    <div class="strict-mode__card-status" id="exitLockStatus" data-i18n="strict.status.inactive">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="exitLockToggleBtn" data-i18n="strict.exit.activate">Activar bloqueo</button>
                 </div>
             </article>
 
@@ -72,13 +72,13 @@
                     </svg>
                 </div>
                 <div class="strict-mode__card-copy">
-                    <div class="strict-mode__card-kicker">Pantalla</div>
-                    <h2 class="strict-mode__card-title">Pantalla tipo Lock</h2>
-                    <p class="strict-mode__card-text">Abre una ventana fullscreen sin bordes, siempre encima y visualmente dominante para simular una pantalla bloqueada de estudio.</p>
+                    <div class="strict-mode__card-kicker" data-i18n="strict.screen.kicker">Pantalla</div>
+                    <h2 class="strict-mode__card-title" data-i18n="strict.screen.title">Pantalla tipo Lock</h2>
+                    <p class="strict-mode__card-text" data-i18n="strict.screen.text">Abre una ventana fullscreen sin bordes, siempre encima y visualmente dominante para simular una pantalla bloqueada de estudio.</p>
                 </div>
                 <div class="strict-mode__card-footer">
-                    <div class="strict-mode__card-status" id="screenLockStatus">Estado: inactivo</div>
-                    <button class="strict-mode__action" id="screenLockToggleBtn">Activar pantalla lock</button>
+                    <div class="strict-mode__card-status" id="screenLockStatus" data-i18n="strict.status.inactive">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="screenLockToggleBtn" data-i18n="strict.screen.activate">Activar pantalla lock</button>
                 </div>
             </article>
 
@@ -91,13 +91,13 @@
                     </svg>
                 </div>
                 <div class="strict-mode__card-copy">
-                    <div class="strict-mode__card-kicker">Interaccion</div>
-                    <h2 class="strict-mode__card-title">Bloqueo de interaccion</h2>
-                    <p class="strict-mode__card-text">Bloquea todo lo que rodea al widget y deja libre unicamente la ventana principal de Pomodoro para que sea la unica superficie interactiva.</p>
+                    <div class="strict-mode__card-kicker" data-i18n="strict.interaction.kicker">Interaccion</div>
+                    <h2 class="strict-mode__card-title" data-i18n="strict.interaction.title">Bloqueo de interaccion</h2>
+                    <p class="strict-mode__card-text" data-i18n="strict.interaction.text">Bloquea todo lo que rodea al widget y deja libre unicamente la ventana principal de Pomodoro para que sea la unica superficie interactiva.</p>
                 </div>
                 <div class="strict-mode__card-footer">
-                    <div class="strict-mode__card-status" id="interactionLockStatus">Estado: inactivo</div>
-                    <button class="strict-mode__action" id="interactionLockToggleBtn">Activar bloqueo PRO</button>
+                    <div class="strict-mode__card-status" id="interactionLockStatus" data-i18n="strict.status.inactive">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="interactionLockToggleBtn" data-i18n="strict.interaction.activate">Activar bloqueo PRO</button>
                 </div>
             </article>
 
@@ -111,30 +111,31 @@
                     </svg>
                 </div>
                 <div class="strict-mode__card-copy">
-                    <div class="strict-mode__card-kicker">Web</div>
-                    <h2 class="strict-mode__card-title">Bloqueo de sitios web</h2>
-                    <p class="strict-mode__card-text">Bloquea dominios a nivel sistema editando el archivo hosts de Windows. Requiere permisos de administrador y se revierte al salir del modo.</p>
+                    <div class="strict-mode__card-kicker" data-i18n="strict.website.kicker">Web</div>
+                    <h2 class="strict-mode__card-title" data-i18n="strict.website.title">Bloqueo de sitios web</h2>
+                    <p class="strict-mode__card-text" data-i18n="strict.website.text">Bloquea dominios a nivel sistema editando el archivo hosts de Windows. Requiere permisos de administrador y se revierte al salir del modo.</p>
                     <label class="strict-mode__field">
-                        <span class="strict-mode__field-label">Dominios a bloquear</span>
-                        <textarea class="strict-mode__textarea" id="websiteLockDomainsInput" rows="4" placeholder="youtube.com&#10;facebook.com&#10;twitter.com"></textarea>
+                        <span class="strict-mode__field-label" data-i18n="strict.website.domainsLabel">Dominios a bloquear</span>
+                        <textarea class="strict-mode__textarea" id="websiteLockDomainsInput" rows="4" placeholder="youtube.com&#10;facebook.com&#10;twitter.com" data-i18n-placeholder="strict.website.domainsPlaceholder"></textarea>
                     </label>
-                    <div class="strict-mode__field-hint" id="websiteLockHint">Se bloquean en todos los navegadores usando C:\Windows\System32\drivers\etc\hosts.</div>
+                    <div class="strict-mode__field-hint" id="websiteLockHint" data-i18n="strict.website.hint">Se bloquean en todos los navegadores usando C:\Windows\System32\drivers\etc\hosts.</div>
                 </div>
                 <div class="strict-mode__card-footer">
-                    <div class="strict-mode__card-status" id="websiteLockStatus">Estado: inactivo</div>
-                    <button class="strict-mode__action" id="websiteLockToggleBtn">Activar bloqueo web</button>
+                    <div class="strict-mode__card-status" id="websiteLockStatus" data-i18n="strict.status.inactive">Estado: inactivo</div>
+                    <button class="strict-mode__action" id="websiteLockToggleBtn" data-i18n="strict.website.activate">Activar bloqueo web</button>
                 </div>
             </article>
         </div>
 
         <div class="strict-mode__footer">
             <div class="strict-mode__footer-copy">
-                <strong>Etapa actual</strong>
-                <span>Los modos activos son excluyentes. Si enciendes uno, cualquier otro modo estricto activo se desactiva automaticamente.</span>
+                <strong data-i18n="strict.footer.title">Etapa actual</strong>
+                <span data-i18n="strict.footer.text">Los modos activos son excluyentes. Si enciendes uno, cualquier otro modo estricto activo se desactiva automaticamente.</span>
             </div>
         </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="strict-mode.js"></script>
 </body>
 </html>

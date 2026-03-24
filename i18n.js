@@ -1,0 +1,720 @@
+/* =====================
+   i18n — Sistema de idiomas (Español / English)
+   Cargado via <script> antes del JS de cada vista.
+   Expone window.i18n con t(), setLang(), getLang(), applyPage().
+   ===================== */
+
+;(function () {
+    const STORAGE_KEY = 'appLanguage'
+    const DEFAULT_LANG = 'es'
+    const SUPPORTED = ['es', 'en']
+
+    /* ---- Diccionarios ---- */
+    const translations = {
+        es: {
+            /* -- Dashboard: controles de ventana -- */
+            'btn.viewModes': 'Modos de ventana',
+            'btn.viewModes.disabled': 'Disponible solo en modo completo',
+            'btn.config': 'Configuración',
+            'btn.minimize': 'Minimizar',
+            'btn.close': 'Cerrar',
+
+            /* -- Pomodoro -- */
+            'pomodoro.focusTime': 'Focus Time',
+            'pomodoro.breakTime': 'Break Time',
+            'pomodoro.start': 'Iniciar',
+            'pomodoro.pause': 'Pausar',
+            'pomodoro.resume': 'Reanudar',
+            'pomodoro.break': 'Descanso',
+            'pomodoro.stop': 'Parar',
+            'pomodoro.strictMode': 'Modo Estricto',
+            'pomodoro.disablePro': 'Desactivar PRO',
+            'pomodoro.expandFull': 'Expandir a modo completo',
+            'pomodoro.startBreak': 'Iniciar descanso',
+
+            /* -- Pomodoro: avisos -- */
+            'pomodoro.notice.reminder': 'Recordatorio',
+            'pomodoro.notice.completed': 'Tiempo completado',
+            'pomodoro.notice.nextReady': 'Tu siguiente bloque ya esta listo.',
+            'pomodoro.notice.continue': 'Continuar',
+            'pomodoro.notice.closeAriaLabel': 'Cerrar aviso',
+            'pomodoro.notice.focusDone': 'Focus completado',
+            'pomodoro.notice.breakReady': 'Tu descanso esta listo',
+            'pomodoro.notice.pomodoroReady': 'Pomodoro #{n} listo. Empieza un descanso de {duration} cuando quieras.',
+            'pomodoro.notice.startBreak': 'Iniciar descanso',
+            'pomodoro.notice.breakDone': 'Break completado',
+            'pomodoro.notice.readyFocus': 'Listo para volver al enfoque',
+            'pomodoro.notice.nextBlock': 'Tu siguiente bloque es de {duration}.',
+            'pomodoro.notice.startFocus': 'Comenzar enfoque',
+            'pomodoro.alert.focusDone': 'Focus terminado',
+            'pomodoro.alert.focusBody': 'Pomodoro #{n} completado. Toma {duration} de descanso.',
+            'pomodoro.alert.breakDone': 'Descanso terminado',
+            'pomodoro.alert.breakBody': 'Vuelve al enfoque por {duration}.',
+
+            /* -- Duración -- */
+            'duration.seconds': '{n} segundos',
+            'duration.min': '{n} min',
+
+            /* -- To-Do -- */
+            'todo.title': 'To-Do List',
+            'todo.summary': '{pending} pendientes · {done} completas',
+            'todo.compact': 'Compacto',
+            'todo.expand': 'Expandir',
+            'todo.noTasks': 'Sin tareas',
+            'todo.pendingOf': '{pending} pendientes de {all}',
+            'todo.inFocus': 'En foco: {task}',
+            'todo.noFocus': 'Sin tarea en foco',
+            'todo.placeholder': 'Nueva tarea...',
+            'todo.priorityHigh': 'Alta',
+            'todo.priorityMedium': 'Media',
+            'todo.priorityLow': 'Baja',
+            'todo.addAriaLabel': 'Agregar tarea',
+            'todo.filterAll': 'Todas',
+            'todo.filterPending': 'Pendientes',
+            'todo.filterCompleted': 'Completadas',
+            'todo.sortManual': 'Manual',
+            'todo.sortPriority': 'Prioridad',
+            'todo.activeTask.kicker': 'Tarea en foco',
+            'todo.activeTask.noActive': 'Sin tarea activa',
+            'todo.activeTask.select': 'Selecciona una tarea para centrarte en ella.',
+            'todo.activeTask.meta': 'Prioridad {priority} · lista para Pomodoro',
+            'todo.emptyAdd': 'Agrega una tarea para empezar.',
+            'todo.emptyFilter': 'No hay tareas en este filtro.',
+            'todo.markPending': 'Marcar como pendiente',
+            'todo.markCompleted': 'Marcar como completada',
+            'todo.focusBadge': 'En foco ahora',
+            'todo.removeFocus': 'Quitar foco',
+            'todo.setFocus': 'Poner foco',
+            'todo.remove': 'Eliminar',
+
+            /* -- Stats -- */
+            'stats.timer': 'Timer',
+            'stats.tasks': 'Tasks',
+            'stats.history': 'History',
+            'stats.pomodoros': 'Pomodoros',
+            'stats.focused': 'Enfocado',
+            'stats.breaks': 'Descansos',
+            'stats.done': 'Hechas',
+            'stats.pending': 'Pendientes',
+            'stats.rate': 'Tasa',
+            'stats.streak': 'Racha',
+            'stats.bestDay': 'Mejor Día',
+            'stats.total': 'Total',
+
+            /* -- Weather -- */
+            'weather.loading': 'Cargando…',
+            'weather.locating': 'Localizando…',
+            'weather.clear': 'Despejado',
+            'weather.mostlyClear': 'Despejado',
+            'weather.partlyCloudy': 'Nublado',
+            'weather.overcast': 'Nublado',
+            'weather.fog': 'Niebla',
+            'weather.icyFog': 'Niebla helada',
+            'weather.lightDrizzle': 'Llovizna ligera',
+            'weather.drizzle': 'Llovizna',
+            'weather.heavyDrizzle': 'Llovizna intensa',
+            'weather.freezingDrizzle': 'Llovizna helada',
+            'weather.lightRain': 'Lluvia ligera',
+            'weather.rain': 'Lluvia',
+            'weather.heavyRain': 'Lluvia intensa',
+            'weather.freezingRain': 'Lluvia helada',
+            'weather.lightSnow': 'Nieve ligera',
+            'weather.snow': 'Nieve',
+            'weather.heavySnow': 'Nieve intensa',
+            'weather.snowGrains': 'Granulado de nieve',
+            'weather.showers': 'Chubascos',
+            'weather.heavyShowers': 'Chubascos intensos',
+            'weather.snowShowers': 'Chubascos de nieve',
+            'weather.heavySnowShowers': 'Chubascos de nieve intensos',
+            'weather.thunderstorm': 'Tormenta eléctrica',
+            'weather.nowPlaying': 'Reproduciendo:',
+            'weather.nothingPlaying': 'Sin reproducción',
+
+            /* -- Music -- */
+            'music.nowPlaying': 'Reproduciendo:',
+            'music.nothingPlaying': 'Sin reproducción',
+            'music.pause': 'Pausar',
+            'music.play': 'Reproducir',
+
+            /* -- View modes -- */
+            'viewModes.eyebrow': 'Modos de ventana',
+            'viewModes.title': 'Modos de empleo de la ventana',
+            'viewModes.subtitle': 'Elige una vista para reorganizar el widget segun tu contexto: completa para trabajo extendido o reducida para mantenerlo presente sin invadir pantalla.',
+            'viewModes.closeAriaLabel': 'Cerrar panel de modos',
+            'viewModes.selected': 'Modo seleccionado',
+            'viewModes.full': 'Modo completo',
+            'viewModes.compact': 'Modo compacto',
+            'viewModes.mini': 'Modo mini',
+            'viewModes.bar': 'Modo barra',
+            'viewModes.collapsed': 'Modo colapsado',
+            'viewModes.full.desc': 'Mantiene el dashboard con toda la informacion y densidad actual.',
+            'viewModes.compact.desc': 'Reduce aire visual y concentra los modulos sin perder lectura.',
+            'viewModes.mini.desc': 'Version corta pensada para ocupar menos espacio sin desaparecer.',
+            'viewModes.bar.desc': 'Formato longitudinal para una lectura rapida y continua.',
+            'viewModes.collapsed.desc': 'Presencia minima lista para expandirse cuando haga falta.',
+
+            /* -- Settings -- */
+            'settings.title': 'Configuracion',
+            'settings.close': 'Cerrar',
+            'settings.pomodoro': 'Pomodoro',
+            'settings.focusDuration': 'Duracion de enfoque',
+            'settings.focusDuration.hint': 'Tiempo de trabajo concentrado',
+            'settings.breakDuration': 'Duracion de descanso',
+            'settings.breakDuration.hint': 'Tiempo de pausa entre sesiones',
+            'settings.seconds.test': '{n} segundos (test)',
+            'settings.minutes': '{n} minutos',
+            'settings.focus': 'Enfoque',
+            'settings.break': 'Descanso',
+            'settings.reminders': 'Recordatorios',
+            'settings.reminders.hint': 'Controla sonido, notificaciones y la intensidad del aviso.',
+            'settings.sound': 'Sonido',
+            'settings.sound.hint': 'Reproduce un tono al terminar enfoque o descanso.',
+            'settings.notifications': 'Notificaciones',
+            'settings.notifications.hint': 'Muestra una notificacion del sistema al completar cada bloque.',
+            'settings.soundLevel': 'Intensidad del sonido',
+            'settings.soundLevel.hint': 'Elige un tono suave o uno mas marcado para pruebas.',
+            'settings.soundSoft': 'Suave',
+            'settings.soundMedium': 'Media',
+            'settings.soundStrong': 'Fuerte',
+            'settings.accentColor': 'Color de acento',
+            'settings.accentColor.desc': 'Elige el color principal del temporizador y botones.',
+            'settings.textColor': 'Color de texto',
+            'settings.textColor.desc': 'Color del reloj y titulos principales.',
+            'settings.dashTheme': 'Tema del Dashboard',
+            'settings.dashTheme.desc': 'Elige el diseño visual del widget. El cambio se aplica al instante.',
+            'settings.typography': 'Tipografía',
+            'settings.typography.desc': 'Elige la fuente del widget. Si una tipografía necesita más espacio, la ventana principal se adapta en horizontal.',
+            'settings.startWithWindows': 'Inicio con Windows',
+            'settings.startWithWindows.desc': 'Decide si el widget debe abrirse automaticamente al encender la PC.',
+            'settings.launchAtStartup': 'Abrir al iniciar Windows',
+            'settings.launchAtStartup.hint': 'La app se abrira automaticamente cuando inicies sesion.',
+            'settings.launchAtStartup.unsupported': 'Esta opcion no esta disponible en este sistema.',
+            'settings.cancel': 'Cancelar',
+            'settings.save': 'Guardar',
+            'settings.footer': 'Los cambios se aplican al instante al guardar.',
+
+            /* -- Settings: idioma -- */
+            'settings.language': 'Idioma',
+            'settings.language.desc': 'Elige el idioma de toda la interfaz. El cambio se aplica al guardar.',
+            'settings.language.es': 'Español',
+            'settings.language.en': 'English',
+
+            /* -- Color names -- */
+            'color.blue': 'Azul',
+            'color.violet': 'Violeta',
+            'color.cyan': 'Cian',
+            'color.green': 'Verde',
+            'color.amber': 'Ambar',
+            'color.red': 'Rojo',
+            'color.pink': 'Rosa',
+            'color.orange': 'Naranja',
+            'color.turquoise': 'Turquesa',
+            'color.lime': 'Lima',
+            'color.crimson': 'Carmesí',
+            'color.indigo': 'Índigo',
+            'color.black': 'Negro',
+            'color.white': 'Blanco',
+            'color.lightBlue': 'Azul claro',
+            'color.lavender': 'Lavanda',
+            'color.mint': 'Menta',
+            'color.cream': 'Crema',
+            'color.lightPink': 'Rosa claro',
+            'color.silver': 'Plata',
+            'color.softGold': 'Dorado suave',
+            'color.ice': 'Hielo',
+            'color.lilac': 'Lila',
+
+            /* -- Font descriptions -- */
+            'font.default': 'Default',
+            'font.modern': 'Moderna',
+            'font.organic': 'Orgánica',
+            'font.rounded': 'Redondeada',
+            'font.technical': 'Técnica',
+            'font.sharp': 'Nítida',
+            'font.editorial': 'Editorial',
+            'font.geo': 'Geo',
+            'font.soft': 'Suave',
+            'font.serifEditorial': 'Serif editorial',
+            'font.monoTechnical': 'Mono técnica',
+            'font.expressive': 'Expresiva',
+
+            /* -- Strict mode -- */
+            'strict.eyebrow': 'Modo Estricto',
+            'strict.title': 'Elige tu nivel de concentracion',
+            'strict.subtitle': 'Cada modo aplica una restriccion distinta. Solo puede haber uno activo al mismo tiempo para evitar conflictos entre ventanas y reglas.',
+            'strict.closeAriaLabel': 'Cerrar modo estricto',
+            'strict.heroBadge.idle': 'Panel en espera',
+            'strict.heroTitle.idle': 'Ningun modo activo',
+            'strict.heroText.idle': 'Selecciona una restriccion para ver aqui el alcance real que tendra sobre la app, la pantalla o los sitios configurados.',
+            'strict.heroScope.idle': 'Sin bloqueo',
+            'strict.heroScope.label': 'Alcance',
+            'strict.heroDomains.label': 'Dominios',
+            'strict.heroDomains.ready': '{n} listos',
+            'strict.heroDomains.readyOne': '{n} listo',
+            'strict.heroTags.none': 'Sin dominios cargados',
+            'strict.status.active': 'Estado: activo',
+            'strict.status.inactive': 'Estado: inactivo',
+
+            /* Strict: exit lock card */
+            'strict.exit.kicker': 'Salida',
+            'strict.exit.title': 'Bloqueo de salida',
+            'strict.exit.text': 'Impide cerrar la ventana principal: oculta el boton cerrar, ignora Alt + F4 y bloquea el evento de salida.',
+            'strict.exit.activate': 'Activar bloqueo',
+            'strict.exit.deactivate': 'Desactivar bloqueo',
+
+            /* Strict: screen lock card */
+            'strict.screen.kicker': 'Pantalla',
+            'strict.screen.title': 'Pantalla tipo Lock',
+            'strict.screen.text': 'Abre una ventana fullscreen sin bordes, siempre encima y visualmente dominante para simular una pantalla bloqueada de estudio.',
+            'strict.screen.activate': 'Activar pantalla lock',
+            'strict.screen.deactivate': 'Desactivar pantalla lock',
+
+            /* Strict: interaction lock card */
+            'strict.interaction.kicker': 'Interaccion',
+            'strict.interaction.title': 'Bloqueo de interaccion',
+            'strict.interaction.text': 'Bloquea todo lo que rodea al widget y deja libre unicamente la ventana principal de Pomodoro para que sea la unica superficie interactiva.',
+            'strict.interaction.activate': 'Activar bloqueo PRO',
+            'strict.interaction.deactivate': 'Desactivar bloqueo PRO',
+
+            /* Strict: website lock card */
+            'strict.website.kicker': 'Web',
+            'strict.website.title': 'Bloqueo de sitios web',
+            'strict.website.text': 'Bloquea dominios a nivel sistema editando el archivo hosts de Windows. Requiere permisos de administrador y se revierte al salir del modo.',
+            'strict.website.domainsLabel': 'Dominios a bloquear',
+            'strict.website.domainsPlaceholder': 'youtube.com\nfacebook.com\ntwitter.com',
+            'strict.website.hint': 'Se bloquean en todos los navegadores usando {path}.',
+            'strict.website.activate': 'Activar bloqueo web',
+            'strict.website.deactivate': 'Desactivar bloqueo web',
+            'strict.website.applying': 'Aplicando...',
+            'strict.website.statusDomains': 'Estado: activo ({n} dominio{s})',
+
+            /* Strict: hero modes */
+            'strict.hero.exit.badge': 'Bloqueo de salida activo',
+            'strict.hero.exit.title': 'La ventana principal no se puede cerrar',
+            'strict.hero.exit.text': 'El widget se mantiene abierto y bloquea salidas comunes mientras el modo siga activo.',
+            'strict.hero.exit.scope': 'Ventana principal',
+            'strict.hero.screen.badge': 'Pantalla lock activa',
+            'strict.hero.screen.title': 'La pantalla queda tomada por el lock',
+            'strict.hero.screen.text': 'Se abre una ventana fullscreen dominante para cortar distracciones visuales y forzar un contexto de estudio.',
+            'strict.hero.screen.scope': 'Pantalla completa',
+            'strict.hero.interaction.badge': 'Bloqueo PRO activo',
+            'strict.hero.interaction.title': 'Solo el widget queda utilizable',
+            'strict.hero.interaction.text': 'Todo lo que rodea la ventana principal queda cubierto por bloqueadores para mantener el foco en Pomodoro.',
+            'strict.hero.interaction.scope': 'Escritorio alrededor del widget',
+            'strict.hero.website.badge': 'Bloqueo web activo',
+            'strict.hero.website.badgeBusy': 'Aplicando bloqueo',
+            'strict.hero.website.title': 'Sitios bloqueados a nivel sistema',
+            'strict.hero.website.text': 'El bloqueo usa el archivo hosts y desactiva Secure DNS compatible para que los navegadores comunes no salten la restriccion.',
+            'strict.hero.website.scope': 'Sistema y navegadores',
+            'strict.hero.tags.hosts': 'Hosts activo',
+            'strict.hero.tags.fullscreen': 'Fullscreen',
+            'strict.hero.tags.widgetOnly': 'Solo widget',
+            'strict.hero.tags.noExit': 'Sin salida rapida',
+            'strict.hero.tags.more': '+{n} mas',
+
+            /* Strict: footer */
+            'strict.footer.title': 'Etapa actual',
+            'strict.footer.text': 'Los modos activos son excluyentes. Si enciendes uno, cualquier otro modo estricto activo se desactiva automaticamente.',
+
+            /* -- Lock screen -- */
+            'lockScreen.badge': 'Modo Estricto Activo',
+            'lockScreen.dateLoading': 'Cargando fecha...',
+            'lockScreen.title': 'Pantalla bloqueada para estudiar',
+            'lockScreen.subtitle': 'La app cubre toda la pantalla con una vista inmersiva, sin bordes y siempre encima. Usa este modo para sesiones donde necesitas cero distracciones visuales.',
+            'lockScreen.session': 'Sesion protegida',
+            'lockScreen.status.active': 'Estado: activo',
+            'lockScreen.status.inactive': 'Estado: inactivo',
+            'lockScreen.window': 'Ventana',
+            'lockScreen.windowVal': 'Fullscreen',
+            'lockScreen.priority': 'Prioridad',
+            'lockScreen.priorityVal': 'Always On Top',
+            'lockScreen.coverage': 'Cobertura',
+            'lockScreen.coverageVal': 'Toda la pantalla simulando una lock screen de estudio',
+            'lockScreen.exit': 'Desactivar pantalla lock',
+
+            /* -- Clock date format -- */
+            'clock.locale': 'es-MX',
+
+            /* -- Weather descs (se dejan en inglés intencionalmente) -- */
+        },
+
+        en: {
+            /* -- Dashboard: controles de ventana -- */
+            'btn.viewModes': 'Window modes',
+            'btn.viewModes.disabled': 'Only available in full mode',
+            'btn.config': 'Settings',
+            'btn.minimize': 'Minimize',
+            'btn.close': 'Close',
+
+            /* -- Pomodoro -- */
+            'pomodoro.focusTime': 'Focus Time',
+            'pomodoro.breakTime': 'Break Time',
+            'pomodoro.start': 'Start',
+            'pomodoro.pause': 'Pause',
+            'pomodoro.resume': 'Resume',
+            'pomodoro.break': 'Break',
+            'pomodoro.stop': 'Stop',
+            'pomodoro.strictMode': 'Strict Mode',
+            'pomodoro.disablePro': 'Disable PRO',
+            'pomodoro.expandFull': 'Expand to full mode',
+            'pomodoro.startBreak': 'Start break',
+
+            /* -- Pomodoro: avisos -- */
+            'pomodoro.notice.reminder': 'Reminder',
+            'pomodoro.notice.completed': 'Time completed',
+            'pomodoro.notice.nextReady': 'Your next block is ready.',
+            'pomodoro.notice.continue': 'Continue',
+            'pomodoro.notice.closeAriaLabel': 'Close notice',
+            'pomodoro.notice.focusDone': 'Focus completed',
+            'pomodoro.notice.breakReady': 'Your break is ready',
+            'pomodoro.notice.pomodoroReady': 'Pomodoro #{n} done. Start a {duration} break whenever you want.',
+            'pomodoro.notice.startBreak': 'Start break',
+            'pomodoro.notice.breakDone': 'Break completed',
+            'pomodoro.notice.readyFocus': 'Ready to get back to focus',
+            'pomodoro.notice.nextBlock': 'Your next block is {duration}.',
+            'pomodoro.notice.startFocus': 'Start focus',
+            'pomodoro.alert.focusDone': 'Focus finished',
+            'pomodoro.alert.focusBody': 'Pomodoro #{n} completed. Take a {duration} break.',
+            'pomodoro.alert.breakDone': 'Break finished',
+            'pomodoro.alert.breakBody': 'Get back to focus for {duration}.',
+
+            /* -- Duración -- */
+            'duration.seconds': '{n} seconds',
+            'duration.min': '{n} min',
+
+            /* -- To-Do -- */
+            'todo.title': 'To-Do List',
+            'todo.summary': '{pending} pending · {done} done',
+            'todo.compact': 'Compact',
+            'todo.expand': 'Expand',
+            'todo.noTasks': 'No tasks',
+            'todo.pendingOf': '{pending} pending of {all}',
+            'todo.inFocus': 'Focus: {task}',
+            'todo.noFocus': 'No task in focus',
+            'todo.placeholder': 'New task...',
+            'todo.priorityHigh': 'High',
+            'todo.priorityMedium': 'Medium',
+            'todo.priorityLow': 'Low',
+            'todo.addAriaLabel': 'Add task',
+            'todo.filterAll': 'All',
+            'todo.filterPending': 'Pending',
+            'todo.filterCompleted': 'Completed',
+            'todo.sortManual': 'Manual',
+            'todo.sortPriority': 'Priority',
+            'todo.activeTask.kicker': 'Task in focus',
+            'todo.activeTask.noActive': 'No active task',
+            'todo.activeTask.select': 'Select a task to focus on.',
+            'todo.activeTask.meta': 'Priority {priority} · ready for Pomodoro',
+            'todo.emptyAdd': 'Add a task to get started.',
+            'todo.emptyFilter': 'No tasks match this filter.',
+            'todo.markPending': 'Mark as pending',
+            'todo.markCompleted': 'Mark as completed',
+            'todo.focusBadge': 'In focus now',
+            'todo.removeFocus': 'Remove focus',
+            'todo.setFocus': 'Set focus',
+            'todo.remove': 'Remove',
+
+            /* -- Stats -- */
+            'stats.timer': 'Timer',
+            'stats.tasks': 'Tasks',
+            'stats.history': 'History',
+            'stats.pomodoros': 'Pomodoros',
+            'stats.focused': 'Focused',
+            'stats.breaks': 'Breaks',
+            'stats.done': 'Done',
+            'stats.pending': 'Pending',
+            'stats.rate': 'Rate',
+            'stats.streak': 'Streak',
+            'stats.bestDay': 'Best Day',
+            'stats.total': 'Total',
+
+            /* -- Weather -- */
+            'weather.loading': 'Loading…',
+            'weather.locating': 'Locating…',
+            'weather.clear': 'Clear',
+            'weather.mostlyClear': 'Mostly Clear',
+            'weather.partlyCloudy': 'Partly Cloudy',
+            'weather.overcast': 'Overcast',
+            'weather.fog': 'Fog',
+            'weather.icyFog': 'Icy Fog',
+            'weather.lightDrizzle': 'Light Drizzle',
+            'weather.drizzle': 'Drizzle',
+            'weather.heavyDrizzle': 'Heavy Drizzle',
+            'weather.freezingDrizzle': 'Freezing Drizzle',
+            'weather.lightRain': 'Light Rain',
+            'weather.rain': 'Rain',
+            'weather.heavyRain': 'Heavy Rain',
+            'weather.freezingRain': 'Freezing Rain',
+            'weather.lightSnow': 'Light Snow',
+            'weather.snow': 'Snow',
+            'weather.heavySnow': 'Heavy Snow',
+            'weather.snowGrains': 'Snow Grains',
+            'weather.showers': 'Showers',
+            'weather.heavyShowers': 'Heavy Showers',
+            'weather.snowShowers': 'Snow Showers',
+            'weather.heavySnowShowers': 'Heavy Snow Showers',
+            'weather.thunderstorm': 'Thunderstorm',
+
+            /* -- Music -- */
+            'music.nowPlaying': 'Now Playing:',
+            'music.nothingPlaying': 'Nothing playing',
+            'music.pause': 'Pause',
+            'music.play': 'Play',
+
+            /* -- View modes -- */
+            'viewModes.eyebrow': 'Window Modes',
+            'viewModes.title': 'Window display modes',
+            'viewModes.subtitle': 'Choose a view to reorganize the widget: full for extended work or reduced to keep it present without invading your screen.',
+            'viewModes.closeAriaLabel': 'Close modes panel',
+            'viewModes.selected': 'Selected mode',
+            'viewModes.full': 'Full mode',
+            'viewModes.compact': 'Compact mode',
+            'viewModes.mini': 'Mini mode',
+            'viewModes.bar': 'Bar mode',
+            'viewModes.collapsed': 'Collapsed mode',
+            'viewModes.full.desc': 'Keeps the dashboard with all current information and density.',
+            'viewModes.compact.desc': 'Reduces visual space and concentrates modules without losing readability.',
+            'viewModes.mini.desc': 'Short version designed to take up less space without disappearing.',
+            'viewModes.bar.desc': 'Longitudinal format for quick and continuous reading.',
+            'viewModes.collapsed.desc': 'Minimal presence ready to expand when needed.',
+
+            /* -- Settings -- */
+            'settings.title': 'Settings',
+            'settings.close': 'Close',
+            'settings.pomodoro': 'Pomodoro',
+            'settings.focusDuration': 'Focus duration',
+            'settings.focusDuration.hint': 'Concentrated work time',
+            'settings.breakDuration': 'Break duration',
+            'settings.breakDuration.hint': 'Rest time between sessions',
+            'settings.seconds.test': '{n} seconds (test)',
+            'settings.minutes': '{n} minutes',
+            'settings.focus': 'Focus',
+            'settings.break': 'Break',
+            'settings.reminders': 'Reminders',
+            'settings.reminders.hint': 'Control sound, notifications and alert intensity.',
+            'settings.sound': 'Sound',
+            'settings.sound.hint': 'Play a tone when focus or break ends.',
+            'settings.notifications': 'Notifications',
+            'settings.notifications.hint': 'Show a system notification when each block completes.',
+            'settings.soundLevel': 'Sound intensity',
+            'settings.soundLevel.hint': 'Choose a soft or more noticeable tone.',
+            'settings.soundSoft': 'Soft',
+            'settings.soundMedium': 'Medium',
+            'settings.soundStrong': 'Strong',
+            'settings.accentColor': 'Accent color',
+            'settings.accentColor.desc': 'Choose the main color for the timer and buttons.',
+            'settings.textColor': 'Text color',
+            'settings.textColor.desc': 'Color for the clock and main titles.',
+            'settings.dashTheme': 'Dashboard Theme',
+            'settings.dashTheme.desc': 'Choose the visual design of the widget. Changes apply instantly.',
+            'settings.typography': 'Typography',
+            'settings.typography.desc': 'Choose the widget font. If a font needs more space, the main window adapts horizontally.',
+            'settings.startWithWindows': 'Start with Windows',
+            'settings.startWithWindows.desc': 'Decide if the widget should open automatically when you turn on the PC.',
+            'settings.launchAtStartup': 'Open at Windows startup',
+            'settings.launchAtStartup.hint': 'The app will open automatically when you sign in.',
+            'settings.launchAtStartup.unsupported': 'This option is not available on this system.',
+            'settings.cancel': 'Cancel',
+            'settings.save': 'Save',
+            'settings.footer': 'Changes apply instantly when saved.',
+
+            /* -- Settings: idioma -- */
+            'settings.language': 'Language',
+            'settings.language.desc': 'Choose the language for the entire interface. Changes apply on save.',
+            'settings.language.es': 'Español',
+            'settings.language.en': 'English',
+
+            /* -- Color names -- */
+            'color.blue': 'Blue',
+            'color.violet': 'Violet',
+            'color.cyan': 'Cyan',
+            'color.green': 'Green',
+            'color.amber': 'Amber',
+            'color.red': 'Red',
+            'color.pink': 'Pink',
+            'color.orange': 'Orange',
+            'color.turquoise': 'Turquoise',
+            'color.lime': 'Lime',
+            'color.crimson': 'Crimson',
+            'color.indigo': 'Indigo',
+            'color.black': 'Black',
+            'color.white': 'White',
+            'color.lightBlue': 'Light blue',
+            'color.lavender': 'Lavender',
+            'color.mint': 'Mint',
+            'color.cream': 'Cream',
+            'color.lightPink': 'Light pink',
+            'color.silver': 'Silver',
+            'color.softGold': 'Soft gold',
+            'color.ice': 'Ice',
+            'color.lilac': 'Lilac',
+
+            /* -- Font descriptions -- */
+            'font.default': 'Default',
+            'font.modern': 'Modern',
+            'font.organic': 'Organic',
+            'font.rounded': 'Rounded',
+            'font.technical': 'Technical',
+            'font.sharp': 'Sharp',
+            'font.editorial': 'Editorial',
+            'font.geo': 'Geo',
+            'font.soft': 'Soft',
+            'font.serifEditorial': 'Serif editorial',
+            'font.monoTechnical': 'Mono technical',
+            'font.expressive': 'Expressive',
+
+            /* -- Strict mode -- */
+            'strict.eyebrow': 'Strict Mode',
+            'strict.title': 'Choose your focus level',
+            'strict.subtitle': 'Each mode applies a different restriction. Only one can be active at a time to avoid conflicts between windows and rules.',
+            'strict.closeAriaLabel': 'Close strict mode',
+            'strict.heroBadge.idle': 'Panel on standby',
+            'strict.heroTitle.idle': 'No active mode',
+            'strict.heroText.idle': 'Select a restriction to see here the real scope it will have on the app, screen or configured sites.',
+            'strict.heroScope.idle': 'No lock',
+            'strict.heroScope.label': 'Scope',
+            'strict.heroDomains.label': 'Domains',
+            'strict.heroDomains.ready': '{n} ready',
+            'strict.heroDomains.readyOne': '{n} ready',
+            'strict.heroTags.none': 'No domains loaded',
+            'strict.status.active': 'Status: active',
+            'strict.status.inactive': 'Status: inactive',
+
+            /* Strict: exit lock card */
+            'strict.exit.kicker': 'Exit',
+            'strict.exit.title': 'Exit lock',
+            'strict.exit.text': 'Prevents closing the main window: hides the close button, ignores Alt + F4 and blocks the exit event.',
+            'strict.exit.activate': 'Activate lock',
+            'strict.exit.deactivate': 'Deactivate lock',
+
+            /* Strict: screen lock card */
+            'strict.screen.kicker': 'Screen',
+            'strict.screen.title': 'Lock-type screen',
+            'strict.screen.text': 'Opens a borderless fullscreen window, always on top and visually dominant to simulate a study lock screen.',
+            'strict.screen.activate': 'Activate lock screen',
+            'strict.screen.deactivate': 'Deactivate lock screen',
+
+            /* Strict: interaction lock card */
+            'strict.interaction.kicker': 'Interaction',
+            'strict.interaction.title': 'Interaction lock',
+            'strict.interaction.text': 'Blocks everything around the widget and only leaves the main Pomodoro window as the only interactive surface.',
+            'strict.interaction.activate': 'Activate PRO lock',
+            'strict.interaction.deactivate': 'Deactivate PRO lock',
+
+            /* Strict: website lock card */
+            'strict.website.kicker': 'Web',
+            'strict.website.title': 'Website blocker',
+            'strict.website.text': 'Blocks domains at system level by editing the Windows hosts file. Requires admin permissions and reverts when exiting the mode.',
+            'strict.website.domainsLabel': 'Domains to block',
+            'strict.website.domainsPlaceholder': 'youtube.com\nfacebook.com\ntwitter.com',
+            'strict.website.hint': 'Blocked in all browsers using {path}.',
+            'strict.website.activate': 'Activate web block',
+            'strict.website.deactivate': 'Deactivate web block',
+            'strict.website.applying': 'Applying...',
+            'strict.website.statusDomains': 'Status: active ({n} domain{s})',
+
+            /* Strict: hero modes */
+            'strict.hero.exit.badge': 'Exit lock active',
+            'strict.hero.exit.title': 'The main window cannot be closed',
+            'strict.hero.exit.text': 'The widget stays open and blocks common exits while the mode is active.',
+            'strict.hero.exit.scope': 'Main window',
+            'strict.hero.screen.badge': 'Lock screen active',
+            'strict.hero.screen.title': 'The screen is taken over by the lock',
+            'strict.hero.screen.text': 'Opens a dominant fullscreen window to block visual distractions and force a study context.',
+            'strict.hero.screen.scope': 'Full screen',
+            'strict.hero.interaction.badge': 'PRO lock active',
+            'strict.hero.interaction.title': 'Only the widget remains usable',
+            'strict.hero.interaction.text': 'Everything around the main window is covered by blockers to keep focus on Pomodoro.',
+            'strict.hero.interaction.scope': 'Desktop around the widget',
+            'strict.hero.website.badge': 'Web block active',
+            'strict.hero.website.badgeBusy': 'Applying block',
+            'strict.hero.website.title': 'Websites blocked at system level',
+            'strict.hero.website.text': 'The block uses the hosts file and disables compatible Secure DNS so common browsers don\'t bypass the restriction.',
+            'strict.hero.website.scope': 'System and browsers',
+            'strict.hero.tags.hosts': 'Hosts active',
+            'strict.hero.tags.fullscreen': 'Fullscreen',
+            'strict.hero.tags.widgetOnly': 'Widget only',
+            'strict.hero.tags.noExit': 'No quick exit',
+            'strict.hero.tags.more': '+{n} more',
+
+            /* Strict: footer */
+            'strict.footer.title': 'Current stage',
+            'strict.footer.text': 'Active modes are mutually exclusive. Turning one on automatically deactivates any other active strict mode.',
+
+            /* -- Lock screen -- */
+            'lockScreen.badge': 'Strict Mode Active',
+            'lockScreen.dateLoading': 'Loading date...',
+            'lockScreen.title': 'Screen locked for studying',
+            'lockScreen.subtitle': 'The app covers the entire screen with an immersive, borderless, always-on-top view. Use this mode for sessions where you need zero visual distractions.',
+            'lockScreen.session': 'Protected session',
+            'lockScreen.status.active': 'Status: active',
+            'lockScreen.status.inactive': 'Status: inactive',
+            'lockScreen.window': 'Window',
+            'lockScreen.windowVal': 'Fullscreen',
+            'lockScreen.priority': 'Priority',
+            'lockScreen.priorityVal': 'Always On Top',
+            'lockScreen.coverage': 'Coverage',
+            'lockScreen.coverageVal': 'Full screen simulating a study lock screen',
+            'lockScreen.exit': 'Deactivate lock screen',
+
+            /* -- Clock date format -- */
+            'clock.locale': 'en-US',
+        }
+    }
+
+    /* ---- Motor ---- */
+    let currentLang = localStorage.getItem(STORAGE_KEY) || DEFAULT_LANG
+    if (!SUPPORTED.includes(currentLang)) currentLang = DEFAULT_LANG
+
+    function getLang() {
+        return currentLang
+    }
+
+    function setLang(lang) {
+        if (!SUPPORTED.includes(lang)) return
+        currentLang = lang
+        localStorage.setItem(STORAGE_KEY, lang)
+    }
+
+    function t(key, params) {
+        const dict = translations[currentLang] || translations[DEFAULT_LANG]
+        let str = dict[key]
+        if (str === undefined) {
+            const fallback = translations[DEFAULT_LANG]
+            str = fallback[key]
+        }
+        if (str === undefined) return key
+        if (params) {
+            Object.keys(params).forEach(function (k) {
+                str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k])
+            })
+        }
+        return str
+    }
+
+    function applyPage() {
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+            el.textContent = t(el.dataset.i18n)
+        })
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+            el.placeholder = t(el.dataset.i18nPlaceholder)
+        })
+        document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
+            el.title = t(el.dataset.i18nTitle)
+        })
+        document.querySelectorAll('[data-i18n-aria]').forEach(function (el) {
+            el.setAttribute('aria-label', t(el.dataset.i18nAria))
+        })
+        document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+            el.innerHTML = t(el.dataset.i18nHtml)
+        })
+    }
+
+    window.i18n = {
+        t: t,
+        setLang: setLang,
+        getLang: getLang,
+        applyPage: applyPage,
+        SUPPORTED: SUPPORTED
+    }
+})()

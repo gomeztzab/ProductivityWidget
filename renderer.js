@@ -22,11 +22,11 @@ const clockValue = document.getElementById('clock')
 const clockPeriod = document.getElementById('clockPeriod')
 const VIEW_MODE_STORAGE_KEY = 'dashboardViewModeDraft'
 const VIEW_MODE_LABELS = {
-    full: 'Modo completo',
-    compact: 'Modo compacto',
-    mini: 'Modo mini',
-    bar: 'Modo barra',
-    collapsed: 'Modo colapsado'
+    full: 'viewModes.full',
+    compact: 'viewModes.compact',
+    mini: 'viewModes.mini',
+    bar: 'viewModes.bar',
+    collapsed: 'viewModes.collapsed'
 }
 const VIEW_MODE_WIDTHS = {
     full: null,
@@ -77,7 +77,7 @@ function syncViewModesButtonState() {
     viewModesBtn.disabled = !enabled
     viewModesBtn.setAttribute('aria-disabled', enabled ? 'false' : 'true')
     viewModesBtn.classList.toggle('dashboard__ctrl-btn--disabled', !enabled)
-    viewModesBtn.title = enabled ? 'Modos de ventana' : 'Disponible solo en modo completo'
+    viewModesBtn.title = enabled ? i18n.t('btn.viewModes') : i18n.t('btn.viewModes.disabled')
 
     if (!enabled) {
         setViewModesPanelOpen(false)
@@ -96,7 +96,7 @@ function renderViewModeSelection(mode = selectedViewMode) {
     })
 
     if (viewModesCurrentLabel) {
-        viewModesCurrentLabel.textContent = VIEW_MODE_LABELS[selectedViewMode] || VIEW_MODE_LABELS.full
+        viewModesCurrentLabel.textContent = i18n.t(VIEW_MODE_LABELS[selectedViewMode] || VIEW_MODE_LABELS.full)
     }
 
     if (expandViewModeBtn) {
@@ -145,7 +145,7 @@ function syncStrictModeButtonState() {
     const active = strictModeState.exit || strictModeState.screen || strictModeState.interaction || strictModeState.website
     strictModeBtn.classList.toggle('pomodoro__strict-btn--active', active)
     if (strictModeBtnLabel) {
-        strictModeBtnLabel.textContent = strictModeState.interaction ? 'Desactivar PRO' : 'Modo Estricto'
+        strictModeBtnLabel.textContent = strictModeState.interaction ? i18n.t('pomodoro.disablePro') : i18n.t('pomodoro.strictMode')
     }
 }
 
@@ -423,13 +423,17 @@ if (document.fonts?.ready) {
 }
 
 ipcRenderer.on("apply-colors", (event, payload = {}) => {
-    const { accentColor, textColor, theme, font, focusDuration, breakDuration } = payload
+    const { accentColor, textColor, theme, font, focusDuration, breakDuration, language } = payload
     if(accentColor) document.documentElement.style.setProperty("--accent-color", accentColor)
     if(textColor)   document.documentElement.style.setProperty("--text-color",   textColor)
     if(theme)       document.documentElement.setAttribute("data-theme", theme)
     if(font)        applyFont(font)
     if (focusDuration || breakDuration) applyPomodoroDurations(focusDuration, breakDuration)
     applyReminderSettings(payload)
+    if (language) {
+        i18n.setLang(language)
+        applyLanguageToPage()
+    }
     scheduleWindowWidthSync()
 })
 
@@ -471,7 +475,7 @@ function updateClock() {
 
     if (clockValue) clockValue.textContent = `${String(h).padStart(2,"0")}:${m}:${s}`
     if (clockPeriod) clockPeriod.textContent = period
-    document.getElementById("date").textContent = now.toLocaleDateString("es-MX", {
+    document.getElementById("date").textContent = now.toLocaleDateString(i18n.t('clock.locale'), {
         weekday: "long", month: "long", day: "numeric"
     })
 
@@ -488,7 +492,7 @@ updateClock()
    Módulo IIFE — sin dependencias externas.
    ===================== */
 const Stats = (() => {
-    const PAGE_TITLES = ['Timer', 'Tasks', 'History']
+    const PAGE_TITLES = ['stats.timer', 'stats.tasks', 'stats.history']
 
     /* ---- Estado diario (clave = fecha del día) ---- */
     function _todayKey() { return `stats_${new Date().toDateString()}` }
@@ -553,7 +557,7 @@ const Stats = (() => {
         _page = n
         _pagesEls.forEach((el, i) => el.classList.toggle('stats__page--active', i === n))
         _dotsEls.forEach((d, i)  => d.classList.toggle('stats__dot--active',   i === n))
-        if (_titleEl) _titleEl.textContent = PAGE_TITLES[n]
+        if (_titleEl) _titleEl.textContent = i18n.t(PAGE_TITLES[n])
         _renderCurrent()
     }
 
@@ -640,7 +644,7 @@ TodoList = (() => {
     const LEGACY_TASKS_STORAGE_KEY = 'tasks'
     const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
     const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
-    const PRIORITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Baja' }
+    const PRIORITY_LABELS = { high: 'todo.priorityHigh', medium: 'todo.priorityMedium', low: 'todo.priorityLow' }
     const PRIORITY_SEQUENCE = ['high', 'medium', 'low']
     const VALID_FILTERS = new Set(['all', 'pending', 'completed'])
     const VALID_SORTS = new Set(['manual', 'priority'])
@@ -779,15 +783,15 @@ TodoList = (() => {
         const visibleTasks = getVisibleTasks()
         const { all, pending, done, activeTask } = getStats()
         const emptyMessage = all === 0
-            ? 'Agrega una tarea para empezar.'
-            : 'No hay tareas en este filtro.'
+            ? i18n.t('todo.emptyAdd')
+            : i18n.t('todo.emptyFilter')
 
         if (todoCard) {
             todoCard.classList.toggle('todo--compact', state.compact)
         }
 
         if (todoCompactToggleBtn) {
-            todoCompactToggleBtn.textContent = state.compact ? 'Expandir' : 'Compacto'
+            todoCompactToggleBtn.textContent = state.compact ? i18n.t('todo.expand') : i18n.t('todo.compact')
             todoCompactToggleBtn.setAttribute('aria-pressed', state.compact ? 'true' : 'false')
         }
 
@@ -802,28 +806,28 @@ TodoList = (() => {
         })
 
         if (todoSummaryText) {
-            todoSummaryText.textContent = `${pending} pendientes · ${done} completas`
+            todoSummaryText.textContent = i18n.t('todo.summary', { pending, done })
         }
 
         if (todoCompactCount) {
-            todoCompactCount.textContent = all === 0 ? 'Sin tareas' : `${pending} pendientes de ${all}`
+            todoCompactCount.textContent = all === 0 ? i18n.t('todo.noTasks') : i18n.t('todo.pendingOf', { pending, all })
         }
 
         if (todoCompactActive) {
-            todoCompactActive.textContent = activeTask ? `En foco: ${activeTask.text}` : 'Sin tarea en foco'
+            todoCompactActive.textContent = activeTask ? i18n.t('todo.inFocus', { task: activeTask.text }) : i18n.t('todo.noFocus')
         }
 
         if (todoActiveTask) {
             todoActiveTask.innerHTML = activeTask
                 ? `
-                    <span class="todo__active-task-kicker">Tarea en foco</span>
+                    <span class="todo__active-task-kicker">${i18n.t('todo.activeTask.kicker')}</span>
                     <strong class="todo__active-task-title">${escapeHtml(activeTask.text)}</strong>
-                    <span class="todo__active-task-meta">Prioridad ${PRIORITY_LABELS[activeTask.priority].toLowerCase()} · lista para Pomodoro</span>
+                    <span class="todo__active-task-meta">${i18n.t('todo.activeTask.meta', { priority: i18n.t(PRIORITY_LABELS[activeTask.priority]).toLowerCase() })}</span>
                 `
                 : `
-                    <span class="todo__active-task-kicker">Foco</span>
-                    <strong class="todo__active-task-title">Sin tarea activa</strong>
-                    <span class="todo__active-task-meta">Selecciona una tarea para centrarte en ella.</span>
+                    <span class="todo__active-task-kicker">${i18n.t('todo.activeTask.kicker')}</span>
+                    <strong class="todo__active-task-title">${i18n.t('todo.activeTask.noActive')}</strong>
+                    <span class="todo__active-task-meta">${i18n.t('todo.activeTask.select')}</span>
                 `
             todoActiveTask.classList.toggle('todo__active-task--idle', !activeTask)
         }
@@ -850,19 +854,19 @@ TodoList = (() => {
 
         return `
             <li class="todo__item${isCompleted ? ' todo__item--completed' : ''}${isActive ? ' todo__item--active' : ''}" data-task-id="${task.id}" data-source-index="${sourceIndex}">
-                <button class="todo__checkbox${isCompleted ? ' todo__checkbox--checked' : ''}" data-action="toggle" type="button" aria-label="${isCompleted ? 'Marcar como pendiente' : 'Marcar como completada'}">${isCompleted ? CHECK_SVG : ''}</button>
+                <button class="todo__checkbox${isCompleted ? ' todo__checkbox--checked' : ''}" data-action="toggle" type="button" aria-label="${isCompleted ? i18n.t('todo.markPending') : i18n.t('todo.markCompleted')}">${isCompleted ? CHECK_SVG : ''}</button>
                 <div class="todo__content">
                     <div class="todo__meta-row">
-                        <button class="todo__priority todo__priority--${task.priority}" data-action="priority" type="button">${PRIORITY_LABELS[task.priority]}</button>
-                        ${isActive ? '<span class="todo__focus-badge">En foco ahora</span>' : ''}
+                        <button class="todo__priority todo__priority--${task.priority}" data-action="priority" type="button">${i18n.t(PRIORITY_LABELS[task.priority])}</button>
+                        ${isActive ? `<span class="todo__focus-badge">${i18n.t('todo.focusBadge')}</span>` : ''}
                     </div>
                     <span class="todo__text">${escapeHtml(task.text)}</span>
                 </div>
                 <div class="todo__actions">
-                    <button class="todo__action${isActive ? ' todo__action--focus-active' : ' todo__action--focus'}" data-action="focus" type="button" ${isCompleted ? 'disabled' : ''}>${isActive ? 'Quitar foco' : 'Poner foco'}</button>
+                    <button class="todo__action${isActive ? ' todo__action--focus-active' : ' todo__action--focus'}" data-action="focus" type="button" ${isCompleted ? 'disabled' : ''}>${isActive ? i18n.t('todo.removeFocus') : i18n.t('todo.setFocus')}</button>
                     <button class="todo__action" data-action="move-up" type="button" ${moveUpDisabled ? 'disabled' : ''}>↑</button>
                     <button class="todo__action" data-action="move-down" type="button" ${moveDownDisabled ? 'disabled' : ''}>↓</button>
-                    <button class="todo__remove" data-action="remove" type="button" title="Eliminar">&times;</button>
+                    <button class="todo__remove" data-action="remove" type="button" title="${i18n.t('todo.remove')}">&times;</button>
                 </div>
             </li>
         `
@@ -1038,7 +1042,8 @@ TodoList = (() => {
     render()
 
     return {
-        getStats
+        getStats,
+        render
     }
 })()
 
@@ -1055,9 +1060,9 @@ function parseStoredDuration(value, defaultMinutes) {
 }
 
 function formatDurationText(seconds) {
-    if (seconds < 60) return `${seconds} segundos`
+    if (seconds < 60) return i18n.t('duration.seconds', { n: seconds })
     const minutes = Math.round(seconds / 60)
-    return `${minutes} min`
+    return i18n.t('duration.min', { n: minutes })
 }
 
 function normalizeReminderFlag(value, fallback) {
@@ -1235,12 +1240,12 @@ function startTimer() {
         /* PAUSAR */
         clearInterval(interval)
         interval = null
-        startBtn.textContent = "Reanudar"
+        startBtn.textContent = i18n.t('pomodoro.resume')
         return
     }
 
     hidePomodoroNotice()
-    startBtn.textContent = "Pausar"
+    startBtn.textContent = i18n.t('pomodoro.pause')
 
     interval = setInterval(() => {
         time--
@@ -1257,17 +1262,17 @@ function startTimer() {
                 isBreak   = true
                 time      = BREAK_TIME
                 totalTime = BREAK_TIME
-                pomodoroLabel.textContent = "Break Time"
-                startBtn.textContent      = "Iniciar descanso"
+                pomodoroLabel.textContent = i18n.t('pomodoro.breakTime')
+                startBtn.textContent      = i18n.t('pomodoro.startBreak')
                 sendPomodoroReminder(
                     "focus",
-                    "Focus terminado",
-                    `Pomodoro #${Stats.getPomodoros()} completado. Toma ${formatDurationText(BREAK_TIME)} de descanso.`,
+                    i18n.t('pomodoro.alert.focusDone'),
+                    i18n.t('pomodoro.alert.focusBody', { n: Stats.getPomodoros(), duration: formatDurationText(BREAK_TIME) }),
                     {
-                        kicker: "Focus completado",
-                        title: "Tu descanso esta listo",
-                        body: `Pomodoro #${Stats.getPomodoros()} listo. Empieza un descanso de ${formatDurationText(BREAK_TIME)} cuando quieras.`,
-                        actionLabel: "Iniciar descanso",
+                        kicker: i18n.t('pomodoro.notice.focusDone'),
+                        title: i18n.t('pomodoro.notice.breakReady'),
+                        body: i18n.t('pomodoro.notice.pomodoroReady', { n: Stats.getPomodoros(), duration: formatDurationText(BREAK_TIME) }),
+                        actionLabel: i18n.t('pomodoro.notice.startBreak'),
                         action: () => startTimer()
                     }
                 )
@@ -1275,17 +1280,17 @@ function startTimer() {
                 isBreak   = false
                 time      = FOCUS_TIME
                 totalTime = FOCUS_TIME
-                pomodoroLabel.textContent = "Focus Time"
-                startBtn.textContent      = "Iniciar"
+                pomodoroLabel.textContent = i18n.t('pomodoro.focusTime')
+                startBtn.textContent      = i18n.t('pomodoro.start')
                 sendPomodoroReminder(
                     "break",
-                    "Descanso terminado",
-                    `Vuelve al enfoque por ${formatDurationText(FOCUS_TIME)}.`,
+                    i18n.t('pomodoro.alert.breakDone'),
+                    i18n.t('pomodoro.alert.breakBody', { duration: formatDurationText(FOCUS_TIME) }),
                     {
-                        kicker: "Break completado",
-                        title: "Listo para volver al enfoque",
-                        body: `Tu siguiente bloque es de ${formatDurationText(FOCUS_TIME)}.`,
-                        actionLabel: "Comenzar enfoque",
+                        kicker: i18n.t('pomodoro.notice.breakDone'),
+                        title: i18n.t('pomodoro.notice.readyFocus'),
+                        body: i18n.t('pomodoro.notice.nextBlock', { duration: formatDurationText(FOCUS_TIME) }),
+                        actionLabel: i18n.t('pomodoro.notice.startFocus'),
                         action: () => startTimer()
                     }
                 )
@@ -1302,8 +1307,8 @@ function resetTimer() {
     isBreak   = false
     time      = FOCUS_TIME
     totalTime = FOCUS_TIME
-    pomodoroLabel.textContent = "Focus Time"
-    startBtn.textContent      = "Iniciar"
+    pomodoroLabel.textContent = i18n.t('pomodoro.focusTime')
+    startBtn.textContent      = i18n.t('pomodoro.start')
     updateTimerDisplay()
 }
 
@@ -1315,8 +1320,8 @@ function startBreak() {
     Stats.addBreak()
     time      = BREAK_TIME
     totalTime = BREAK_TIME
-    pomodoroLabel.textContent = "Break Time"
-    startBtn.textContent      = "Iniciar"
+    pomodoroLabel.textContent = i18n.t('pomodoro.breakTime')
+    startBtn.textContent      = i18n.t('pomodoro.start')
     updateTimerDisplay()
 }
 
@@ -1422,7 +1427,7 @@ const MusicPlayer = (() => {
     /* ---- Icono play/pause ---- */
     function setPlayIcon(playing) {
         if (!els.playBtn) return
-        els.playBtn.setAttribute("aria-label", playing ? "Pausar" : "Reproducir")
+        els.playBtn.setAttribute("aria-label", playing ? i18n.t('music.pause') : i18n.t('music.play'))
         els.playBtn.innerHTML = playing
             ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`
             : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>`
@@ -1452,7 +1457,7 @@ const MusicPlayer = (() => {
         const newDur    = data.duration || 0
         const newPlay   = data.status === "Playing"
         const curTitle  = els.trackName ? els.trackName.textContent : ""
-        const newTitle  = data.title || "Nothing playing"
+        const newTitle  = data.title || i18n.t('music.nothingPlaying')
         const trackChanged = newTitle !== curTitle
         const drift     = newPos - state.position   /* +server adelante, -server atrás */
 
@@ -1510,6 +1515,24 @@ MusicPlayer.init()
 Stats.init()
 
 /* =====================
+   i18n — aplicar traducciones al DOM
+   ===================== */
+function applyLanguageToPage() {
+    i18n.applyPage()
+    if (TodoList && typeof TodoList.render === 'function') {
+        TodoList.render()
+    }
+    syncViewModesButtonState()
+    syncStrictModeButtonState()
+    if (viewModesCurrentLabel) {
+        viewModesCurrentLabel.textContent = i18n.t(VIEW_MODE_LABELS[selectedViewMode] || VIEW_MODE_LABELS.full)
+    }
+    if (Weather && typeof Weather.refresh === 'function') {
+        Weather.refresh()
+    }
+}
+
+/* =====================
    WEATHER
    Geolocalización IP (ip-api.com, gratis, sin key) +
    clima (open-meteo.com, gratis, sin key).
@@ -1518,6 +1541,7 @@ Stats.init()
 const Weather = (() => {
     const https = require('https')
     const http  = require('http')
+    let latestData = null
 
     /* WMO Weather Interpretation Codes */
     const ICONS = {
@@ -1551,16 +1575,16 @@ const Weather = (() => {
         99: '\u26C8\uFE0F'
     }
     const DESCS = {
-        0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
-        45: 'Fog', 48: 'Icy Fog',
-        51: 'Light Drizzle', 53: 'Drizzle', 55: 'Heavy Drizzle',
-        56: 'Frz. Drizzle', 57: 'Frz. Drizzle',
-        61: 'Light Rain', 63: 'Rain', 65: 'Heavy Rain',
-        66: 'Frz. Rain', 67: 'Frz. Rain',
-        71: 'Light Snow', 73: 'Snow', 75: 'Heavy Snow', 77: 'Snow Grains',
-        80: 'Showers', 81: 'Showers', 82: 'Heavy Showers',
-        85: 'Snow Showers', 86: 'Heavy Snow Showers',
-        95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm'
+        0: 'weather.clear', 1: 'weather.mostlyClear', 2: 'weather.partlyCloudy', 3: 'weather.overcast',
+        45: 'weather.fog', 48: 'weather.icyFog',
+        51: 'weather.lightDrizzle', 53: 'weather.drizzle', 55: 'weather.heavyDrizzle',
+        56: 'weather.freezingDrizzle', 57: 'weather.freezingDrizzle',
+        61: 'weather.lightRain', 63: 'weather.rain', 65: 'weather.heavyRain',
+        66: 'weather.freezingRain', 67: 'weather.freezingRain',
+        71: 'weather.lightSnow', 73: 'weather.snow', 75: 'weather.heavySnow', 77: 'weather.snowGrains',
+        80: 'weather.showers', 81: 'weather.showers', 82: 'weather.heavyShowers',
+        85: 'weather.snowShowers', 86: 'weather.heavySnowShowers',
+        95: 'weather.thunderstorm', 96: 'weather.thunderstorm', 99: 'weather.thunderstorm'
     }
 
     const els = {
@@ -1585,9 +1609,10 @@ const Weather = (() => {
 
     function _render(d) {
         if (!d || d.temp === undefined) return
+        latestData = d
         if (els.icon)     els.icon.textContent     = ICONS[d.code]  ?? '\uD83C\uDF21\uFE0F'
         if (els.temp)     els.temp.textContent     = `${d.temp}\xB0`
-        if (els.cond)     els.cond.textContent     = DESCS[d.code]  ?? '\u2014'
+        if (els.cond)     els.cond.textContent     = DESCS[d.code] ? i18n.t(DESCS[d.code]) : '\u2014'
         if (els.location) els.location.textContent = d.city
     }
 
@@ -1614,8 +1639,18 @@ const Weather = (() => {
             if (cached) _render(cached)
             _fetch().catch(() => {})
             setInterval(() => _fetch().catch(() => {}), 30 * 60 * 1000)
+        },
+        refresh() {
+            if (latestData) {
+                _render(latestData)
+                return
+            }
+
+            const cached = JSON.parse(localStorage.getItem('weather_cache') || 'null')
+            if (cached) _render(cached)
         }
     }
 })()
 
 Weather.init()
+applyLanguageToPage()

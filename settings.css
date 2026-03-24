@@ -1080,3 +1080,63 @@ body {
 .settings__font-grid::-webkit-scrollbar-thumb:hover {
     filter: brightness(1.15);
 }
+
+/* ---- Language selector ---- */
+.settings__lang-grid {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 4px 2px;
+}
+
+.settings__lang-card {
+    flex: 0 0 140px;
+    background: #ffffff08;
+    border: 2px solid #ffffff15;
+    border-radius: 12px;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    -webkit-app-region: no-drag;
+}
+
+.settings__lang-card:hover {
+    transform: translateY(-2px);
+    border-color: #ffffff30;
+}
+
+.settings__lang-card--active {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px var(--accent-color), 0 4px 20px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+.settings__lang-card-flag {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.settings__lang-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffffcc;
+}
+
+[data-theme="light"] .settings__lang-card {
+    background: #00000006;
+    border-color: #00000012;
+}
+
+[data-theme="light"] .settings__lang-card:hover {
+    border-color: #00000030;
+}
+
+[data-theme="light"] .settings__lang-card--active {
+    border-color: var(--accent-color);
+}
+
+[data-theme="light"] .settings__lang-card-name {
+    color: #1e293b;
+}

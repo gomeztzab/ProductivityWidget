@@ -15,35 +15,36 @@ const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch"
 const textSwatches  = document.querySelectorAll("#textSwatchGroup .settings__swatch--text")
 const themeCards    = document.querySelectorAll(".settings__theme-card")
 const fontCards     = document.querySelectorAll(".settings__font-card")
+const langCards     = document.querySelectorAll(".settings__lang-card")
 
 const colorNames = {
-    "#3b82f6": "Azul",
-    "#8b5cf6": "Violeta",
-    "#06b6d4": "Cian",
-    "#10b981": "Verde",
-    "#f59e0b": "Ambar",
-    "#ef4444": "Rojo",
-    "#ec4899": "Rosa",
-    "#f97316": "Naranja",
-    "#14b8a6": "Turquesa",
-    "#84cc16": "Lima",
-    "#e11d48": "Carmesí",
-    "#6366f1": "Índigo",
-    "#111111": "Negro"
+    "#3b82f6": "color.blue",
+    "#8b5cf6": "color.violet",
+    "#06b6d4": "color.cyan",
+    "#10b981": "color.green",
+    "#f59e0b": "color.amber",
+    "#ef4444": "color.red",
+    "#ec4899": "color.pink",
+    "#f97316": "color.orange",
+    "#14b8a6": "color.turquoise",
+    "#84cc16": "color.lime",
+    "#e11d48": "color.crimson",
+    "#6366f1": "color.indigo",
+    "#111111": "color.black"
 }
 
 const textColorNames = {
-    "#ffffff": "Blanco",
-    "#e0f2fe": "Azul claro",
-    "#f3e8ff": "Lavanda",
-    "#d1fae5": "Menta",
-    "#fef3c7": "Crema",
-    "#fce7f3": "Rosa claro",
-    "#e5e7eb": "Plata",
-    "#fde68a": "Dorado suave",
-    "#cffafe": "Hielo",
-    "#ddd6fe": "Lila",
-    "#111111": "Negro"
+    "#ffffff": "color.white",
+    "#e0f2fe": "color.lightBlue",
+    "#f3e8ff": "color.lavender",
+    "#d1fae5": "color.mint",
+    "#fef3c7": "color.cream",
+    "#fce7f3": "color.lightPink",
+    "#e5e7eb": "color.silver",
+    "#fde68a": "color.softGold",
+    "#cffafe": "color.ice",
+    "#ddd6fe": "color.lilac",
+    "#111111": "color.black"
 }
 
 let selectedColor     = localStorage.getItem("accentColor") || "#3b82f6"
@@ -54,6 +55,7 @@ let reminderSoundEnabled = localStorage.getItem("reminderSoundEnabled") !== "fal
 let reminderNotificationsEnabled = localStorage.getItem("reminderNotificationsEnabled") !== "false"
 let reminderSoundLevel = localStorage.getItem("reminderSoundLevel") || "soft"
 let launchAtStartupEnabled = localStorage.getItem("launchAtStartupEnabled") === "true"
+let selectedLanguage  = localStorage.getItem("appLanguage") || "es"
 
 /* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
@@ -75,7 +77,9 @@ updateTextColorPreview(selectedTextColor)
 updateActiveTextSwatch(selectedTextColor)
 updateActiveThemeCard(selectedTheme)
 updateActiveFontCard(selectedFont)
+updateActiveLangCard(selectedLanguage)
 updateBars()
+i18n.applyPage()
 void syncLaunchAtStartupState()
 
 /* ---- Preview bars en tiempo real ---- */
@@ -134,6 +138,17 @@ fontCards.forEach(card => {
     })
 })
 
+langCards.forEach(card => {
+    card.addEventListener("click", () => {
+        selectedLanguage = card.dataset.lang
+        updateActiveLangCard(selectedLanguage)
+        i18n.setLang(selectedLanguage)
+        i18n.applyPage()
+        updateColorPreview(selectedColor)
+        updateTextColorPreview(selectedTextColor)
+    })
+})
+
 if (reminderSoundToggle) {
     reminderSoundToggle.addEventListener("change", () => {
         reminderSoundEnabled = reminderSoundToggle.checked
@@ -170,12 +185,18 @@ async function syncLaunchAtStartupState() {
 
         if (launchAtStartupHint) {
             launchAtStartupHint.textContent = isSupported
-                ? "La app se abrira automaticamente cuando inicies sesion."
-                : "Esta opcion no esta disponible en este sistema."
+                ? i18n.t("settings.launchAtStartup.hint")
+                : i18n.t("settings.launchAtStartup.unsupported")
         }
     } catch (_) {
         launchAtStartupToggle.checked = launchAtStartupEnabled
     }
+}
+
+function updateActiveLangCard(lang) {
+    langCards.forEach(c => c.classList.remove("settings__lang-card--active"))
+    const active = document.querySelector(`.settings__lang-card[data-lang='${lang}']`)
+    if(active) active.classList.add("settings__lang-card--active")
 }
 
 function updateActiveFontCard(font) {
@@ -225,7 +246,7 @@ function updateTextColorPreview(color) {
     }
     const nameEl = document.getElementById("textColorPreviewName")
     const hexEl  = document.getElementById("textColorPreviewHex")
-    if(nameEl) nameEl.textContent = textColorNames[color] || color
+    if(nameEl) nameEl.textContent = i18n.t(textColorNames[color]) || color
     if(hexEl)  hexEl.textContent  = color
 }
 
@@ -237,7 +258,7 @@ function updateColorPreview(color) {
     }
     const nameEl = document.getElementById("colorPreviewName")
     const hexEl  = document.getElementById("colorPreviewHex")
-    if(nameEl) nameEl.textContent = colorNames[color] || color
+    if(nameEl) nameEl.textContent = i18n.t(colorNames[color]) || color
     if(hexEl)  hexEl.textContent  = color
 }
 
@@ -260,6 +281,8 @@ saveBtn.addEventListener("click", async () => {
         return
     }
 
+    localStorage.setItem("appLanguage", selectedLanguage)
+
     ipcRenderer.send("save-settings", {
         accentColor: selectedColor,
         textColor:   selectedTextColor,
@@ -269,7 +292,8 @@ saveBtn.addEventListener("click", async () => {
         breakDuration: breakSel.value,
         reminderSoundEnabled,
         reminderNotificationsEnabled,
-        reminderSoundLevel
+        reminderSoundLevel,
+        language: selectedLanguage
     })
 })
 

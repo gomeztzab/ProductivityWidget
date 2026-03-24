@@ -23,7 +23,7 @@ function updateLockClock() {
     const minutes = String(now.getMinutes()).padStart(2, '0')
     if (clockEl) clockEl.textContent = `${hours}:${minutes}`
     if (dateEl) {
-        dateEl.textContent = now.toLocaleDateString('es-MX', {
+        dateEl.textContent = now.toLocaleDateString(i18n.t('clock.locale'), {
             weekday: 'long',
             month: 'long',
             day: 'numeric'
@@ -32,15 +32,21 @@ function updateLockClock() {
 }
 
 applyLockTheme()
+i18n.applyPage()
 updateLockClock()
 setInterval(updateLockClock, 1000)
 
 ipcRenderer.on('apply-colors', (_, payload) => {
     applyLockTheme(payload)
+    if (payload.language) {
+        i18n.setLang(payload.language)
+        i18n.applyPage()
+        updateLockClock()
+    }
 })
 
 ipcRenderer.on('strict-screen-lock-state', (_, payload = {}) => {
-    if (stateEl) stateEl.textContent = `Estado: ${payload.screenLockEnabled ? 'activo' : 'inactivo'}`
+    if (stateEl) stateEl.textContent = i18n.t(payload.screenLockEnabled ? 'lockScreen.status.active' : 'lockScreen.status.inactive')
 })
 
 ipcRenderer.on('strict-screen-lock-blocked', () => {

@@ -19,9 +19,9 @@
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                 </svg>
-                <h2 class="settings__title">Configuracion</h2>
+                <h2 class="settings__title" data-i18n="settings.title">Configuracion</h2>
             </div>
-            <button class="settings__close" id="closeSettingsBtn" title="Cerrar">
+            <button class="settings__close" id="closeSettingsBtn" title="Cerrar" data-i18n-title="settings.close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -44,8 +44,8 @@
 
                 <div class="settings__group">
                     <div class="settings__group-info">
-                        <span class="settings__label">Duracion de enfoque</span>
-                        <span class="settings__hint">Tiempo de trabajo concentrado</span>
+                        <span class="settings__label" data-i18n="settings.focusDuration">Duracion de enfoque</span>
+                        <span class="settings__hint" data-i18n="settings.focusDuration.hint">Tiempo de trabajo concentrado</span>
                     </div>
                     <div class="settings__select-wrapper">
                         <select class="settings__select" id="focusDuration">
@@ -65,8 +65,8 @@
 
                 <div class="settings__group">
                     <div class="settings__group-info">
-                        <span class="settings__label">Duracion de descanso</span>
-                        <span class="settings__hint">Tiempo de pausa entre sesiones</span>
+                        <span class="settings__label" data-i18n="settings.breakDuration">Duracion de descanso</span>
+                        <span class="settings__hint" data-i18n="settings.breakDuration.hint">Tiempo de pausa entre sesiones</span>
                     </div>
                     <div class="settings__select-wrapper">
                         <select class="settings__select" id="breakDuration">
@@ -89,14 +89,14 @@
                 <!-- Preview visual del pomodoro -->
                 <div class="settings__pomodoro-preview">
                     <div class="settings__pomodoro-bar">
-                        <div class="settings__pomodoro-bar-label">Enfoque</div>
+                        <div class="settings__pomodoro-bar-label" data-i18n="settings.focus">Enfoque</div>
                         <div class="settings__pomodoro-bar-track">
                             <div class="settings__pomodoro-bar-fill settings__pomodoro-bar-fill--focus" id="focusBar"></div>
                         </div>
                         <span class="settings__pomodoro-bar-val" id="focusPreview">25 min</span>
                     </div>
                     <div class="settings__pomodoro-bar">
-                        <div class="settings__pomodoro-bar-label">Descanso</div>
+                        <div class="settings__pomodoro-bar-label" data-i18n="settings.break">Descanso</div>
                         <div class="settings__pomodoro-bar-track">
                             <div class="settings__pomodoro-bar-fill settings__pomodoro-bar-fill--break" id="breakBar"></div>
                         </div>
@@ -106,14 +106,14 @@
 
                 <div class="settings__pomodoro-alerts">
                     <div class="settings__pomodoro-alerts-head">
-                        <span class="settings__label">Recordatorios</span>
-                        <span class="settings__hint">Controla sonido, notificaciones y la intensidad del aviso.</span>
+                        <span class="settings__label" data-i18n="settings.reminders">Recordatorios</span>
+                        <span class="settings__hint" data-i18n="settings.reminders.hint">Controla sonido, notificaciones y la intensidad del aviso.</span>
                     </div>
 
                     <label class="settings__toggle-row">
                         <div class="settings__group-info">
-                            <span class="settings__label">Sonido</span>
-                            <span class="settings__hint">Reproduce un tono al terminar enfoque o descanso.</span>
+                            <span class="settings__label" data-i18n="settings.sound">Sonido</span>
+                            <span class="settings__hint" data-i18n="settings.sound.hint">Reproduce un tono al terminar enfoque o descanso.</span>
                         </div>
                         <input class="settings__toggle-input" id="reminderSoundEnabled" type="checkbox">
                         <span class="settings__toggle-ui" aria-hidden="true"></span>
@@ -121,8 +121,8 @@
 
                     <label class="settings__toggle-row">
                         <div class="settings__group-info">
-                            <span class="settings__label">Notificaciones</span>
-                            <span class="settings__hint">Muestra una notificacion del sistema al completar cada bloque.</span>
+                            <span class="settings__label" data-i18n="settings.notifications">Notificaciones</span>
+                            <span class="settings__hint" data-i18n="settings.notifications.hint">Muestra una notificacion del sistema al completar cada bloque.</span>
                         </div>
                         <input class="settings__toggle-input" id="reminderNotificationsEnabled" type="checkbox">
                         <span class="settings__toggle-ui" aria-hidden="true"></span>
@@ -130,14 +130,14 @@
 
                     <div class="settings__group settings__group--stacked">
                         <div class="settings__group-info">
-                            <span class="settings__label">Intensidad del sonido</span>
-                            <span class="settings__hint">Elige un tono suave o uno mas marcado para pruebas.</span>
+                            <span class="settings__label" data-i18n="settings.soundLevel">Intensidad del sonido</span>
+                            <span class="settings__hint" data-i18n="settings.soundLevel.hint">Elige un tono suave o uno mas marcado para pruebas.</span>
                         </div>
                         <div class="settings__select-wrapper settings__select-wrapper--full">
                             <select class="settings__select" id="reminderSoundLevel">
-                                <option value="soft">Suave</option>
-                                <option value="medium">Media</option>
-                                <option value="strong">Fuerte</option>
+                                <option value="soft" data-i18n="settings.soundSoft">Suave</option>
+                                <option value="medium" data-i18n="settings.soundMedium">Media</option>
+                                <option value="strong" data-i18n="settings.soundStrong">Fuerte</option>
                             </select>
                             <svg class="settings__select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -160,7 +160,7 @@
                     Color de acento
                 </h3>
 
-                <p class="settings__panel-desc">Elige el color principal del temporizador y botones.</p>
+                <p class="settings__panel-desc" data-i18n="settings.accentColor.desc">Elige el color principal del temporizador y botones.</p>
 
                 <div class="settings__swatches" id="swatchGroup">
                     <button class="settings__swatch settings__swatch--active" data-color="#3b82f6" style="background:#3b82f6" title="Azul"></button>
@@ -198,7 +198,7 @@
                     Color de texto
                 </h3>
 
-                <p class="settings__panel-desc">Color del reloj y titulos principales.</p>
+                <p class="settings__panel-desc" data-i18n="settings.textColor.desc">Color del reloj y titulos principales.</p>
 
                 <div class="settings__swatches" id="textSwatchGroup">
                     <button class="settings__swatch settings__swatch--text settings__swatch--active" data-color="#ffffff" style="background:#ffffff" title="Blanco"></button>
@@ -234,7 +234,7 @@
                     </svg>
                     Tema del Dashboard
                 </h3>
-                <p class="settings__panel-desc">Elige el diseño visual del widget. El cambio se aplica al instante.</p>
+                <p class="settings__panel-desc" data-i18n="settings.dashTheme.desc">Elige el diseño visual del widget. El cambio se aplica al instante.</p>
 
                 <div class="settings__theme-grid">
 
@@ -382,82 +382,106 @@
                     </svg>
                     Tipografía
                 </h3>
-                <p class="settings__panel-desc">Elige la fuente del widget. Si una tipografía necesita más espacio, la ventana principal se adapta en horizontal.</p>
+                <p class="settings__panel-desc" data-i18n="settings.typography.desc">Elige la fuente del widget. Si una tipografía necesita más espacio, la ventana principal se adapta en horizontal.</p>
 
                 <div class="settings__font-grid">
 
                     <button class="settings__font-card settings__font-card--active" data-font="Inter">
                         <span class="settings__font-card-sample" style="font-family:'Inter',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Inter</span>
-                        <span class="settings__font-card-desc">Default</span>
+                        <span class="settings__font-card-desc" data-i18n="font.default">Default</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Outfit">
                         <span class="settings__font-card-sample" style="font-family:'Outfit',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Outfit</span>
-                        <span class="settings__font-card-desc">Moderna</span>
+                        <span class="settings__font-card-desc" data-i18n="font.modern">Moderna</span>
                     </button>
 
                     <button class="settings__font-card" data-font="DM Sans">
                         <span class="settings__font-card-sample" style="font-family:'DM Sans',sans-serif">Aa</span>
                         <span class="settings__font-card-name">DM Sans</span>
-                        <span class="settings__font-card-desc">Orgánica</span>
+                        <span class="settings__font-card-desc" data-i18n="font.organic">Orgánica</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Nunito">
                         <span class="settings__font-card-sample" style="font-family:'Nunito',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Nunito</span>
-                        <span class="settings__font-card-desc">Redondeada</span>
+                        <span class="settings__font-card-desc" data-i18n="font.rounded">Redondeada</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Sora">
                         <span class="settings__font-card-sample" style="font-family:'Sora',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Sora</span>
-                        <span class="settings__font-card-desc">Técnica</span>
+                        <span class="settings__font-card-desc" data-i18n="font.technical">Técnica</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Manrope">
                         <span class="settings__font-card-sample" style="font-family:'Manrope',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Manrope</span>
-                        <span class="settings__font-card-desc">Nítida</span>
+                        <span class="settings__font-card-desc" data-i18n="font.sharp">Nítida</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Plus Jakarta Sans">
                         <span class="settings__font-card-sample" style="font-family:'Plus Jakarta Sans',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Plus Jakarta</span>
-                        <span class="settings__font-card-desc">Editorial</span>
+                        <span class="settings__font-card-desc" data-i18n="font.editorial">Editorial</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Space Grotesk">
                         <span class="settings__font-card-sample" style="font-family:'Space Grotesk',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Space Grotesk</span>
-                        <span class="settings__font-card-desc">Geo</span>
+                        <span class="settings__font-card-desc" data-i18n="font.geo">Geo</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Urbanist">
                         <span class="settings__font-card-sample" style="font-family:'Urbanist',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Urbanist</span>
-                        <span class="settings__font-card-desc">Suave</span>
+                        <span class="settings__font-card-desc" data-i18n="font.soft">Suave</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Playfair Display">
                         <span class="settings__font-card-sample" style="font-family:'Playfair Display',serif">Aa</span>
                         <span class="settings__font-card-name">Playfair Display</span>
-                        <span class="settings__font-card-desc">Serif editorial</span>
+                        <span class="settings__font-card-desc" data-i18n="font.serifEditorial">Serif editorial</span>
                     </button>
 
                     <button class="settings__font-card" data-font="JetBrains Mono">
                         <span class="settings__font-card-sample" style="font-family:'JetBrains Mono',monospace">12</span>
                         <span class="settings__font-card-name">JetBrains Mono</span>
-                        <span class="settings__font-card-desc">Mono técnica</span>
+                        <span class="settings__font-card-desc" data-i18n="font.monoTechnical">Mono técnica</span>
                     </button>
 
                     <button class="settings__font-card" data-font="Bricolage Grotesque">
                         <span class="settings__font-card-sample" style="font-family:'Bricolage Grotesque',sans-serif">Aa</span>
                         <span class="settings__font-card-name">Bricolage</span>
-                        <span class="settings__font-card-desc">Expresiva</span>
+                        <span class="settings__font-card-desc" data-i18n="font.expressive">Expresiva</span>
                     </button>
 
+                </div>
+            </div>
+
+            <!-- Panel: Idioma -->
+            <div class="settings__panel settings__panel--language">
+                <h3 class="settings__panel-title">
+                    <svg class="settings__panel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M2 12h20"></path>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                    <span data-i18n="settings.language">Idioma</span>
+                </h3>
+                <p class="settings__panel-desc" data-i18n="settings.language.desc">Elige el idioma de toda la interfaz. El cambio se aplica al guardar.</p>
+
+                <div class="settings__lang-grid">
+                    <button class="settings__lang-card settings__lang-card--active" data-lang="es" type="button">
+                        <span class="settings__lang-card-flag">🇪🇸</span>
+                        <span class="settings__lang-card-name" data-i18n="settings.language.es">Español</span>
+                    </button>
+                    <button class="settings__lang-card" data-lang="en" type="button">
+                        <span class="settings__lang-card-flag">🇺🇸</span>
+                        <span class="settings__lang-card-name" data-i18n="settings.language.en">English</span>
+                    </button>
                 </div>
             </div>
 
@@ -469,12 +493,12 @@
                     </svg>
                     Inicio con Windows
                 </h3>
-                <p class="settings__panel-desc">Decide si el widget debe abrirse automaticamente al encender la PC.</p>
+                <p class="settings__panel-desc" data-i18n="settings.startWithWindows.desc">Decide si el widget debe abrirse automaticamente al encender la PC.</p>
 
                 <label class="settings__toggle-row">
                     <div class="settings__group-info">
-                        <span class="settings__label">Abrir al iniciar Windows</span>
-                        <span class="settings__hint" id="launchAtStartupHint">La app se abrira automaticamente cuando inicies sesion.</span>
+                        <span class="settings__label" data-i18n="settings.launchAtStartup">Abrir al iniciar Windows</span>
+                        <span class="settings__hint" id="launchAtStartupHint" data-i18n="settings.launchAtStartup.hint">La app se abrira automaticamente cuando inicies sesion.</span>
                     </div>
                     <input class="settings__toggle-input" id="launchAtStartupToggle" type="checkbox">
                     <span class="settings__toggle-ui" aria-hidden="true"></span>
@@ -487,20 +511,21 @@
 
         <!-- Footer -->
         <div class="settings__footer">
-            <span class="settings__footer-note">Los cambios se aplican al instante al guardar.</span>
+            <span class="settings__footer-note" data-i18n="settings.footer">Los cambios se aplican al instante al guardar.</span>
             <div class="settings__footer-actions">
-                <button class="btn btn--secondary" id="cancelSettingsBtn">Cancelar</button>
+                <button class="btn btn--secondary" id="cancelSettingsBtn" data-i18n="settings.cancel">Cancelar</button>
                 <button class="btn btn--primary" id="saveSettingsBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Guardar
+                    <span data-i18n="settings.save">Guardar</span>
                 </button>
             </div>
         </div>
 
     </div>
 
+    <script src="i18n.js"></script>
     <script src="settings.js"></script>
 </body>
 </html>

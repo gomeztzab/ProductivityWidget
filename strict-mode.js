@@ -50,49 +50,49 @@ function applyStrictModeTheme(payload = {}) {
 function getHeroModeConfig() {
     if (websiteLockEnabled) {
         return {
-            badge: websiteLockBusy ? 'Aplicando bloqueo' : 'Bloqueo web activo',
-            title: 'Sitios bloqueados a nivel sistema',
-            text: 'El bloqueo usa el archivo hosts y desactiva Secure DNS compatible para que los navegadores comunes no salten la restriccion.',
-            scope: 'Sistema y navegadores',
+            badge: websiteLockBusy ? i18n.t('strict.hero.website.badgeBusy') : i18n.t('strict.hero.website.badge'),
+            title: i18n.t('strict.hero.website.title'),
+            text: i18n.t('strict.hero.website.text'),
+            scope: i18n.t('strict.hero.website.scope'),
             tone: 'website'
         }
     }
 
     if (interactionLockEnabled) {
         return {
-            badge: 'Bloqueo PRO activo',
-            title: 'Solo el widget queda utilizable',
-            text: 'Todo lo que rodea la ventana principal queda cubierto por bloqueadores para mantener el foco en Pomodoro.',
-            scope: 'Escritorio alrededor del widget',
+            badge: i18n.t('strict.hero.interaction.badge'),
+            title: i18n.t('strict.hero.interaction.title'),
+            text: i18n.t('strict.hero.interaction.text'),
+            scope: i18n.t('strict.hero.interaction.scope'),
             tone: 'interaction'
         }
     }
 
     if (screenLockEnabled) {
         return {
-            badge: 'Pantalla lock activa',
-            title: 'La pantalla queda tomada por el lock',
-            text: 'Se abre una ventana fullscreen dominante para cortar distracciones visuales y forzar un contexto de estudio.',
-            scope: 'Pantalla completa',
+            badge: i18n.t('strict.hero.screen.badge'),
+            title: i18n.t('strict.hero.screen.title'),
+            text: i18n.t('strict.hero.screen.text'),
+            scope: i18n.t('strict.hero.screen.scope'),
             tone: 'screen'
         }
     }
 
     if (exitLockEnabled) {
         return {
-            badge: 'Bloqueo de salida activo',
-            title: 'La ventana principal no se puede cerrar',
-            text: 'El widget se mantiene abierto y bloquea salidas comunes mientras el modo siga activo.',
-            scope: 'Ventana principal',
+            badge: i18n.t('strict.hero.exit.badge'),
+            title: i18n.t('strict.hero.exit.title'),
+            text: i18n.t('strict.hero.exit.text'),
+            scope: i18n.t('strict.hero.exit.scope'),
             tone: 'exit'
         }
     }
 
     return {
-        badge: 'Panel en espera',
-        title: 'Ningun modo activo',
-        text: 'Selecciona una restriccion para ver aqui el alcance real que tendra sobre la app, la pantalla o los sitios configurados.',
-        scope: 'Sin bloqueo',
+        badge: i18n.t('strict.heroBadge.idle'),
+        title: i18n.t('strict.heroTitle.idle'),
+        text: i18n.t('strict.heroText.idle'),
+        scope: i18n.t('strict.heroScope.idle'),
         tone: 'idle'
     }
 }
@@ -112,27 +112,28 @@ function renderHeroPreview() {
     if (heroText) heroText.textContent = mode.text
     if (heroScope) heroScope.textContent = mode.scope
     if (heroDomains) {
-        heroDomains.textContent = `${displayedDomains.length} ${displayedDomains.length === 1 ? 'listo' : 'listos'}`
+        const key = displayedDomains.length === 1 ? 'strict.heroDomains.readyOne' : 'strict.heroDomains.ready'
+        heroDomains.textContent = i18n.t(key, { n: displayedDomains.length })
     }
 
     if (!heroTags) return
 
     const tags = []
 
-    if (websiteLockEnabled) tags.push('Hosts activo')
-    if (screenLockEnabled) tags.push('Fullscreen')
-    if (interactionLockEnabled) tags.push('Solo widget')
-    if (exitLockEnabled) tags.push('Sin salida rapida')
+    if (websiteLockEnabled) tags.push(i18n.t('strict.hero.tags.hosts'))
+    if (screenLockEnabled) tags.push(i18n.t('strict.hero.tags.fullscreen'))
+    if (interactionLockEnabled) tags.push(i18n.t('strict.hero.tags.widgetOnly'))
+    if (exitLockEnabled) tags.push(i18n.t('strict.hero.tags.noExit'))
 
     displayedDomains.slice(0, 4).forEach(domain => tags.push(domain))
 
     if (!tags.length) {
-        heroTags.innerHTML = '<span class="strict-mode__hero-tag strict-mode__hero-tag--muted">Sin dominios cargados</span>'
+        heroTags.innerHTML = `<span class="strict-mode__hero-tag strict-mode__hero-tag--muted">${i18n.t('strict.heroTags.none')}</span>`
         return
     }
 
     const hiddenCount = displayedDomains.length - Math.min(displayedDomains.length, 4)
-    if (hiddenCount > 0) tags.push(`+${hiddenCount} mas`)
+    if (hiddenCount > 0) tags.push(i18n.t('strict.hero.tags.more', { n: hiddenCount }))
 
     heroTags.innerHTML = tags
         .map(tag => `<span class="strict-mode__hero-tag">${tag}</span>`)
@@ -140,33 +141,39 @@ function renderHeroPreview() {
 }
 
 applyStrictModeTheme()
+i18n.applyPage()
 renderHeroPreview()
 
 ipcRenderer.on('apply-colors', (_, payload) => {
     applyStrictModeTheme(payload)
+    if (payload.language) {
+        i18n.setLang(payload.language)
+        i18n.applyPage()
+        renderHeroPreview()
+    }
 })
 
 function renderExitLockState(enabled) {
     exitLockEnabled = Boolean(enabled)
     if (exitLockCard) exitLockCard.classList.toggle('strict-mode__card--locked', exitLockEnabled)
-    if (exitLockStatus) exitLockStatus.textContent = `Estado: ${exitLockEnabled ? 'activo' : 'inactivo'}`
-    if (exitLockToggleBtn) exitLockToggleBtn.textContent = exitLockEnabled ? 'Desactivar bloqueo' : 'Activar bloqueo'
+    if (exitLockStatus) exitLockStatus.textContent = i18n.t(exitLockEnabled ? 'strict.status.active' : 'strict.status.inactive')
+    if (exitLockToggleBtn) exitLockToggleBtn.textContent = i18n.t(exitLockEnabled ? 'strict.exit.deactivate' : 'strict.exit.activate')
     renderHeroPreview()
 }
 
 function renderScreenLockState(enabled) {
     screenLockEnabled = Boolean(enabled)
     if (screenLockCard) screenLockCard.classList.toggle('strict-mode__card--locked', screenLockEnabled)
-    if (screenLockStatus) screenLockStatus.textContent = `Estado: ${screenLockEnabled ? 'activo' : 'inactivo'}`
-    if (screenLockToggleBtn) screenLockToggleBtn.textContent = screenLockEnabled ? 'Desactivar pantalla lock' : 'Activar pantalla lock'
+    if (screenLockStatus) screenLockStatus.textContent = i18n.t(screenLockEnabled ? 'strict.status.active' : 'strict.status.inactive')
+    if (screenLockToggleBtn) screenLockToggleBtn.textContent = i18n.t(screenLockEnabled ? 'strict.screen.deactivate' : 'strict.screen.activate')
     renderHeroPreview()
 }
 
 function renderInteractionLockState(enabled) {
     interactionLockEnabled = Boolean(enabled)
     if (interactionLockCard) interactionLockCard.classList.toggle('strict-mode__card--locked', interactionLockEnabled)
-    if (interactionLockStatus) interactionLockStatus.textContent = `Estado: ${interactionLockEnabled ? 'activo' : 'inactivo'}`
-    if (interactionLockToggleBtn) interactionLockToggleBtn.textContent = interactionLockEnabled ? 'Desactivar bloqueo PRO' : 'Activar bloqueo PRO'
+    if (interactionLockStatus) interactionLockStatus.textContent = i18n.t(interactionLockEnabled ? 'strict.status.active' : 'strict.status.inactive')
+    if (interactionLockToggleBtn) interactionLockToggleBtn.textContent = i18n.t(interactionLockEnabled ? 'strict.interaction.deactivate' : 'strict.interaction.activate')
     renderHeroPreview()
 }
 
@@ -177,20 +184,20 @@ function renderWebsiteLockState(payload = {}) {
     if (websiteLockStatus) {
         const count = Array.isArray(payload.domains) ? payload.domains.length : 0
         websiteLockStatus.textContent = websiteLockEnabled
-            ? `Estado: activo (${count} dominio${count === 1 ? '' : 's'})`
-            : 'Estado: inactivo'
+            ? i18n.t('strict.website.statusDomains', { n: count, s: count === 1 ? '' : 's' })
+            : i18n.t('strict.status.inactive')
     }
     if (websiteLockToggleBtn) {
         websiteLockToggleBtn.textContent = websiteLockBusy
-            ? 'Aplicando...'
-            : websiteLockEnabled ? 'Desactivar bloqueo web' : 'Activar bloqueo web'
+            ? i18n.t('strict.website.applying')
+            : i18n.t(websiteLockEnabled ? 'strict.website.deactivate' : 'strict.website.activate')
         websiteLockToggleBtn.disabled = websiteLockBusy
     }
     if (websiteLockDomainsInput && Array.isArray(payload.domains) && document.activeElement !== websiteLockDomainsInput) {
         websiteLockDomainsInput.value = payload.domains.join('\n')
     }
     if (websiteLockHint) {
-        websiteLockHint.textContent = payload.error || `Se bloquean en todos los navegadores usando ${payload.hostsPath || 'el archivo hosts'}.`
+        websiteLockHint.textContent = payload.error || i18n.t('strict.website.hint', { path: payload.hostsPath || 'hosts' })
     }
     renderHeroPreview()
 }

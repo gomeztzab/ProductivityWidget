@@ -15,14 +15,14 @@
     <!-- Controles de ventana -->
     <div class="dashboard__controls">
         <div class="dashboard__controls-group dashboard__controls-group--left">
-            <button class="dashboard__ctrl-btn dashboard__ctrl-btn--mode" id="viewModesBtn" title="Modos de ventana">
+            <button class="dashboard__ctrl-btn dashboard__ctrl-btn--mode" id="viewModesBtn" title="Modos de ventana" data-i18n-title="btn.viewModes">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="4" y="5" width="16" height="4" rx="1.5"></rect>
                     <rect x="4" y="10" width="10" height="9" rx="1.5"></rect>
                     <rect x="15.5" y="10" width="4.5" height="9" rx="1.5"></rect>
                 </svg>
             </button>
-            <button class="dashboard__ctrl-btn" id="configBtn" title="Configuración">
+            <button class="dashboard__ctrl-btn" id="configBtn" title="Configuración" data-i18n-title="btn.config">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -30,12 +30,12 @@
             </button>
         </div>
         <div class="dashboard__controls-group dashboard__controls-group--right">
-            <button class="dashboard__ctrl-btn" id="minimizeBtn" title="Minimizar">
+            <button class="dashboard__ctrl-btn" id="minimizeBtn" title="Minimizar" data-i18n-title="btn.minimize">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="6" y1="12" x2="18" y2="12"></line>
                 </svg>
             </button>
-            <button class="dashboard__ctrl-btn dashboard__ctrl-btn--close" id="closeBtn" title="Cerrar">
+            <button class="dashboard__ctrl-btn dashboard__ctrl-btn--close" id="closeBtn" title="Cerrar" data-i18n-title="btn.close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -66,31 +66,31 @@
                     </svg>
                     <div class="pomodoro__circle-label">
                         <div class="pomodoro__time" id="timer">25:00</div>
-                        <div class="pomodoro__label">Focus Time</div>
+                        <div class="pomodoro__label" data-i18n="pomodoro.focusTime">Focus Time</div>
                     </div>
                 </div>
                 <div class="pomodoro__controls">
-                    <button class="btn btn--primary" id="startTimerBtn">Start</button>
-                    <button class="btn btn--secondary" id="breakBtn">Break</button>
-                    <button class="btn btn--danger" id="resetTimerBtn">Stop</button>
+                    <button class="btn btn--primary" id="startTimerBtn" data-i18n="pomodoro.start">Iniciar</button>
+                    <button class="btn btn--secondary" id="breakBtn" data-i18n="pomodoro.break">Descanso</button>
+                    <button class="btn btn--danger" id="resetTimerBtn" data-i18n="pomodoro.stop">Parar</button>
                 </div>
                 <button class="pomodoro__strict-btn" id="strictModeBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 3l7 3v6c0 4.5-2.9 8.5-7 9.8C7.9 20.5 5 16.5 5 12V6l7-3z"></path>
                         <path d="M9.5 12.5l1.8 1.8 3.7-4.3"></path>
                     </svg>
-                    <span>Modo Estricto</span>
+                    <span data-i18n="pomodoro.strictMode">Modo Estricto</span>
                 </button>
-                <button class="pomodoro__expand-btn btn btn--secondary btn--small" id="expandViewModeBtn" type="button">Expandir a modo completo</button>
+                <button class="pomodoro__expand-btn btn btn--secondary btn--small" id="expandViewModeBtn" type="button" data-i18n="pomodoro.expandFull">Expandir a modo completo</button>
                 <div class="pomodoro__notice pomodoro__notice--hidden" id="pomodoroNotice" aria-live="polite">
                     <div class="pomodoro__notice-copy">
-                        <span class="pomodoro__notice-kicker" id="pomodoroNoticeKicker">Recordatorio</span>
-                        <strong class="pomodoro__notice-title" id="pomodoroNoticeTitle">Tiempo completado</strong>
-                        <span class="pomodoro__notice-body" id="pomodoroNoticeBody">Tu siguiente bloque ya esta listo.</span>
+                        <span class="pomodoro__notice-kicker" id="pomodoroNoticeKicker" data-i18n="pomodoro.notice.reminder">Recordatorio</span>
+                        <strong class="pomodoro__notice-title" id="pomodoroNoticeTitle" data-i18n="pomodoro.notice.completed">Tiempo completado</strong>
+                        <span class="pomodoro__notice-body" id="pomodoroNoticeBody" data-i18n="pomodoro.notice.nextReady">Tu siguiente bloque ya esta listo.</span>
                     </div>
                     <div class="pomodoro__notice-actions">
-                        <button class="btn btn--primary btn--small" id="pomodoroNoticeAction">Continuar</button>
-                        <button class="pomodoro__notice-dismiss" id="pomodoroNoticeDismiss" aria-label="Cerrar aviso">&times;</button>
+                        <button class="btn btn--primary btn--small" id="pomodoroNoticeAction" data-i18n="pomodoro.notice.continue">Continuar</button>
+                        <button class="pomodoro__notice-dismiss" id="pomodoroNoticeDismiss" aria-label="Cerrar aviso" data-i18n-aria="pomodoro.notice.closeAriaLabel">&times;</button>
                     </div>
                 </div>
             </div>
@@ -99,14 +99,14 @@
             <div class="todo">
                 <div class="todo__header">
                     <div class="todo__header-copy">
-                        <h3 class="todo__title">To-Do List</h3>
+                        <h3 class="todo__title" data-i18n="todo.title">To-Do List</h3>
                         <span class="todo__summary-text" id="todoSummaryText">0 tareas pendientes</span>
                     </div>
                     <div class="todo__header-actions">
                         <svg class="todo__header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        <button class="todo__compact-toggle" id="todoCompactToggleBtn" type="button" aria-pressed="false">Compacto</button>
+                        <button class="todo__compact-toggle" id="todoCompactToggleBtn" type="button" aria-pressed="false" data-i18n="todo.compact">Compacto</button>
                     </div>
                 </div>
                 <button class="todo__compact-summary" id="todoCompactSummaryBtn" type="button">
@@ -115,35 +115,35 @@
                 </button>
                 <div class="todo__panel" id="todoPanel">
                     <div class="todo__input-row">
-                        <input class="todo__input" id="taskInput" type="text" placeholder="Nueva tarea...">
-                        <select class="todo__priority-select" id="taskPrioritySelect" aria-label="Prioridad de la nueva tarea">
-                            <option value="high">Alta</option>
-                            <option value="medium" selected>Media</option>
-                            <option value="low">Baja</option>
+                        <input class="todo__input" id="taskInput" type="text" placeholder="Nueva tarea..." data-i18n-placeholder="todo.placeholder">
+                        <select class="todo__priority-select" id="taskPrioritySelect" aria-label="Prioridad de la nueva tarea" data-i18n-aria="todo.addAriaLabel">
+                            <option value="high" data-i18n="todo.priorityHigh">Alta</option>
+                            <option value="medium" selected data-i18n="todo.priorityMedium">Media</option>
+                            <option value="low" data-i18n="todo.priorityLow">Baja</option>
                         </select>
-                        <button class="btn btn--primary" id="addTaskBtn" type="button" aria-label="Agregar tarea">+</button>
+                        <button class="btn btn--primary" id="addTaskBtn" type="button" aria-label="Agregar tarea" data-i18n-aria="todo.addAriaLabel">+</button>
                     </div>
                     <div class="todo__toolbar">
                         <div class="todo__filters" id="taskFilters">
-                            <button class="todo__filter todo__filter--active" data-filter="all" type="button">Todas</button>
-                            <button class="todo__filter" data-filter="pending" type="button">Pendientes</button>
-                            <button class="todo__filter" data-filter="completed" type="button">Completadas</button>
+                            <button class="todo__filter todo__filter--active" data-filter="all" type="button" data-i18n="todo.filterAll">Todas</button>
+                            <button class="todo__filter" data-filter="pending" type="button" data-i18n="todo.filterPending">Pendientes</button>
+                            <button class="todo__filter" data-filter="completed" type="button" data-i18n="todo.filterCompleted">Completadas</button>
                         </div>
                         <select class="todo__sort" id="taskSortSelect" aria-label="Ordenar tareas">
-                            <option value="manual">Manual</option>
-                            <option value="priority">Prioridad</option>
+                            <option value="manual" data-i18n="todo.sortManual">Manual</option>
+                            <option value="priority" data-i18n="todo.sortPriority">Prioridad</option>
                         </select>
                     </div>
-                    <div class="todo__active-task" id="todoActiveTask">Sin tarea activa</div>
+                    <div class="todo__active-task" id="todoActiveTask" data-i18n="todo.activeTask.noActive">Sin tarea activa</div>
                     <ul class="todo__list" id="taskList"></ul>
-                    <p class="todo__empty" id="todoEmptyState">Agrega una tarea para empezar.</p>
+                    <p class="todo__empty" id="todoEmptyState" data-i18n="todo.emptyAdd">Agrega una tarea para empezar.</p>
                 </div>
             </div>
 
             <!-- Stats -->
             <div class="stats">
                 <div class="stats__header">
-                    <h3 class="stats__title">Timer</h3>
+                    <h3 class="stats__title" data-i18n="stats.timer">Timer</h3>
                     <div class="stats__dots">
                         <div class="stats__dot stats__dot--active"></div>
                         <div class="stats__dot"></div>
@@ -161,7 +161,7 @@
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                                 <span class="stats__item-value" id="statPomodoros">0</span>
-                                <span class="stats__item-label">Pomodoros</span>
+                                <span class="stats__item-label" data-i18n="stats.pomodoros">Pomodoros</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -170,14 +170,14 @@
                                     <line x1="12" y1="12" x2="15" y2="14"></line>
                                 </svg>
                                 <span class="stats__item-value" id="statFocused">0m</span>
-                                <span class="stats__item-label">Focused</span>
+                                <span class="stats__item-label" data-i18n="stats.focused">Enfocado</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 </svg>
                                 <span class="stats__item-value" id="statBreaks">0</span>
-                                <span class="stats__item-label">Breaks</span>
+                                <span class="stats__item-label" data-i18n="stats.breaks">Descansos</span>
                             </div>
                         </div>
                     </div>
@@ -190,7 +190,7 @@
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                                 <span class="stats__item-value" id="statTasksDone">0</span>
-                                <span class="stats__item-label">Done</span>
+                                <span class="stats__item-label" data-i18n="stats.done">Hechas</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -202,7 +202,7 @@
                                     <line x1="3" y1="18" x2="3.01" y2="18"></line>
                                 </svg>
                                 <span class="stats__item-value" id="statTasksPending">0</span>
-                                <span class="stats__item-label">Pending</span>
+                                <span class="stats__item-label" data-i18n="stats.pending">Pendientes</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -211,7 +211,7 @@
                                     <line x1="6" y1="20" x2="6" y2="16"></line>
                                 </svg>
                                 <span class="stats__item-value" id="statTasksRate">0%</span>
-                                <span class="stats__item-label">Rate</span>
+                                <span class="stats__item-label" data-i18n="stats.rate">Tasa</span>
                             </div>
                         </div>
                     </div>
@@ -224,14 +224,14 @@
                                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                                 </svg>
                                 <span class="stats__item-value" id="statStreak">0d</span>
-                                <span class="stats__item-label">Streak</span>
+                                <span class="stats__item-label" data-i18n="stats.streak">Racha</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                                 </svg>
                                 <span class="stats__item-value" id="statBest">0</span>
-                                <span class="stats__item-label">Best Day</span>
+                                <span class="stats__item-label" data-i18n="stats.bestDay">Mejor Día</span>
                             </div>
                             <div class="stats__item">
                                 <svg class="stats__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -239,7 +239,7 @@
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                                 <span class="stats__item-value" id="statTotal">0h</span>
-                                <span class="stats__item-label">Total</span>
+                                <span class="stats__item-label" data-i18n="stats.total">Total</span>
                             </div>
                         </div>
                     </div>
@@ -255,8 +255,8 @@
             <div class="weather">
                 <div class="weather__icon" id="weatherIcon">&#9925;</div>
                 <div class="weather__info">
-                    <div class="weather__temp"><span id="weatherTemp">—°</span> <span class="weather__condition" id="weatherCondition">Loading…</span></div>
-                    <div class="weather__location" id="weatherLocation">Locating…</div>
+                    <div class="weather__temp"><span id="weatherTemp">—°</span> <span class="weather__condition" id="weatherCondition" data-i18n="weather.loading">Cargando…</span></div>
+                    <div class="weather__location" id="weatherLocation" data-i18n="weather.locating">Localizando…</div>
                 </div>
             </div>
 
@@ -270,7 +270,7 @@
                     </svg>
                 </div>
                 <div class="music__info">
-                    <div class="music__now-playing">Now Playing: <span class="music__track-name" id="musicTrackName">Nothing playing</span></div>
+                    <div class="music__now-playing"><span data-i18n="music.nowPlaying">Reproduciendo:</span> <span class="music__track-name" id="musicTrackName" data-i18n="music.nothingPlaying">Sin reproducción</span></div>
                     <div class="music__progress" id="musicProgress">
                         <div class="music__progress-dot" id="musicProgressDot"></div>
                     </div>
@@ -300,16 +300,16 @@
         <section class="view-modes view-modes--hidden" id="viewModesPanel" aria-labelledby="viewModesTitle" aria-hidden="true">
             <div class="view-modes__header">
                 <div class="view-modes__header-copy">
-                    <span class="view-modes__eyebrow">Window Modes</span>
-                    <h2 class="view-modes__title" id="viewModesTitle">Modos de empleo de la ventana</h2>
-                    <p class="view-modes__subtitle">Elige una vista para reorganizar el widget segun tu contexto: completa para trabajo extendido o reducida para mantenerlo presente sin invadir pantalla.</p>
+                    <span class="view-modes__eyebrow" data-i18n="viewModes.eyebrow">Modos de ventana</span>
+                    <h2 class="view-modes__title" id="viewModesTitle" data-i18n="viewModes.title">Modos de empleo de la ventana</h2>
+                    <p class="view-modes__subtitle" data-i18n="viewModes.subtitle">Elige una vista para reorganizar el widget segun tu contexto: completa para trabajo extendido o reducida para mantenerlo presente sin invadir pantalla.</p>
                 </div>
-                <button class="view-modes__close" id="viewModesCloseBtn" aria-label="Cerrar panel de modos">&times;</button>
+                <button class="view-modes__close" id="viewModesCloseBtn" aria-label="Cerrar panel de modos" data-i18n-aria="viewModes.closeAriaLabel">&times;</button>
             </div>
 
             <div class="view-modes__active-strip">
-                <span class="view-modes__active-label">Modo seleccionado</span>
-                <strong class="view-modes__active-value" id="viewModesCurrentLabel">Modo completo</strong>
+                <span class="view-modes__active-label" data-i18n="viewModes.selected">Modo seleccionado</span>
+                <strong class="view-modes__active-value" id="viewModesCurrentLabel" data-i18n="viewModes.full">Modo completo</strong>
             </div>
 
             <div class="view-modes__grid" id="viewModesGrid">
@@ -318,8 +318,8 @@
                         <span></span><span></span><span></span><span></span>
                     </span>
                     <span class="view-modes__option-copy">
-                        <strong class="view-modes__option-title">Modo completo</strong>
-                        <span class="view-modes__option-text">Mantiene el dashboard con toda la informacion y densidad actual.</span>
+                        <strong class="view-modes__option-title" data-i18n="viewModes.full">Modo completo</strong>
+                        <span class="view-modes__option-text" data-i18n="viewModes.full.desc">Mantiene el dashboard con toda la informacion y densidad actual.</span>
                     </span>
                 </button>
 
@@ -328,8 +328,8 @@
                         <span></span><span></span><span></span>
                     </span>
                     <span class="view-modes__option-copy">
-                        <strong class="view-modes__option-title">Modo compacto</strong>
-                        <span class="view-modes__option-text">Reduce aire visual y concentra los modulos sin perder lectura.</span>
+                        <strong class="view-modes__option-title" data-i18n="viewModes.compact">Modo compacto</strong>
+                        <span class="view-modes__option-text" data-i18n="viewModes.compact.desc">Reduce aire visual y concentra los modulos sin perder lectura.</span>
                     </span>
                 </button>
 
@@ -338,8 +338,8 @@
                         <span></span><span></span>
                     </span>
                     <span class="view-modes__option-copy">
-                        <strong class="view-modes__option-title">Modo mini</strong>
-                        <span class="view-modes__option-text">Version corta pensada para ocupar menos espacio sin desaparecer.</span>
+                        <strong class="view-modes__option-title" data-i18n="viewModes.mini">Modo mini</strong>
+                        <span class="view-modes__option-text" data-i18n="viewModes.mini.desc">Version corta pensada para ocupar menos espacio sin desaparecer.</span>
                     </span>
                 </button>
 
@@ -348,8 +348,8 @@
                         <span></span>
                     </span>
                     <span class="view-modes__option-copy">
-                        <strong class="view-modes__option-title">Modo barra</strong>
-                        <span class="view-modes__option-text">Formato longitudinal para una lectura rapida y continua.</span>
+                        <strong class="view-modes__option-title" data-i18n="viewModes.bar">Modo barra</strong>
+                        <span class="view-modes__option-text" data-i18n="viewModes.bar.desc">Formato longitudinal para una lectura rapida y continua.</span>
                     </span>
                 </button>
 
@@ -358,14 +358,15 @@
                         <span></span>
                     </span>
                     <span class="view-modes__option-copy">
-                        <strong class="view-modes__option-title">Modo colapsado</strong>
-                        <span class="view-modes__option-text">Presencia minima lista para expandirse cuando haga falta.</span>
+                        <strong class="view-modes__option-title" data-i18n="viewModes.collapsed">Modo colapsado</strong>
+                        <span class="view-modes__option-text" data-i18n="viewModes.collapsed.desc">Presencia minima lista para expandirse cuando haga falta.</span>
                     </span>
                 </button>
             </div>
         </section>
     </div>
 
+<script src="i18n.js"></script>
 <script src="renderer.js"></script>
 </body>
 </html>
