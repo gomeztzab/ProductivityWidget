@@ -4,10 +4,54 @@
   "description": "Desktop productivity widget",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "npm run build:portable",
+    "build:portable": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-portable.ps1",
+    "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-installer.ps1 -Target nsis",
+    "build:dir": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\scripts\\build-installer.ps1 -Target dir"
+  },
+  "build": {
+    "appId": "com.focuspro.productivitywidget",
+    "productName": "Focus Pro",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "i18n.js",
+      "settings.html",
+      "settings.js",
+      "settings.css",
+      "strict-mode.html",
+      "strict-mode.js",
+      "strict-mode.css",
+      "lock-screen.html",
+      "lock-screen.js",
+      "lock-screen.css",
+      "interaction-lock.html",
+      "interaction-lock.js",
+      "interaction-lock.css",
+      "website-blocker.js",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "icon": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   },
   "devDependencies": {
-    "electron": "^40.8.0"
+    "@electron/packager": "^19.1.0",
+    "electron": "^40.8.0",
+    "electron-builder": "^26.8.1"
   },
   "dependencies": {
     "electron-store": "^8.2.0"
