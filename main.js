@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Notification, screen } = require('electron')
+const { app, BrowserWindow, ipcMain, Notification, screen, dialog } = require('electron')
 const Store = require('electron-store')
 const { spawn, spawnSync } = require('child_process')
 const { createHash, randomUUID } = require('crypto')
@@ -46,6 +46,7 @@ function createDefaultFeatureState() {
         customTextColors: false,
         customThemes: false,
         customFonts: false,
+        customBackground: false,
         strictScreenLock: false,
         strictInteractionLock: false,
         strictWebsiteBlock: false
@@ -163,6 +164,7 @@ function createFocusProTrialLicenseState(deviceFingerprint) {
             customTextColors: true,
             customThemes: true,
             customFonts: true,
+            customBackground: true,
             strictScreenLock: true,
             strictInteractionLock: true,
             strictWebsiteBlock: true
@@ -1020,6 +1022,33 @@ ipcMain.handle('set-strict-website-lock', async (event, payload = {}) => {
     }
 
     return deactivateWebsiteLock()
+})
+
+/* ---- Fondo personalizado ---- */
+ipcMain.handle('select-custom-bg', async () => {
+    const parentWin = settingsWindow || win
+    const result = await dialog.showOpenDialog(parentWin, {
+        title: 'Seleccionar fondo',
+        filters: [{ name: 'Imágenes', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] }],
+        properties: ['openFile']
+    })
+    if (result.canceled || !result.filePaths.length) return { canceled: true }
+
+    const src = result.filePaths[0]
+    const ext = path.extname(src)
+    const dest = path.join(app.getPath('userData'), `custom-bg${ext}`)
+    fs.copyFileSync(src, dest)
+    return { canceled: false, filePath: dest }
+})
+
+ipcMain.handle('remove-custom-bg', () => {
+    const userData = app.getPath('userData')
+    for (const f of fs.readdirSync(userData)) {
+        if (f.startsWith('custom-bg.')) {
+            try { fs.unlinkSync(path.join(userData, f)) } catch (_) {}
+        }
+    }
+    return { ok: true }
 })
 
 ipcMain.on('save-settings', (event, data) => {

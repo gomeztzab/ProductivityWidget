@@ -365,7 +365,65 @@ body {
     box-shadow: var(--dash-shadow);
     position: relative;
     z-index: 1;
-    -webkit-app-region: no-drag;
+    -webkit-app-region: drag;
+    cursor: grab;
+}
+
+/* Fondo personalizado del usuario */
+.dashboard--custom-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: var(--custom-bg-image) center / cover no-repeat;
+    border-radius: var(--dash-radius);
+    pointer-events: none;
+}
+
+.dashboard--custom-bg > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Temas opacos → semi-transparentes cuando hay fondo personalizado */
+[data-theme="light"] .dashboard--custom-bg {
+    background: linear-gradient(135deg, #f8fbffb3 0%, #eef4ffb3 100%);
+    backdrop-filter: blur(18px);
+}
+
+[data-theme="minimal"] .dashboard--custom-bg {
+    background: #111827cc;
+    backdrop-filter: blur(12px);
+}
+
+[data-theme="neon"] .dashboard--custom-bg {
+    background: #020408b3;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="aurora"] .dashboard--custom-bg {
+    background: linear-gradient(135deg, #02061ab3 0%, #071229b3 60%, #030b1fb3 100%);
+    backdrop-filter: blur(20px);
+}
+
+[data-theme="obsidian"] .dashboard--custom-bg {
+    background: #12100ab3;
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="frost"] .dashboard--custom-bg {
+    background: linear-gradient(135deg, #08111eb3 0%, #0d1f34b3 100%);
+    backdrop-filter: blur(18px);
+}
+
+[data-theme="sunset"] .dashboard--custom-bg {
+    background: linear-gradient(135deg, #1b1022b3 0%, #31111db3 55%, #3c1f12b3 100%);
+    backdrop-filter: blur(14px);
+}
+
+[data-theme="graphite"] .dashboard--custom-bg {
+    background: #101214b3;
+    backdrop-filter: blur(10px);
 }
 
 .dashboard__controls {
@@ -376,12 +434,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    -webkit-app-region: drag;
-    cursor: grab;
-}
-
-.dashboard__controls:active {
-    cursor: grabbing;
 }
 
 .dashboard__controls-group {
@@ -1719,6 +1771,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     gap: 12px;
     list-style: none;
     padding: 0;
+    -webkit-app-region: no-drag;
 }
 
 .todo__item {
@@ -1733,6 +1786,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.18s ease;
     position: relative;
     overflow: hidden;
+    cursor: default;
 }
 
 .todo__item::before {
@@ -1782,6 +1836,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    -webkit-app-region: no-drag;
     margin-top: 2px;
     background: transparent;
 }
@@ -2754,6 +2809,23 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     background: radial-gradient(ellipse, #7c3aed0c 0%, transparent 65%);
     pointer-events: none;
     z-index: -1;
+}
+
+/* Fondo personalizado: restaurar ::before imagen sobre decoraciones de tema */
+[data-theme="light"] .dashboard--custom-bg::before,
+[data-theme="neon"] .dashboard--custom-bg::before,
+[data-theme="aurora"] .dashboard--custom-bg::before {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    z-index: 0;
+    background: var(--custom-bg-image) center / cover no-repeat;
+    border-radius: var(--dash-radius);
+}
+
+[data-theme="aurora"] .dashboard--custom-bg::after {
+    display: none;
 }
 
 /* Obsidian — Oscuro cálido, tintes ámbar */

@@ -435,6 +435,13 @@ function applyFeatureGating() {
         reminderSoundLevelGroup.classList.toggle("settings__group--locked", !hasLicenseFeature("pomodoroSoundIntensity"))
         reminderSoundLevelSel.disabled = !hasLicenseFeature("pomodoroSoundIntensity")
     }
+
+    const customBgSection = document.querySelector(".settings__custom-bg")
+    if (customBgSection) {
+        const locked = !hasLicenseFeature("customBackground")
+        customBgSection.classList.toggle("settings__custom-bg--locked", locked)
+        customBgSection.dataset.lockLabel = locked ? i18n.t("premium.badge") : ""
+    }
 }
 
 function setupLockedSettingsInteractions() {
@@ -712,6 +719,55 @@ function updateActiveThemeCard(theme) {
     if(active) active.classList.add("settings__theme-card--active")
 }
 
+/* ---- Fondo personalizado ---- */
+const customBgPickBtn   = document.getElementById("customBgPickBtn")
+const customBgRemoveBtn = document.getElementById("customBgRemoveBtn")
+const customBgImg        = document.getElementById("customBgImg")
+const customBgPlaceholder = document.getElementById("customBgPlaceholder")
+let customBgPath = localStorage.getItem("customBgPath") || ""
+
+function refreshCustomBgPreview() {
+    if (customBgPath) {
+        const fileUrl = "file:///" + customBgPath.replace(/\\/g, "/")
+        customBgImg.src = fileUrl
+        customBgImg.style.display = "block"
+        customBgPlaceholder.style.display = "none"
+        customBgRemoveBtn.style.display = ""
+    } else {
+        customBgImg.src = ""
+        customBgImg.style.display = "none"
+        customBgPlaceholder.style.display = ""
+        customBgRemoveBtn.style.display = "none"
+    }
+}
+refreshCustomBgPreview()
+
+if (customBgPickBtn) {
+    customBgPickBtn.addEventListener("click", async () => {
+        if (!hasLicenseFeature("customBackground")) {
+            showPremiumAccessMessage()
+            return
+        }
+        const result = await ipcRenderer.invoke("select-custom-bg")
+        if (result && !result.canceled && result.filePath) {
+            customBgPath = result.filePath
+            refreshCustomBgPreview()
+        }
+    })
+}
+
+if (customBgRemoveBtn) {
+    customBgRemoveBtn.addEventListener("click", async () => {
+        if (!hasLicenseFeature("customBackground")) {
+            showPremiumAccessMessage()
+            return
+        }
+        await ipcRenderer.invoke("remove-custom-bg")
+        customBgPath = ""
+        refreshCustomBgPreview()
+    })
+}
+
 function updateActiveSwatch(color) {
     swatches.forEach(b => b.classList.remove("settings__swatch--active"))
     const active = document.querySelector(`.settings__swatch[data-color='${color}']`)
@@ -778,6 +834,7 @@ saveBtn.addEventListener("click", async () => {
     localStorage.setItem("textColor",      selectedTextColor)
     localStorage.setItem("dashTheme",      selectedTheme)
     localStorage.setItem("fontFamily",     selectedFont)
+    localStorage.setItem("customBgPath",   customBgPath)
     localStorage.setItem("reminderSoundEnabled", String(reminderSoundEnabled))
     localStorage.setItem("reminderNotificationsEnabled", String(reminderNotificationsEnabled))
     localStorage.setItem("reminderSoundLevel", reminderSoundLevel)
@@ -796,6 +853,7 @@ saveBtn.addEventListener("click", async () => {
         textColor:   selectedTextColor,
         theme:       selectedTheme,
         font:        selectedFont,
+        customBgPath,
         focusDuration: focusSel.value,
         breakDuration: breakSel.value,
         reminderSoundEnabled,

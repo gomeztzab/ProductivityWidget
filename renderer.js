@@ -117,6 +117,10 @@ function ensureAllowedFont(font) {
     return !hasLicenseFeature('customFonts') && !FREE_FONTS.has(font) ? 'Inter' : font
 }
 
+function ensureAllowedCustomBg(bgPath) {
+    return hasLicenseFeature('customBackground') ? bgPath : ''
+}
+
 function ensureAllowedViewMode(mode) {
     return canUseViewMode(mode) ? mode : 'full'
 }
@@ -178,6 +182,7 @@ function sanitizeDashboardPremiumState() {
     applyFont(allowedFont)
     renderViewModeSelection(allowedViewMode)
     applyReminderSettings()
+    applyCustomBg(localStorage.getItem('customBgPath') || '')
 }
 
 async function syncLicenseState() {
@@ -438,6 +443,22 @@ if(savedAccent) document.documentElement.style.setProperty("--accent-color", sav
 if(savedText)   document.documentElement.style.setProperty("--text-color",   savedText)
 document.documentElement.setAttribute("data-theme", savedTheme)
 
+/* ---- Fondo personalizado ---- */
+function applyCustomBg(bgPath) {
+    const dashboard = document.querySelector('.dashboard')
+    if (!dashboard) return
+    const allowed = ensureAllowedCustomBg(bgPath)
+    if (allowed) {
+        const fileUrl = 'file:///' + allowed.replace(/\\/g, '/')
+        dashboard.style.setProperty('--custom-bg-image', `url("${fileUrl}")`)
+        dashboard.classList.add('dashboard--custom-bg')
+    } else {
+        dashboard.style.removeProperty('--custom-bg-image')
+        dashboard.classList.remove('dashboard--custom-bg')
+    }
+}
+applyCustomBg(localStorage.getItem('customBgPath') || '')
+
 /* ---- font + window width ---- */
 const FONT_WIDTHS = {
     Inter: 960,
@@ -563,11 +584,12 @@ if (document.fonts?.ready) {
 }
 
 ipcRenderer.on("apply-colors", (event, payload = {}) => {
-    const { accentColor, textColor, theme, font, focusDuration, breakDuration, language } = payload
+    const { accentColor, textColor, theme, font, customBgPath, focusDuration, breakDuration, language } = payload
     if(accentColor) document.documentElement.style.setProperty("--accent-color", ensureAllowedAccentColor(accentColor))
     if(textColor)   document.documentElement.style.setProperty("--text-color",   ensureAllowedTextColor(textColor))
     if(theme)       document.documentElement.setAttribute("data-theme", ensureAllowedTheme(theme))
     if(font)        applyFont(ensureAllowedFont(font))
+    if (customBgPath !== undefined) applyCustomBg(customBgPath)
     if (focusDuration || breakDuration) applyPomodoroDurations(focusDuration, breakDuration)
     applyReminderSettings(payload)
     if (language) {

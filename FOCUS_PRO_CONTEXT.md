@@ -5,7 +5,7 @@ Definir de forma clara y consistente el modelo comercial, el alcance de Free vs 
 
 ## Producto
 - Nombre del plan: Focus Pro
-- Precio: $6.99 USD
+- Precio: $5.99 USD
 - Tipo de compra: pago unico
 - Duracion: acceso de por vida
 - Canal principal de venta: Gumroad
@@ -54,6 +54,7 @@ Incluye estas funciones premium:
 - Acceso completo a colores de acento
 - Acceso completo a colores de texto
 - Acceso completo a temas del dashboard
+- Acceso al dashboard con tema personalizado
 - Acceso completo a tipografias
 - Modo estricto avanzado
 - Pantalla tipo lock
@@ -174,6 +175,7 @@ La app no debe depender de un unico booleano isPro. Debe guardar tambien un mapa
 - features.customTextColors
 - features.customThemes
 - features.customFonts
+- features.customBackground
 - features.strictScreenLock
 - features.strictInteractionLock
 - features.strictWebsiteBlock

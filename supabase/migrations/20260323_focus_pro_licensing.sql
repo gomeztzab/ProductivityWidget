@@ -162,6 +162,7 @@ cross join (
         ('customTextColors'),
         ('customThemes'),
         ('customFonts'),
+        ('customBackground'),
         ('strictScreenLock'),
         ('strictInteractionLock'),
         ('strictWebsiteBlock')
