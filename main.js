@@ -819,7 +819,8 @@ resizable:false,
 
 webPreferences:{
 nodeIntegration:true,
-contextIsolation:false
+contextIsolation:false,
+backgroundThrottling:false
 }
 
 })
@@ -1227,7 +1228,7 @@ const PS_BRIDGE = [
     '          $p=__Await ($s.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])',
     '          $t=$s.GetTimelineProperties()',
     '          $pb=$s.GetPlaybackInfo()',
-    '          Write-Output ([PSCustomObject]@{title=$p.Title;artist=$p.Artist;position=[math]::Round($t.Position.TotalSeconds,1);duration=[math]::Round($t.EndTime.TotalSeconds,1);status=$pb.PlaybackStatus.ToString()}|ConvertTo-Json -Compress)',
+    '          Write-Output ([PSCustomObject]@{title=$p.Title;artist=$p.Artist;position=[math]::Round($t.Position.TotalSeconds,1);duration=[math]::Round($t.EndTime.TotalSeconds,1);status=$pb.PlaybackStatus.ToString();isPlaying=($pb.PlaybackStatus.ToString() -eq "Playing");capturedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()}|ConvertTo-Json -Compress)',
     '        }else{Write-Output "{}"}',
     '      }',
     '      "toggle"{if($s){$s.TryTogglePlayPauseAsync()|Out-Null};Write-Output "{}"}',
@@ -1289,6 +1290,13 @@ function psCmd(command, cb) {
 
 let mediaPollInterval = null
 
+/* Estado para interpolar posición cuando Windows SMTC devuelve datos cacheados */
+const mediaBridge = {
+    lastRawPos: NaN,
+    lastRawPosChangedAt: 0,
+    lastTitle: ''
+}
+
 function startMediaPolling() {
     if (mediaPollInterval) return
     mediaPollInterval = setInterval(() => {
@@ -1298,10 +1306,41 @@ function startMediaPolling() {
             pollPending = false
             try {
                 const data = JSON.parse(response)
-                if (win && !win.isDestroyed()) win.webContents.send('media-info', data)
+                if (!data || !win || win.isDestroyed()) return
+
+                const rawPos    = Number(data.position)
+                const rawDur    = Number(data.duration)
+                const isPlaying = !!data.isPlaying
+                const title     = data.title || ''
+                const now       = Date.now()
+
+                const posChanged   = !Number.isFinite(mediaBridge.lastRawPos)
+                    || Math.abs(rawPos - mediaBridge.lastRawPos) > 0.05
+                const trackChanged = title !== mediaBridge.lastTitle
+
+                if (posChanged || trackChanged) {
+                    mediaBridge.lastRawPos          = rawPos
+                    mediaBridge.lastRawPosChangedAt = now
+                    mediaBridge.lastTitle           = title
+                }
+
+                /* Si está reproduciendo y Windows repite la misma posición → interpolar */
+                if (isPlaying && !posChanged && !trackChanged
+                    && Number.isFinite(mediaBridge.lastRawPos)) {
+                    const elapsed      = (now - mediaBridge.lastRawPosChangedAt) / 1000
+                    const interpolated = mediaBridge.lastRawPos + elapsed
+                    data.position = (Number.isFinite(rawDur) && rawDur > 0)
+                        ? Math.min(interpolated, rawDur)
+                        : interpolated
+                }
+
+                /* capturedAt fresco para que el renderer no compense de más */
+                data.capturedAt = now
+
+                win.webContents.send('media-info', data)
             } catch(_) {}
         })
-    }, 1000)
+    }, 350)
 }
 
 ipcMain.on('media-control', (event, action) => {

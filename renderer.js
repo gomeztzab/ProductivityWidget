@@ -136,15 +136,26 @@ function ensureViewModePremiumBadge(option) {
     return badge
 }
 
+function removeViewModePremiumBadge(option) {
+    const badge = option.querySelector('.view-modes__badge')
+    if (badge) {
+        badge.remove()
+    }
+}
+
 function syncViewModeAccess() {
     viewModeOptions.forEach(option => {
         const locked = !canUseViewMode(option.dataset.mode)
-        const badge = ensureViewModePremiumBadge(option)
 
         option.classList.toggle('view-modes__option--locked', locked)
         option.setAttribute('aria-disabled', locked ? 'true' : 'false')
         option.title = locked ? i18n.t('premium.availableInPro') : ''
-        badge.hidden = !locked
+
+        if (locked) {
+            ensureViewModePremiumBadge(option)
+        } else {
+            removeViewModePremiumBadge(option)
+        }
     })
 }
 
@@ -1517,6 +1528,7 @@ const MusicPlayer = (() => {
         playing     : false,
         rafId       : null,
         lastTick    : 0,
+        lastSyncAt  : 0,
         renderedPct : -1,
         renderedSec : -1
     }
@@ -1567,6 +1579,24 @@ const MusicPlayer = (() => {
         state.lastTick = 0
     }
 
+    function clampPosition(position, duration) {
+        if (!Number.isFinite(position) || position < 0) return 0
+        if (!Number.isFinite(duration) || duration <= 0) return position
+        return Math.min(position, duration)
+    }
+
+    function resolveLivePosition(position, duration, playing, capturedAt) {
+        const safeDuration = Number.isFinite(duration) ? duration : 0
+        let safePosition = clampPosition(position, safeDuration)
+
+        if (!playing) return safePosition
+        if (!Number.isFinite(capturedAt) || capturedAt <= 0) return safePosition
+
+        const elapsedSeconds = Math.max(0, (Date.now() - capturedAt) / 1000)
+        safePosition += elapsedSeconds
+        return clampPosition(safePosition, safeDuration)
+    }
+
     /* ---- Icono play/pause ---- */
     function setPlayIcon(playing) {
         if (!els.playBtn) return
@@ -1596,27 +1626,32 @@ const MusicPlayer = (() => {
 
     /* ---- Actualización desde IPC ---- */
     function onInfo(data) {
-        const newPos    = data.position || 0
-        const newDur    = data.duration || 0
-        const newPlay   = data.status === "Playing"
+        const rawPos    = Number(data.position)
+        const rawDur    = Number(data.duration)
+        const newDur    = Number.isFinite(rawDur) && rawDur > 0 ? rawDur : 0
+        const playbackStatus = typeof data.status === 'string' ? data.status : ''
+        const reportedPlaying = typeof data.isPlaying === 'boolean' ? data.isPlaying : playbackStatus === 'Playing'
+        const capturedAt = Number(data.capturedAt)
+        const hasTrackData = Boolean((typeof data.title === 'string' && data.title.trim()) || newDur > 0)
+        const isExplicitPause = ['Paused', 'Stopped', 'Closed'].includes(playbackStatus)
+        const newPlay = reportedPlaying || (!isExplicitPause && hasTrackData)
+        const newPos    = resolveLivePosition(rawPos, newDur, newPlay, capturedAt)
         const curTitle  = els.trackName ? els.trackName.textContent : ""
         const newTitle  = data.title || i18n.t('music.nothingPlaying')
         const trackChanged = newTitle !== curTitle
-        const drift     = newPos - state.position   /* +server adelante, -server atrás */
+        const drift     = newPos - state.position
 
         state.duration = newDur
+        state.lastSyncAt = Number.isFinite(capturedAt) ? capturedAt : Date.now()
 
-        /* Pista nueva, seek grande o sin duración → posición exacta */
-        if (trackChanged || Math.abs(drift) > 3 || !state.duration) {
+        /* Pista nueva, seek claro o sin duración → posición exacta */
+        if (trackChanged || Math.abs(drift) > 1.25 || !state.duration) {
             state.position    = newPos
             state.renderedPct = -1
             state.renderedSec = -1
-        } else if (drift > 0.5) {
-            /* Servidor adelante → mezcla suave solo hacia adelante */
-            state.position = state.position + drift * 0.5
+        } else if (Math.abs(drift) > 0.15) {
+            state.position = clampPosition(state.position + drift * 0.75, state.duration)
         }
-        /* Si servidor atrás (drift ≤ 0): ignorar, la interpolación rAF
-           es más precisa en tiempo real que el poll con latencia de PS */
 
         setTrack(newTitle)
         setPlayIcon(newPlay)
@@ -1649,6 +1684,12 @@ const MusicPlayer = (() => {
             if (state.playing) startTick(); else stopTick()
         })
         ipcRenderer.on("media-info", (_, data) => onInfo(data))
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden || !state.playing) return
+            state.renderedPct = -1
+            state.renderedSec = -1
+            startTick()
+        })
     }
 
     return { init }
