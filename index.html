@@ -59,11 +59,29 @@
 
             <!-- Pomodoro Timer -->
             <div class="pomodoro">
+                <div class="pomodoro__status-strip">
+                    <div class="pomodoro__streak" id="pomodoroStreak" aria-live="polite">
+                        <span class="pomodoro__streak-icon" aria-hidden="true">🔥</span>
+                        <div class="pomodoro__streak-copy">
+                            <span class="pomodoro__streak-label" data-i18n="pomodoro.streak">Racha activa</span>
+                            <strong class="pomodoro__streak-value" id="pomodoroStreakValue">0 dias</strong>
+                        </div>
+                    </div>
+                </div>
                 <div class="pomodoro__circle">
                     <svg viewBox="0 0 180 180">
                         <circle class="pomodoro__circle-track" cx="90" cy="90" r="80"></circle>
                         <circle class="pomodoro__circle-progress" cx="90" cy="90" r="80"></circle>
                     </svg>
+                    <div class="pomodoro__celebration" id="pomodoroCelebration" aria-hidden="true">
+                        <strong class="pomodoro__celebration-badge" id="pomodoroCelebrationBadge">Pomodoro #1</strong>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--1"></span>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--2"></span>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--3"></span>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--4"></span>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--5"></span>
+                        <span class="pomodoro__celebration-spark pomodoro__celebration-spark--6"></span>
+                    </div>
                     <div class="pomodoro__circle-label">
                         <div class="pomodoro__time" id="timer">25:00</div>
                         <div class="pomodoro__label" data-i18n="pomodoro.focusTime">Focus Time</div>
@@ -101,6 +119,12 @@
                     <div class="todo__header-copy">
                         <h3 class="todo__title" data-i18n="todo.title">To-Do List</h3>
                         <span class="todo__summary-text" id="todoSummaryText">0 tareas pendientes</span>
+                        <div class="todo__progress" id="todoProgress" aria-hidden="true">
+                            <div class="todo__progress-track">
+                                <span class="todo__progress-fill" id="todoProgressFill"></span>
+                            </div>
+                            <span class="todo__progress-text" id="todoProgressText">0/0 hechas</span>
+                        </div>
                     </div>
                     <div class="todo__header-actions">
                         <svg class="todo__header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

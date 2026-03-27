@@ -36,6 +36,9 @@
             'pomodoro.disablePro': 'Desactivar PRO',
             'pomodoro.expandFull': 'Expandir a modo completo',
             'pomodoro.startBreak': 'Iniciar descanso',
+            'pomodoro.streak': 'Racha activa',
+            'pomodoro.streakValue': '{n} dias',
+            'pomodoro.celebrationBadge': 'Pomodoro #{n}',
 
             /* -- Pomodoro: avisos -- */
             'pomodoro.notice.reminder': 'Recordatorio',
@@ -63,6 +66,7 @@
             /* -- To-Do -- */
             'todo.title': 'To-Do List',
             'todo.summary': '{pending} pendientes · {done} completas',
+            'todo.progress': '{done}/{all} hechas',
             'todo.compact': 'Compacto',
             'todo.expand': 'Expandir',
             'todo.noTasks': 'Sin tareas',
@@ -418,6 +422,9 @@
             'pomodoro.disablePro': 'Disable PRO',
             'pomodoro.expandFull': 'Expand to full mode',
             'pomodoro.startBreak': 'Start break',
+            'pomodoro.streak': 'Active streak',
+            'pomodoro.streakValue': '{n} days',
+            'pomodoro.celebrationBadge': 'Pomodoro #{n}',
 
             /* -- Pomodoro: avisos -- */
             'pomodoro.notice.reminder': 'Reminder',
@@ -445,6 +452,7 @@
             /* -- To-Do -- */
             'todo.title': 'To-Do List',
             'todo.summary': '{pending} pending · {done} done',
+            'todo.progress': '{done}/{all} done',
             'todo.compact': 'Compact',
             'todo.expand': 'Expand',
             'todo.noTasks': 'No tasks',

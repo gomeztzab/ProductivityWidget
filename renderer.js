@@ -768,6 +768,7 @@ const Stats = (() => {
         addBreak()        { _daily.breaks++;      _saveDaily(); if (_page === 0) _renderPage0() },
         refreshTasks()    { if (_page === 1) _renderPage1() },
         getPomodoros()    { return _daily.pomodoros },
+        getStreak()       { return _streak() },
         init() {
             _titleEl  = document.querySelector('.stats__title')
             _pagesEls = Array.from(document.querySelectorAll('.stats__page'))
@@ -803,6 +804,8 @@ TodoList = (() => {
     const todoCompactToggleBtn = document.getElementById('todoCompactToggleBtn')
     const todoCompactSummaryBtn = document.getElementById('todoCompactSummaryBtn')
     const todoSummaryText = document.getElementById('todoSummaryText')
+    const todoProgressFill = document.getElementById('todoProgressFill')
+    const todoProgressText = document.getElementById('todoProgressText')
     const todoCompactCount = document.getElementById('todoCompactCount')
     const todoCompactActive = document.getElementById('todoCompactActive')
     const todoActiveTask = document.getElementById('todoActiveTask')
@@ -816,6 +819,8 @@ TodoList = (() => {
     const PRIORITY_SEQUENCE = ['high', 'medium', 'low']
     const VALID_FILTERS = new Set(['all', 'pending', 'completed'])
     const VALID_SORTS = new Set(['manual', 'priority'])
+    let todoAudioCtx = null
+    let recentlyCompletedTaskId = null
 
     let state = {
         ...readState(),
@@ -911,6 +916,48 @@ TodoList = (() => {
         localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(state))
     }
 
+    function getTodoAudioCtx() {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (!AudioCtx) return null
+        if (!todoAudioCtx) todoAudioCtx = new AudioCtx()
+        if (todoAudioCtx.state === 'suspended') todoAudioCtx.resume().catch(() => {})
+        return todoAudioCtx
+    }
+
+    function playTaskToggleSound(isCompleted) {
+        const ctx = getTodoAudioCtx()
+        if (!ctx) return
+
+        const start = ctx.currentTime + 0.01
+        const master = ctx.createGain()
+        master.gain.setValueAtTime(0.0001, start)
+        master.gain.exponentialRampToValueAtTime(isCompleted ? 0.14 : 0.1, start + 0.016)
+        master.gain.exponentialRampToValueAtTime(0.0001, start + 0.16)
+        master.connect(ctx.destination)
+
+        const oscA = ctx.createOscillator()
+        const oscB = ctx.createOscillator()
+        const gainB = ctx.createGain()
+
+        oscA.type = isCompleted ? 'triangle' : 'sine'
+        oscB.type = 'sine'
+        oscA.frequency.setValueAtTime(isCompleted ? 720 : 420, start)
+        oscA.frequency.exponentialRampToValueAtTime(isCompleted ? 980 : 320, start + 0.1)
+        oscB.frequency.setValueAtTime(isCompleted ? 1080 : 540, start)
+        oscB.frequency.exponentialRampToValueAtTime(isCompleted ? 1280 : 420, start + 0.08)
+        gainB.gain.setValueAtTime(isCompleted ? 0.55 : 0.35, start)
+        gainB.gain.exponentialRampToValueAtTime(0.0001, start + 0.12)
+
+        oscA.connect(master)
+        oscB.connect(gainB)
+        gainB.connect(master)
+
+        oscA.start(start)
+        oscB.start(start)
+        oscA.stop(start + 0.18)
+        oscB.stop(start + 0.14)
+    }
+
     function getStats() {
         const all = state.tasks.length
         const done = state.tasks.filter(task => task.done).length
@@ -977,6 +1024,14 @@ TodoList = (() => {
             todoSummaryText.textContent = i18n.t('todo.summary', { pending, done })
         }
 
+        if (todoProgressFill) {
+            todoProgressFill.style.width = `${all > 0 ? Math.round(done / all * 100) : 0}%`
+        }
+
+        if (todoProgressText) {
+            todoProgressText.textContent = i18n.t('todo.progress', { done, all })
+        }
+
         if (todoCompactCount) {
             todoCompactCount.textContent = all === 0 ? i18n.t('todo.noTasks') : i18n.t('todo.pendingOf', { pending, all })
         }
@@ -1021,7 +1076,7 @@ TodoList = (() => {
         const moveDownDisabled = !isManualSort || sourceIndex === state.tasks.length - 1
 
         return `
-            <li class="todo__item${isCompleted ? ' todo__item--completed' : ''}${isActive ? ' todo__item--active' : ''}" data-task-id="${task.id}" data-source-index="${sourceIndex}">
+            <li class="todo__item${isCompleted ? ' todo__item--completed' : ''}${isActive ? ' todo__item--active' : ''}${recentlyCompletedTaskId === task.id ? ' todo__item--just-completed' : ''}" data-task-id="${task.id}" data-source-index="${sourceIndex}">
                 <button class="todo__checkbox${isCompleted ? ' todo__checkbox--checked' : ''}" data-action="toggle" type="button" aria-label="${isCompleted ? i18n.t('todo.markPending') : i18n.t('todo.markCompleted')}">${isCompleted ? CHECK_SVG : ''}</button>
                 <div class="todo__content">
                     <div class="todo__meta-row">
@@ -1088,14 +1143,30 @@ TodoList = (() => {
     }
 
     function toggleTask(taskId) {
+        let completedState = false
+        const nextTasks = state.tasks.map(task => {
+            if (task.id !== taskId) return task
+            const done = !task.done
+            completedState = done
+            return { ...task, done, active: done ? false : task.active }
+        })
+
+        recentlyCompletedTaskId = completedState ? taskId : null
+
         commit({
             ...state,
-            tasks: state.tasks.map(task => {
-                if (task.id !== taskId) return task
-                const done = !task.done
-                return { ...task, done, active: done ? false : task.active }
-            })
+            tasks: nextTasks
         })
+
+        playTaskToggleSound(completedState)
+
+        if (completedState) {
+            setTimeout(() => {
+                if (recentlyCompletedTaskId === taskId) {
+                    recentlyCompletedTaskId = null
+                }
+            }, 360)
+        }
     }
 
     function toggleActiveTask(taskId) {
@@ -1299,6 +1370,10 @@ let isBreak   = false
 
 const progressCircle = document.querySelector(".pomodoro__circle-progress")
 const pomodoroLabel  = document.querySelector(".pomodoro__label")
+const pomodoroRoot = document.querySelector(".pomodoro")
+const pomodoroStreak = document.getElementById("pomodoroStreak")
+const pomodoroStreakValue = document.getElementById("pomodoroStreakValue")
+const pomodoroCelebrationBadge = document.getElementById("pomodoroCelebrationBadge")
 const startBtn       = document.getElementById("startTimerBtn")
 const resetBtn       = document.getElementById("resetTimerBtn")
 const breakBtn       = document.getElementById("breakBtn")
@@ -1310,8 +1385,66 @@ const pomodoroNoticeActionBtn = document.getElementById("pomodoroNoticeAction")
 const pomodoroNoticeDismissBtn = document.getElementById("pomodoroNoticeDismiss")
 let reminderAudioCtx = null
 let pomodoroNoticeAction = null
+let pomodoroCelebrationTimeout = null
 
 applyReminderSettings()
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max)
+}
+
+function renderPomodoroStreak() {
+    if (!pomodoroStreak || !pomodoroStreakValue) return
+    const streak = Stats.getStreak()
+    pomodoroStreakValue.textContent = i18n.t('pomodoro.streakValue', { n: streak })
+    pomodoroStreak.classList.toggle('pomodoro__streak--warm', streak >= 2)
+    pomodoroStreak.classList.toggle('pomodoro__streak--hot', streak >= 4)
+    pomodoroStreak.classList.toggle('pomodoro__streak--legend', streak >= 8)
+}
+
+function syncPomodoroVisualState() {
+    if (!pomodoroRoot || !progressCircle || !totalTime) return
+
+    const remainingRatio = clamp(time / totalTime, 0, 1)
+    let progressColor = 'var(--accent-color)'
+    let glowColor = 'color-mix(in srgb, var(--accent-color) 62%, transparent)'
+    const isPaused = !interval && time < totalTime && time > 0
+
+    if (remainingRatio <= 0.55 && remainingRatio > 0.2) {
+        const warningMix = Math.round(((0.55 - remainingRatio) / 0.35) * 48)
+        progressColor = `color-mix(in srgb, var(--accent-color) ${100 - warningMix}%, #f59e0b)`
+        glowColor = `color-mix(in srgb, ${progressColor} 70%, transparent)`
+    } else if (remainingRatio <= 0.2) {
+        const dangerMix = Math.round(((0.2 - remainingRatio) / 0.2) * 64)
+        progressColor = `color-mix(in srgb, var(--accent-color) ${100 - dangerMix}%, #ef4444)`
+        glowColor = `color-mix(in srgb, ${progressColor} 76%, transparent)`
+    }
+
+    if (isBreak) {
+        progressColor = `color-mix(in srgb, var(--accent-color) 78%, #22c55e)`
+        glowColor = `color-mix(in srgb, ${progressColor} 68%, transparent)`
+    }
+
+    pomodoroRoot.style.setProperty('--pomodoro-progress-color', progressColor)
+    pomodoroRoot.style.setProperty('--pomodoro-progress-glow', glowColor)
+    pomodoroRoot.classList.toggle('pomodoro--running', Boolean(interval))
+    pomodoroRoot.classList.toggle('pomodoro--paused', isPaused)
+    pomodoroRoot.classList.toggle('pomodoro--break', isBreak)
+    pomodoroRoot.classList.toggle('pomodoro--urgent', remainingRatio <= 0.35)
+    pomodoroRoot.classList.toggle('pomodoro--critical', remainingRatio <= 0.15)
+}
+
+function triggerPomodoroCelebration(pomodoroCount) {
+    if (!pomodoroRoot || !pomodoroCelebrationBadge) return
+    pomodoroCelebrationBadge.textContent = i18n.t('pomodoro.celebrationBadge', { n: pomodoroCount })
+    pomodoroRoot.classList.remove('pomodoro--celebrating')
+    void pomodoroRoot.offsetWidth
+    pomodoroRoot.classList.add('pomodoro--celebrating')
+    clearTimeout(pomodoroCelebrationTimeout)
+    pomodoroCelebrationTimeout = setTimeout(() => {
+        pomodoroRoot.classList.remove('pomodoro--celebrating')
+    }, 1500)
+}
 
 function showPomodoroNotice({ kicker, title, body, actionLabel, action }) {
     if (!pomodoroNotice) return
@@ -1402,6 +1535,7 @@ function updateTimerDisplay() {
     /* animar c�rculo SVG */
     const offset = CIRCUMFERENCE * (1 - time / totalTime)
     progressCircle.style.strokeDashoffset = offset
+    syncPomodoroVisualState()
 }
 
 function ensurePomodoroRunning(trigger = "manual") {
@@ -1417,6 +1551,7 @@ function startTimer() {
         clearInterval(interval)
         interval = null
         startBtn.textContent = i18n.t('pomodoro.resume')
+        syncPomodoroVisualState()
         return
     }
 
@@ -1435,6 +1570,8 @@ function startTimer() {
             if(!isBreak) {
                 Stats.addPomodoro()
                 Stats.addBreak()
+                renderPomodoroStreak()
+                triggerPomodoroCelebration(Stats.getPomodoros())
                 isBreak   = true
                 time      = BREAK_TIME
                 totalTime = BREAK_TIME
@@ -1474,6 +1611,8 @@ function startTimer() {
             updateTimerDisplay()
         }
     }, 1000)
+
+    syncPomodoroVisualState()
 }
 
 function resetTimer() {
@@ -1524,6 +1663,7 @@ if (pomodoroNoticeDismissBtn) {
 }
 
 updateTimerDisplay()
+renderPomodoroStreak()
 
 /* =====================
    MUSIC PLAYER
