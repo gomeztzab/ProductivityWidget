@@ -54,6 +54,13 @@
             'pomodoro.notice.readyFocus': 'Listo para volver al enfoque',
             'pomodoro.notice.nextBlock': 'Tu siguiente bloque es de {duration}.',
             'pomodoro.notice.startFocus': 'Comenzar enfoque',
+
+            /* -- Confirm reset notice -- */
+            'pomodoro.confirmReset.kicker':  'Bloque en curso',
+            'pomodoro.confirmReset.title':   '¿Parar el temporizador?',
+            'pomodoro.confirmReset.body':    'Perderás el progreso del bloque actual.',
+            'pomodoro.confirmReset.confirm': 'Sí, parar',
+
             'pomodoro.alert.focusDone': 'Focus terminado',
             'pomodoro.alert.focusBody': 'Pomodoro #{n} completado. Toma {duration} de descanso.',
             'pomodoro.alert.breakDone': 'Descanso terminado',
@@ -459,6 +466,13 @@
             'pomodoro.notice.readyFocus': 'Ready to get back to focus',
             'pomodoro.notice.nextBlock': 'Your next block is {duration}.',
             'pomodoro.notice.startFocus': 'Start focus',
+
+            /* -- Confirm reset notice -- */
+            'pomodoro.confirmReset.kicker':  'Block in progress',
+            'pomodoro.confirmReset.title':   'Stop the timer?',
+            'pomodoro.confirmReset.body':    'Current block progress will be lost.',
+            'pomodoro.confirmReset.confirm': 'Yes, stop',
+
             'pomodoro.alert.focusDone': 'Focus finished',
             'pomodoro.alert.focusBody': 'Pomodoro #{n} completed. Take a {duration} break.',
             'pomodoro.alert.breakDone': 'Break finished',

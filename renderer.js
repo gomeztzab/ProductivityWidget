@@ -366,7 +366,7 @@ if(collapsedExpandBtn) {
 if(minimizeBtn) {
     minimizeBtn.addEventListener("click", () => {
         if (strictModeState.exit) return
-        ipcRenderer.send("minimize-app")
+        Discipline.onMinimizeBtnClick()
     })
 }
 if(closeBtn) {
@@ -1418,6 +1418,7 @@ const pomodoroNoticeDismissBtn = document.getElementById("pomodoroNoticeDismiss"
 let reminderAudioCtx = null
 let pomodoroClickAudioCtx = null
 let pomodoroNoticeAction = null
+let noticeElapsedInterval = null
 let pomodoroCelebrationTimeout = null
 
 applyReminderSettings()
@@ -1502,6 +1503,9 @@ function syncPomodoroVisualState() {
     pomodoroRoot.classList.toggle('pomodoro--break', isBreak)
     pomodoroRoot.classList.toggle('pomodoro--urgent', remainingRatio <= 0.35)
     pomodoroRoot.classList.toggle('pomodoro--critical', remainingRatio <= 0.15)
+
+    /* Feature G — deshabilitar "Descanso" cuando ya estamos en break */
+    if (breakBtn) breakBtn.disabled = isBreak
 }
 
 function triggerPomodoroCelebration(pomodoroCount) {
@@ -1524,11 +1528,29 @@ function showPomodoroNotice({ kicker, title, body, actionLabel, action }) {
     if (pomodoroNoticeBody) pomodoroNoticeBody.textContent = body
     if (pomodoroNoticeActionBtn) pomodoroNoticeActionBtn.textContent = actionLabel || "Continuar"
     pomodoroNotice.classList.remove("pomodoro__notice--hidden")
+
+    /* Feature D — elapsed counter */
+    clearInterval(noticeElapsedInterval)
+    let secs = 0
+    const elapsedEl = document.getElementById('pomodoroNoticeElapsed')
+    if (elapsedEl) {
+        elapsedEl.textContent = '+00:00'
+        noticeElapsedInterval = setInterval(() => {
+            secs++
+            const m = String(Math.floor(secs / 60)).padStart(2, '0')
+            const s = String(secs % 60).padStart(2, '0')
+            elapsedEl.textContent = `+${m}:${s}`
+        }, 1000)
+    }
 }
 
 function hidePomodoroNotice() {
     pomodoroNoticeAction = null
     if (pomodoroNotice) pomodoroNotice.classList.add("pomodoro__notice--hidden")
+    clearInterval(noticeElapsedInterval)
+    noticeElapsedInterval = null
+    const elapsedEl = document.getElementById('pomodoroNoticeElapsed')
+    if (elapsedEl) elapsedEl.textContent = ''
 }
 
 function getReminderAudioCtx() {
@@ -1637,8 +1659,9 @@ function updateTimerCost() {
 function updateTimerDisplay() {
     const m = Math.floor(time / 60)
     const s = time % 60
-    document.getElementById("timer").textContent =
-        `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
+    const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    document.getElementById("timer").textContent = timeStr
+    document.title = `${timeStr} · Focus Pro`
 
     /* animar c�rculo SVG */
     const offset = CIRCUMFERENCE * (1 - time / totalTime)
@@ -1745,6 +1768,21 @@ function resetTimer() {
     updateTimerDisplay()
 }
 
+/* Feature H — confirmar antes de resetear cuando hay un bloque en curso */
+function confirmResetTimer() {
+    if (!pomodoroAttemptActive) {
+        resetTimer()
+        return
+    }
+    showPomodoroNotice({
+        kicker:      i18n.t('pomodoro.confirmReset.kicker'),
+        title:       i18n.t('pomodoro.confirmReset.title'),
+        body:        i18n.t('pomodoro.confirmReset.body'),
+        actionLabel: i18n.t('pomodoro.confirmReset.confirm'),
+        action:      () => resetTimer()
+    })
+}
+
 function startBreak() {
     hidePomodoroNotice()
     if (pomodoroAttemptActive) { Stats.addInterrupted(); pomodoroAttemptActive = false }
@@ -1768,7 +1806,7 @@ ipcRenderer.on('strict-interaction-lock-activated', () => {
 })
 
 startBtn.addEventListener("click", () => Discipline.onStartTimerClick())
-resetBtn.addEventListener("click", resetTimer)
+resetBtn.addEventListener("click", confirmResetTimer)
 breakBtn.addEventListener("click", startBreak)
 if (pomodoroNoticeActionBtn) {
     pomodoroNoticeActionBtn.addEventListener("click", () => {
@@ -2128,6 +2166,19 @@ const Discipline = (() => {
                 return
             }
             _showReviewModal(() => ipcRenderer.send('close-app'))
+        },
+
+        /* Feature I — revisar al minimizar si es fin del día */
+        onMinimizeBtnClick() {
+            const hour           = new Date().getHours()
+            const isEndOfDay     = hour >= 20
+            const hasPomodoros   = Stats.getPomodoros() > 0
+            const alreadyReviewed = !!localStorage.getItem(REVIEW_KEY())
+            if (isEndOfDay && hasPomodoros && !alreadyReviewed) {
+                _showReviewModal(() => ipcRenderer.send('minimize-app'))
+                return
+            }
+            ipcRenderer.send('minimize-app')
         },
 
         init() {

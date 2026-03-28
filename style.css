@@ -1465,6 +1465,15 @@ body {
     line-height: 1.45;
 }
 
+.pomodoro__notice-elapsed {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    color: color-mix(in srgb, var(--accent-color) 85%, #ffffffcc);
+    font-weight: 600;
+    min-height: 1em;
+}
+
 .pomodoro__notice-actions {
     display: flex;
     align-items: center;
