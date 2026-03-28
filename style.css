@@ -1361,6 +1361,18 @@ body {
     color: #ffffff40;
 }
 
+.pomodoro__goal-input--error {
+    border-bottom-color: #ef4444 !important;
+    color: #ef4444cc;
+    animation: goal-input-shake 0.25s ease;
+}
+
+@keyframes goal-input-shake {
+    0%, 100% { transform: translateX(0); }
+    33%       { transform: translateX(-3px); }
+    66%       { transform: translateX(3px); }
+}
+
 /* ---- Propuesta 1: Intention anchor ---- */
 .pomodoro__intention {
     display: block;

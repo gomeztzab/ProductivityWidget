@@ -1283,7 +1283,7 @@ ipcMain.on('export-stats', async (event, { history = [], daily = {}, tasks = [],
                     focusedHours: parseFloat(((e.focusedSecs || 0) / 3600).toFixed(2))
                 })),
                 tasks: {
-                    done:    tasks.filter(t => t.done).map(t => ({ text: t.text, priority: t.priority })),
+                    done:    tasks.filter(t => t.done).map(t => ({ text: t.text, priority: t.priority, completedAt: t.completedAt ? new Date(t.completedAt).toISOString() : null })),
                     pending: tasks.filter(t => !t.done).map(t => ({ text: t.text, priority: t.priority }))
                 }
             }
@@ -1316,8 +1316,11 @@ ipcMain.on('export-stats', async (event, { history = [], daily = {}, tasks = [],
             if (doneTasks.length > 0 || pendingTasks.length > 0) {
                 lines.push('')
                 lines.push('=== TAREAS COMPLETADAS (snapshot actual) ===')
-                lines.push('Texto,Prioridad')
-                doneTasks.forEach(t => lines.push(`"${t.text.replace(/"/g,'""')}",${t.priority}`))
+                lines.push('Texto,Prioridad,Completada el')
+                doneTasks.forEach(t => {
+                    const date = t.completedAt ? new Date(t.completedAt).toLocaleDateString('es-ES') : ''
+                    lines.push(`"${t.text.replace(/"/g,'""')}",${t.priority},${date}`)
+                })
                 if (pendingTasks.length > 0) {
                     lines.push('')
                     lines.push('=== TAREAS PENDIENTES ===')

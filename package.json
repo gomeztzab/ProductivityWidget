@@ -18,7 +18,7 @@
     },
     "files": [
       "main.js",
-      "renderer.js",
+      "modules/**/*",
       "index.html",
       "style.css",
       "i18n.js",

@@ -1,5 +1,11 @@
 /* =====================
-   SETTINGS IPC (guard: el bot�n puede no existir en esta vista)
+   ARCHIVO ORIGINAL — solo como referencia/backup.
+   La app carga los módulos desde modules/*.js (ver index.html).
+   No modificar aquí; editar el módulo correspondiente en modules/.
+   ===================== */
+
+/* =====================
+   SETTINGS IPC (guard: el botón puede no existir en esta vista)
    ===================== */
 
 const { ipcRenderer } = require('electron')
@@ -667,6 +673,7 @@ const Stats = (() => {
 
     const _defaults = { pomodoros: 0, focusedSecs: 0, breaks: 0, attempted: 0, interrupted: 0 }
     let _daily = Object.assign({}, _defaults, JSON.parse(localStorage.getItem(_todayKey()) || '{}'))
+    let _focusSaveTick = 0   /* contador para persistir focusedSecs cada 60s sin escribir cada tick */
 
     function _saveDaily() {
         localStorage.setItem(_todayKey(), JSON.stringify(_daily))
@@ -682,7 +689,7 @@ const Stats = (() => {
         let hist  = _getHistory()
         const key = new Date().toDateString()
         const idx = hist.findIndex(e => e.date === key)
-        const entry = { date: key, pomodoros: _daily.pomodoros, focusedSecs: _daily.focusedSecs }
+        const entry = { date: key, pomodoros: _daily.pomodoros, focusedSecs: _daily.focusedSecs, breaks: _daily.breaks, attempted: _daily.attempted, interrupted: _daily.interrupted }
         if (idx >= 0) hist[idx] = entry; else hist.push(entry)
         if (hist.length > 30) hist = hist.slice(-30)
         localStorage.setItem('stats_history', JSON.stringify(hist))
@@ -798,7 +805,7 @@ const Stats = (() => {
     /* ---- API pública ---- */
     return {
         addPomodoro()     { _daily.pomodoros++;   _saveDaily(); if (_page === 0) _renderPage0() },
-        addFocusedTime(s) { _daily.focusedSecs += s; if (_page === 0) _renderPage0() },
+        addFocusedTime(s) { _daily.focusedSecs += s; if (++_focusSaveTick >= 60) { _focusSaveTick = 0; _saveDaily() } if (_page === 0) _renderPage0() },
         addBreak()        { _daily.breaks++;      _saveDaily(); if (_page === 0) _renderPage0() },
         addAttempt()      { _daily.attempted++;   _saveDaily(); if (_page === 0) _renderPage0() },
         addInterrupted()  { _daily.interrupted++; _saveDaily(); if (_page === 0) _renderPage0() },
@@ -2106,8 +2113,23 @@ const Discipline = (() => {
         overlay.classList.remove('discipline-overlay--hidden')
         setTimeout(() => input.focus(), 60)
 
+        /* Focus trap: Tab queda dentro del modal */
+        const _focusableI = [input, confirm, skip]
+        function _trapFocusI(e) {
+            if (e.key !== 'Tab') return
+            const first = _focusableI[0]
+            const last  = _focusableI[_focusableI.length - 1]
+            if (e.shiftKey) {
+                if (document.activeElement === first) { e.preventDefault(); last.focus() }
+            } else {
+                if (document.activeElement === last)  { e.preventDefault(); first.focus() }
+            }
+        }
+        overlay.addEventListener('keydown', _trapFocusI)
+
         function _close() {
             overlay.classList.add('discipline-overlay--hidden')
+            overlay.removeEventListener('keydown', _trapFocusI)
             confirm.removeEventListener('click', _onConfirm)
             skip.removeEventListener('click', _onSkip)
         }
@@ -2156,8 +2178,24 @@ const Discipline = (() => {
 
         overlay.classList.remove('discipline-overlay--hidden')
 
+        /* Focus trap: Tab queda dentro del modal de revisión */
+        const _focusableR = [yesBtn, noBtn, notes, confirm, closeBtn]
+        setTimeout(() => _focusableR[0].focus(), 60)
+        function _trapFocusR(e) {
+            if (e.key !== 'Tab') return
+            const first = _focusableR[0]
+            const last  = _focusableR[_focusableR.length - 1]
+            if (e.shiftKey) {
+                if (document.activeElement === first) { e.preventDefault(); last.focus() }
+            } else {
+                if (document.activeElement === last)  { e.preventDefault(); first.focus() }
+            }
+        }
+        overlay.addEventListener('keydown', _trapFocusR)
+
         function _close() {
             overlay.classList.add('discipline-overlay--hidden')
+            overlay.removeEventListener('keydown', _trapFocusR)
             yesBtn.removeEventListener('click', _onYes)
             noBtn.removeEventListener('click', _onNo)
             confirm.removeEventListener('click', _onConfirm)
