@@ -116,6 +116,8 @@
             'stats.streak': 'Racha',
             'stats.bestDay': 'Mejor Día',
             'stats.total': 'Total',
+            'stats.export': 'Exportar historial',
+            'pomodoro.goal.ariaLabel': 'Meta de pomodoros diaria',
 
             /* -- Weather -- */
             'weather.loading': 'Cargando…',
@@ -528,6 +530,8 @@
             'stats.streak': 'Streak',
             'stats.bestDay': 'Best Day',
             'stats.total': 'Total',
+            'stats.export': 'Export history',
+            'pomodoro.goal.ariaLabel': 'Daily pomodoro goal',
 
             /* -- Weather -- */
             'weather.loading': 'Loading…',

@@ -771,6 +771,18 @@ const Stats = (() => {
         document.getElementById('statStreak').textContent = _streak() + 'd'
         document.getElementById('statBest').textContent   = _best()
         document.getElementById('statTotal').textContent  = _totalHours() + 'h'
+
+        /* Feature J — wire export button once */
+        const exportBtn = document.getElementById('statsExportBtn')
+        if (exportBtn && !exportBtn._wired) {
+            exportBtn._wired = true
+            exportBtn.addEventListener('click', () => {
+                const hist = _getHistory()
+                const tasks = JSON.parse(localStorage.getItem('todoStateV2') || '{"tasks":[]}').tasks || []
+                const accentColor = localStorage.getItem('accentColor') || '#3b82f6'
+                ipcRenderer.send('export-stats', { history: hist, daily: _daily, tasks, accentColor })
+            })
+        }
     }
 
     function _renderCurrent() {
@@ -817,6 +829,11 @@ function getTaskStats() {
         return { all: 0, done: 0, pending: 0, rate: 0, activeTask: null }
     }
     return TodoList.getStats()
+}
+
+/* Feature K — meta diária de pomodoros */
+function getPomodoroGoal() {
+    return parseInt(localStorage.getItem('pomodoroGoal') || '0', 10) || 0
 }
 
 TodoList = (() => {
@@ -1496,6 +1513,13 @@ function syncPomodoroVisualState() {
         glowColor = `color-mix(in srgb, ${progressColor} 68%, transparent)`
     }
 
+    /* Feature K — meta diaria alcanzada → verde */
+    const goal = getPomodoroGoal()
+    if (goal > 0 && Stats.getPomodoros() >= goal) {
+        progressColor = `color-mix(in srgb, #22c55e 85%, var(--accent-color))`
+        glowColor     = `color-mix(in srgb, #22c55e 70%, transparent)`
+    }
+
     pomodoroRoot.style.setProperty('--pomodoro-progress-color', progressColor)
     pomodoroRoot.style.setProperty('--pomodoro-progress-glow', glowColor)
     pomodoroRoot.classList.toggle('pomodoro--running', Boolean(interval))
@@ -1644,8 +1668,9 @@ function updateTimerCost() {
     const el = document.getElementById('pomodoroCost')
     if (!el) return
     const done   = Stats.getPomodoros()
+    const goal   = getPomodoroGoal()
     const active = !isBreak && !!interval
-    const total  = Math.max(done + (active ? 1 : 0), 1)
+    const total  = goal > 0 ? goal : Math.max(done + (active ? 1 : 0), 1)
     const dots   = []
     for (let i = 0; i < total; i++) {
         let cls = 'pomodoro__cost-dot'
@@ -1654,6 +1679,17 @@ function updateTimerCost() {
         dots.push(`<span class="${cls}"></span>`)
     }
     el.innerHTML = dots.join('')
+
+    /* Feature K — fraction label */
+    const fracEl = document.getElementById('pomodoroGoalFraction')
+    if (fracEl) {
+        if (goal > 0) {
+            fracEl.textContent = `${done}/${goal}`
+            fracEl.hidden = false
+        } else {
+            fracEl.hidden = true
+        }
+    }
 }
 
 function updateTimerDisplay() {
@@ -2202,6 +2238,33 @@ const Discipline = (() => {
 MusicPlayer.init()
 Stats.init()
 Discipline.init()
+
+/* Feature K — inicializar input de meta */
+;(function initGoalInput() {
+    const input = document.getElementById('pomodoroGoalInput')
+    if (!input) return
+    const saved = getPomodoroGoal()
+    if (saved > 0) input.value = saved
+    input.addEventListener('change', () => {
+        const v = parseInt(input.value, 10)
+        if (v >= 1 && v <= 20) {
+            localStorage.setItem('pomodoroGoal', String(v))
+        } else {
+            localStorage.removeItem('pomodoroGoal')
+            input.value = ''
+        }
+        updateTimerCost()
+        syncPomodoroVisualState()
+    })
+    /* also allow clearing with backspace -> empty string */
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && input.value === '') {
+            localStorage.removeItem('pomodoroGoal')
+            updateTimerCost()
+            syncPomodoroVisualState()
+        }
+    })
+})()
 
 const _pomodoroActiveTaskDoneBtn = document.getElementById('pomodoroActiveTaskDone')
 if (_pomodoroActiveTaskDoneBtn) {

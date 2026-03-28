@@ -1149,6 +1149,211 @@ return
 if(win && !win.isDestroyed()) win.minimize()
 })
 
+/* Feature J — exportar historial de stats */
+function buildStatsHtmlReport({ history = [], daily = {}, tasks = [], accentColor = '#3b82f6', exportDate } = {}) {
+    const maxPom = Math.max(1, ...history.map(e => e.pomodoros || 0))
+    const histRows = history.slice().reverse().map(e => {
+        const pct  = Math.round(((e.pomodoros || 0) / maxPom) * 100)
+        const h    = Math.floor((e.focusedSecs || 0) / 3600)
+        const m    = Math.floor(((e.focusedSecs || 0) % 3600) / 60)
+        const focus = h > 0 ? `${h}h ${m}m` : `${m}m`
+        return `<tr>
+            <td>${e.date}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:7px;max-width:150px">
+                        <div style="width:${pct}%;background:${accentColor};height:7px;border-radius:4px"></div>
+                    </div>
+                    <strong style="min-width:24px;text-align:right">${e.pomodoros || 0}</strong>
+                </div>
+            </td>
+            <td>${focus}</td>
+        </tr>`
+    }).join('')
+    const priColor = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e' }
+    const priLabel = { high: 'Alta', medium: 'Media', low: 'Baja' }
+    const doneTasks    = tasks.filter(t => t.done)
+    const pendingTasks = tasks.filter(t => !t.done)
+    const totalH    = Math.floor((daily.focusedSecs || 0) / 3600)
+    const totalM    = Math.floor(((daily.focusedSecs || 0) % 3600) / 60)
+    const todayFocus = totalH > 0 ? `${totalH}h ${totalM}m` : `${totalM}m`
+    const adherence  = (daily.attempted || 0) > 0
+        ? Math.round(((daily.pomodoros || 0) / daily.attempted) * 100) + '%'
+        : '—'
+    const taskSection = (doneTasks.length > 0 || pendingTasks.length > 0) ? `
+        <h2>Tareas (snapshot actual)</h2>
+        <table>
+            <thead><tr><th>Tarea</th><th>Prioridad</th><th>Estado</th></tr></thead>
+            <tbody>
+                ${doneTasks.map(t => `<tr>
+                    <td style="text-decoration:line-through;color:#94a3b8">${t.text.replace(/</g,'&lt;')}</td>
+                    <td><span style="color:${priColor[t.priority]||'#94a3b8'};font-size:11px;font-weight:700">${priLabel[t.priority]||t.priority}</span></td>
+                    <td><span class="badge badge--done">✓ Completada</span></td>
+                </tr>`).join('')}
+                ${pendingTasks.map(t => `<tr>
+                    <td>${t.text.replace(/</g,'&lt;')}</td>
+                    <td><span style="color:${priColor[t.priority]||'#94a3b8'};font-size:11px;font-weight:700">${priLabel[t.priority]||t.priority}</span></td>
+                    <td><span class="badge badge--pending">Pendiente</span></td>
+                </tr>`).join('')}
+            </tbody>
+        </table>` : ''
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Focus Pro — Historial</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;padding:40px;font-size:14px}
+  h1{font-size:22px;color:${accentColor};margin-bottom:3px}
+  .sub{color:#64748b;font-size:12px;margin-bottom:30px}
+  h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#475569;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid ${accentColor}33}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:6px}
+  .card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px #0000000a;border-top:3px solid ${accentColor}}
+  .card .val{font-size:26px;font-weight:800;color:${accentColor};line-height:1}
+  .card .lbl{font-size:10px;color:#94a3b8;margin-top:5px;text-transform:uppercase;letter-spacing:.6px}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px #0000000a;border:1px solid #e2e8f0}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+  td{padding:9px 14px;border-bottom:1px solid #f1f5f9;font-size:13px}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#fafafa}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .badge--done{background:#dcfce7;color:#15803d}
+  .badge--pending{background:#f1f5f9;color:#64748b}
+  footer{margin-top:40px;font-size:11px;color:#cbd5e1;text-align:center;padding-top:20px;border-top:1px solid #f1f5f9}
+  @media print{body{padding:20px}}
+</style>
+</head>
+<body>
+  <h1>Focus Pro</h1>
+  <div class="sub">Historial de productividad &middot; Exportado el ${exportDate}</div>
+  <h2>Hoy</h2>
+  <div class="grid">
+    <div class="card"><div class="val">${daily.pomodoros||0}</div><div class="lbl">Pomodoros</div></div>
+    <div class="card"><div class="val">${todayFocus}</div><div class="lbl">Enfocado</div></div>
+    <div class="card"><div class="val">${daily.breaks||0}</div><div class="lbl">Descansos</div></div>
+    <div class="card"><div class="val">${adherence}</div><div class="lbl">Adherencia</div></div>
+  </div>
+  <h2>Historial &mdash; últimos 30 días</h2>
+  <table>
+    <thead><tr><th>Fecha</th><th>Pomodoros</th><th>Tiempo enfocado</th></tr></thead>
+    <tbody>${histRows}</tbody>
+  </table>
+  ${taskSection}
+  <footer>Generado por Focus Pro &middot; ${exportDate}</footer>
+</body>
+</html>`
+}
+
+ipcMain.on('export-stats', async (event, { history = [], daily = {}, tasks = [], accentColor = '#3b82f6' } = {}) => {
+    if (!win || win.isDestroyed()) return
+    const exportDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+    const defaultName = `focus-stats-${new Date().toISOString().slice(0, 10)}`
+    const { canceled, filePath: savePath } = await dialog.showSaveDialog(win, {
+        title: 'Exportar historial',
+        defaultPath: defaultName,
+        filters: [
+            { name: 'PDF',  extensions: ['pdf']  },
+            { name: 'CSV',  extensions: ['csv']  },
+            { name: 'JSON', extensions: ['json'] }
+        ]
+    })
+    if (canceled || !savePath) return
+    try {
+        if (savePath.endsWith('.json')) {
+            /* ---- JSON enriquecido ---- */
+            const totalFocusH = ((daily.focusedSecs || 0) / 3600).toFixed(2)
+            const adherencePct = (daily.attempted || 0) > 0
+                ? Math.round(((daily.pomodoros || 0) / daily.attempted) * 100)
+                : null
+            const out = {
+                meta: { exportedAt: new Date().toISOString(), app: 'Focus Pro' },
+                today: {
+                    date: new Date().toDateString(),
+                    pomodoros: daily.pomodoros || 0,
+                    focusedSecs: daily.focusedSecs || 0,
+                    focusedHours: parseFloat(totalFocusH),
+                    breaks: daily.breaks || 0,
+                    attempted: daily.attempted || 0,
+                    interrupted: daily.interrupted || 0,
+                    adherencePct
+                },
+                history: history.map(e => ({
+                    ...e,
+                    focusedHours: parseFloat(((e.focusedSecs || 0) / 3600).toFixed(2))
+                })),
+                tasks: {
+                    done:    tasks.filter(t => t.done).map(t => ({ text: t.text, priority: t.priority })),
+                    pending: tasks.filter(t => !t.done).map(t => ({ text: t.text, priority: t.priority }))
+                }
+            }
+            fs.writeFileSync(savePath, JSON.stringify(out, null, 2), 'utf8')
+
+        } else if (savePath.endsWith('.csv')) {
+            /* ---- CSV multi-sección ---- */
+            const lines = []
+            lines.push('Focus Pro - Historial de productividad')
+            lines.push(`Exportado:,${exportDate}`)
+            lines.push('')
+            lines.push('=== HOY ===')
+            lines.push('Pomodoros,Tiempo enfocado (mins),Descansos,Intentados,Interrumpidos,Adherencia %')
+            const focusedMins = Math.round((daily.focusedSecs || 0) / 60)
+            const adh = (daily.attempted || 0) > 0
+                ? Math.round(((daily.pomodoros || 0) / daily.attempted) * 100)
+                : ''
+            lines.push(`${daily.pomodoros||0},${focusedMins},${daily.breaks||0},${daily.attempted||0},${daily.interrupted||0},${adh}`)
+            lines.push('')
+            lines.push('=== HISTORIAL (últimos 30 días) ===')
+            lines.push('Fecha,Pomodoros,Tiempo enfocado (mins),Tiempo enfocado (hh:mm)')
+            history.slice().reverse().forEach(e => {
+                const mins = Math.round((e.focusedSecs || 0) / 60)
+                const h = String(Math.floor((e.focusedSecs || 0) / 3600)).padStart(2, '0')
+                const m = String(Math.floor(((e.focusedSecs || 0) % 3600) / 60)).padStart(2, '0')
+                lines.push(`${e.date},${e.pomodoros||0},${mins},${h}:${m}`)
+            })
+            const doneTasks    = tasks.filter(t => t.done)
+            const pendingTasks = tasks.filter(t => !t.done)
+            if (doneTasks.length > 0 || pendingTasks.length > 0) {
+                lines.push('')
+                lines.push('=== TAREAS COMPLETADAS (snapshot actual) ===')
+                lines.push('Texto,Prioridad')
+                doneTasks.forEach(t => lines.push(`"${t.text.replace(/"/g,'""')}",${t.priority}`))
+                if (pendingTasks.length > 0) {
+                    lines.push('')
+                    lines.push('=== TAREAS PENDIENTES ===')
+                    lines.push('Texto,Prioridad')
+                    pendingTasks.forEach(t => lines.push(`"${t.text.replace(/"/g,'""')}",${t.priority}`))
+                }
+            }
+            fs.writeFileSync(savePath, '\uFEFF' + lines.join('\n'), 'utf8') /* BOM for Excel */
+
+        } else {
+            /* ---- PDF via printToPDF ---- */
+            const html    = buildStatsHtmlReport({ history, daily, tasks, accentColor, exportDate })
+            const tmpFile = path.join(os.tmpdir(), `focus-pro-report-${Date.now()}.html`)
+            fs.writeFileSync(tmpFile, html, 'utf8')
+            const pdfWin  = new BrowserWindow({
+                show: false,
+                webPreferences: { nodeIntegration: false, contextIsolation: true }
+            })
+            await pdfWin.loadFile(tmpFile)
+            try {
+                const pdfBuf = await pdfWin.webContents.printToPDF({
+                    printBackground: true,
+                    pageSize: 'A4',
+                    margins: { top: 0.5, bottom: 0.5, left: 0.5, right: 0.5 }
+                })
+                fs.writeFileSync(savePath, pdfBuf)
+            } finally {
+                pdfWin.destroy()
+                try { fs.unlinkSync(tmpFile) } catch (_) {}
+            }
+        }
+    } catch (err) {
+        console.error('[export-stats]', err)
+    }
+})
+
 ipcMain.on('set-window-width', (event, width) => {
     if (!win || win.isDestroyed()) return
     const currentBounds = win.getBounds()

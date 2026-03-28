@@ -86,6 +86,10 @@
                         <div class="pomodoro__time" id="timer">25:00</div>
                         <div class="pomodoro__label" data-i18n="pomodoro.focusTime">Focus Time</div>
                         <div class="pomodoro__cost" id="pomodoroCost"></div>
+                        <div class="pomodoro__goal-row" id="pomodoroGoalRow">
+                            <span class="pomodoro__goal-fraction" id="pomodoroGoalFraction"></span>
+                            <input class="pomodoro__goal-input" id="pomodoroGoalInput" type="number" min="1" max="20" step="1" aria-label="Meta de pomodoros" data-i18n-aria="pomodoro.goal.ariaLabel">
+                        </div>
                     </div>
                 </div>
                 <div class="pomodoro__controls">
@@ -283,6 +287,7 @@
                                 <span class="stats__item-label" data-i18n="stats.total">Total</span>
                             </div>
                         </div>
+                        <button class="stats__export-btn" id="statsExportBtn" type="button" data-i18n="stats.export">Exportar historial</button>
                     </div>
 
                 </div>

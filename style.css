@@ -1313,6 +1313,54 @@ body {
     50%       { transform: scale(1.25); opacity: 1; }
 }
 
+/* ---- Feature K: Daily goal row ---- */
+.pomodoro__goal-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    min-height: 18px;
+}
+
+.pomodoro__goal-fraction {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: #ffffffaa;
+    letter-spacing: 0.3px;
+}
+
+.pomodoro__goal-input {
+    width: 38px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ffffff30;
+    color: #ffffff80;
+    font-size: 11px;
+    text-align: center;
+    padding: 0 2px 1px;
+    outline: none;
+    -webkit-app-region: no-drag;
+    transition: border-color 0.15s ease, color 0.15s ease;
+    /* hide spin arrows */
+    -moz-appearance: textfield;
+}
+
+.pomodoro__goal-input::-webkit-outer-spin-button,
+.pomodoro__goal-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.pomodoro__goal-input:focus {
+    border-bottom-color: var(--accent-color);
+    color: #ffffffcc;
+}
+
+.pomodoro__goal-input::placeholder {
+    color: #ffffff40;
+}
+
 /* ---- Propuesta 1: Intention anchor ---- */
 .pomodoro__intention {
     display: block;
@@ -2843,6 +2891,28 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     font-size: 14px;
     color: #ffffff80;
     margin-left: 4px;
+}
+
+/* ---- Feature J: Export button ---- */
+.stats__export-btn {
+    display: block;
+    width: calc(100% - 4px);
+    margin: 10px 2px 2px;
+    padding: 7px 12px;
+    background: #ffffff0a;
+    border: 1px solid #ffffff18;
+    border-radius: 10px;
+    color: #ffffffcc;
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    -webkit-app-region: no-drag;
+}
+
+.stats__export-btn:hover {
+    background: color-mix(in srgb, var(--accent-color) 18%, transparent);
+    border-color: color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
 
 /* ---- Propuesta 2: Adherence bar ---- */
