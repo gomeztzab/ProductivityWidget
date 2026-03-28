@@ -85,12 +85,19 @@
                     <div class="pomodoro__circle-label">
                         <div class="pomodoro__time" id="timer">25:00</div>
                         <div class="pomodoro__label" data-i18n="pomodoro.focusTime">Focus Time</div>
+                        <div class="pomodoro__cost" id="pomodoroCost"></div>
                     </div>
                 </div>
                 <div class="pomodoro__controls">
                     <button class="btn btn--primary" id="startTimerBtn" data-i18n="pomodoro.start">Iniciar</button>
                     <button class="btn btn--secondary" id="breakBtn" data-i18n="pomodoro.break">Descanso</button>
                     <button class="btn btn--danger" id="resetTimerBtn" data-i18n="pomodoro.stop">Parar</button>
+                </div>
+                <a class="pomodoro__intention pomodoro__intention--hidden" id="pomodoroIntention" href="#" tabindex="-1" aria-hidden="true"></a>
+                <div class="pomodoro__active-task pomodoro__active-task--hidden" id="pomodoroActiveTask" aria-live="polite">
+                    <span class="pomodoro__active-task-pin" aria-hidden="true">📌</span>
+                    <span class="pomodoro__active-task-text" id="pomodoroActiveTaskText"></span>
+                    <button class="pomodoro__active-task-done" id="pomodoroActiveTaskDone" type="button" aria-label="Marcar como completada" data-i18n-aria="pomodoro.activeTask.doneAriaLabel">✓</button>
                 </div>
                 <button class="pomodoro__strict-btn" id="strictModeBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -202,6 +209,15 @@
                                 </svg>
                                 <span class="stats__item-value" id="statBreaks">0</span>
                                 <span class="stats__item-label" data-i18n="stats.breaks">Descansos</span>
+                            </div>
+                        </div>
+                        <div class="stats__adherence" id="statAdherenceWrap" style="display:none">
+                            <div class="stats__adherence-header">
+                                <span class="stats__adherence-label" id="statAdherenceLabel" data-i18n="stats.adherence">Adherencia</span>
+                                <span class="stats__adherence-pct" id="statAdherencePct">0%</span>
+                            </div>
+                            <div class="stats__adherence-track">
+                                <div class="stats__adherence-fill" id="statAdherenceFill" style="width:0%"></div>
                             </div>
                         </div>
                     </div>
@@ -389,6 +405,36 @@
             </div>
         </section>
     </div>
+
+<!-- Discipline: Intention modal -->
+<div class="discipline-overlay discipline-overlay--hidden" id="disciplineIntentionOverlay" role="dialog" aria-modal="true" aria-labelledby="disciplineIntentionTitle">
+    <div class="discipline-modal">
+        <h2 class="discipline-modal__title" id="disciplineIntentionTitle" data-i18n="discipline.intention.title">¿Cuál es tu intención para esta sesión?</h2>
+        <p class="discipline-modal__subtitle" data-i18n="discipline.intention.subtitle">Una intención clara mejora tu enfoque.</p>
+        <textarea class="discipline-modal__input" id="disciplineIntentionInput" rows="3" data-i18n-placeholder="discipline.intention.placeholder" placeholder="Ej: Terminar el módulo de autenticación..."></textarea>
+        <div class="discipline-modal__actions">
+            <button class="btn btn--primary" id="disciplineIntentionConfirm" data-i18n="discipline.intention.confirm">Empezar</button>
+            <button class="btn btn--secondary" id="disciplineIntentionSkip" data-i18n="discipline.intention.skip">Omitir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Discipline: Review modal -->
+<div class="discipline-overlay discipline-overlay--hidden" id="disciplineReviewOverlay" role="dialog" aria-modal="true" aria-labelledby="disciplineReviewTitle">
+    <div class="discipline-modal">
+        <h2 class="discipline-modal__title" id="disciplineReviewTitle" data-i18n="discipline.review.title">Revisión de cierre</h2>
+        <p class="discipline-modal__intention-recap" id="disciplineReviewIntentionText"></p>
+        <div class="discipline-modal__met">
+            <button class="discipline-modal__met-btn discipline-modal__met-btn--yes" id="disciplineReviewYes" data-i18n="discipline.review.yes">✓ Sí lo logré</button>
+            <button class="discipline-modal__met-btn discipline-modal__met-btn--no" id="disciplineReviewNo" data-i18n="discipline.review.no">✗ No del todo</button>
+        </div>
+        <textarea class="discipline-modal__input" id="disciplineReviewNotes" rows="2" data-i18n-placeholder="discipline.review.notesPlaceholder" placeholder="Notas opcionales..."></textarea>
+        <div class="discipline-modal__actions">
+            <button class="btn btn--primary" id="disciplineReviewConfirm" data-i18n="discipline.review.confirm">Guardar y cerrar</button>
+            <button class="btn btn--secondary" id="disciplineReviewClose" data-i18n="discipline.review.skip">Cerrar sin guardar</button>
+        </div>
+    </div>
+</div>
 
 <script src="i18n.js"></script>
 <script src="renderer.js"></script>

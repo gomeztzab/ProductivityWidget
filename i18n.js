@@ -391,6 +391,25 @@
             'lockScreen.coverageVal': 'Toda la pantalla simulando una lock screen de estudio',
             'lockScreen.exit': 'Desactivar pantalla lock',
 
+            /* -- Discipline module -- */
+            'discipline.intention.title': '¿Cuál es tu intención para esta sesión?',
+            'discipline.intention.subtitle': 'Una intención clara mejora tu enfoque.',
+            'discipline.intention.placeholder': 'Ej: Terminar el módulo de autenticación...',
+            'discipline.intention.confirm': 'Empezar',
+            'discipline.intention.skip': 'Omitir',
+            'discipline.review.title': 'Revisión de cierre',
+            'discipline.review.noIntention': 'Sin intención registrada para hoy.',
+            'discipline.review.yes': '✓ Sí lo logré',
+            'discipline.review.no': '✗ No del todo',
+            'discipline.review.notesPlaceholder': 'Notas opcionales...',
+            'discipline.review.confirm': 'Guardar y cerrar',
+            'discipline.review.skip': 'Cerrar sin guardar',
+
+            /* -- Stats adherence -- */
+            'pomodoro.activeTask.doneAriaLabel': 'Marcar tarea como completada',
+            'stats.adherence': 'Adherencia',
+            'stats.adherenceInterrupted': 'Adherencia · {n} interrumpidos',
+
             /* -- Clock date format -- */
             'clock.locale': 'es-MX',
 
@@ -774,6 +793,25 @@
             'lockScreen.coverage': 'Coverage',
             'lockScreen.coverageVal': 'Full screen simulating a study lock screen',
             'lockScreen.exit': 'Deactivate lock screen',
+
+            /* -- Discipline module -- */
+            'discipline.intention.title': 'What is your intention for this session?',
+            'discipline.intention.subtitle': 'A clear intention improves your focus.',
+            'discipline.intention.placeholder': 'e.g. Finish the authentication module...',
+            'discipline.intention.confirm': 'Start',
+            'discipline.intention.skip': 'Skip',
+            'discipline.review.title': 'Session Review',
+            'discipline.review.noIntention': 'No intention set for today.',
+            'discipline.review.yes': '✓ Yes, I achieved it',
+            'discipline.review.no': '✗ Not quite',
+            'discipline.review.notesPlaceholder': 'Optional notes...',
+            'discipline.review.confirm': 'Save & close',
+            'discipline.review.skip': 'Close without saving',
+
+            /* -- Stats adherence -- */
+            'pomodoro.activeTask.doneAriaLabel': 'Mark task as done',
+            'stats.adherence': 'Adherence',
+            'stats.adherenceInterrupted': 'Adherence · {n} interrupted',
 
             /* -- Clock date format -- */
             'clock.locale': 'en-US',

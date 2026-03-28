@@ -370,7 +370,7 @@ if(minimizeBtn) {
     })
 }
 if(closeBtn) {
-    closeBtn.addEventListener("click", () => ipcRenderer.send("close-app"))
+    closeBtn.addEventListener("click", () => Discipline.onCloseBtnClick())
 }
 if(strictModeBtn) {
     strictModeBtn.addEventListener("click", () => {
@@ -665,7 +665,7 @@ const Stats = (() => {
     /* ---- Estado diario (clave = fecha del día) ---- */
     function _todayKey() { return `stats_${new Date().toDateString()}` }
 
-    const _defaults = { pomodoros: 0, focusedSecs: 0, breaks: 0 }
+    const _defaults = { pomodoros: 0, focusedSecs: 0, breaks: 0, attempted: 0, interrupted: 0 }
     let _daily = Object.assign({}, _defaults, JSON.parse(localStorage.getItem(_todayKey()) || '{}'))
 
     function _saveDaily() {
@@ -736,6 +736,28 @@ const Stats = (() => {
         document.getElementById('statPomodoros').textContent = _daily.pomodoros
         document.getElementById('statFocused').textContent  = h > 0 ? `${h}h ${m}m` : `${m}m`
         document.getElementById('statBreaks').textContent   = _daily.breaks
+
+        /* Adherence bar */
+        const attempted   = _daily.attempted  || 0
+        const interrupted = _daily.interrupted || 0
+        const completed   = _daily.pomodoros  || 0
+        const wrap = document.getElementById('statAdherenceWrap')
+        if (wrap) {
+            if (attempted > 0) {
+                const pct = Math.round((completed / attempted) * 100)
+                wrap.style.display = ''
+                document.getElementById('statAdherencePct').textContent  = pct + '%'
+                document.getElementById('statAdherenceFill').style.width = pct + '%'
+                const labelEl = document.getElementById('statAdherenceLabel')
+                if (labelEl) {
+                    labelEl.textContent = interrupted > 0
+                        ? i18n.t('stats.adherenceInterrupted', { n: interrupted })
+                        : i18n.t('stats.adherence')
+                }
+            } else {
+                wrap.style.display = 'none'
+            }
+        }
     }
 
     function _renderPage1() {
@@ -766,8 +788,12 @@ const Stats = (() => {
         addPomodoro()     { _daily.pomodoros++;   _saveDaily(); if (_page === 0) _renderPage0() },
         addFocusedTime(s) { _daily.focusedSecs += s; if (_page === 0) _renderPage0() },
         addBreak()        { _daily.breaks++;      _saveDaily(); if (_page === 0) _renderPage0() },
+        addAttempt()      { _daily.attempted++;   _saveDaily(); if (_page === 0) _renderPage0() },
+        addInterrupted()  { _daily.interrupted++; _saveDaily(); if (_page === 0) _renderPage0() },
         refreshTasks()    { if (_page === 1) _renderPage1() },
         getPomodoros()    { return _daily.pomodoros },
+        getAttempted()    { return _daily.attempted },
+        getFocusedSecs()  { return _daily.focusedSecs },
         getStreak()       { return _streak() },
         init() {
             _titleEl  = document.querySelector('.stats__title')
@@ -1099,6 +1125,7 @@ TodoList = (() => {
         state = normalizeState(nextState)
         saveState()
         render()
+        if (typeof syncPomodoroActiveTask === 'function') syncPomodoroActiveTask()
 
         if (options.focusInput && taskInput) {
             taskInput.focus()
@@ -1282,7 +1309,11 @@ TodoList = (() => {
 
     return {
         getStats,
-        render
+        render,
+        completeActiveTask() {
+            const { activeTask } = getStats()
+            if (activeTask) toggleTask(activeTask.id)
+        }
     }
 })()
 
@@ -1365,6 +1396,7 @@ let time      = FOCUS_TIME
 let totalTime = FOCUS_TIME
 let interval  = null
 let isBreak   = false
+let pomodoroAttemptActive = false
 
 /* stats eliminadas — gestionadas por módulo Stats */
 
@@ -1384,6 +1416,7 @@ const pomodoroNoticeBody = document.getElementById("pomodoroNoticeBody")
 const pomodoroNoticeActionBtn = document.getElementById("pomodoroNoticeAction")
 const pomodoroNoticeDismissBtn = document.getElementById("pomodoroNoticeDismiss")
 let reminderAudioCtx = null
+let pomodoroClickAudioCtx = null
 let pomodoroNoticeAction = null
 let pomodoroCelebrationTimeout = null
 
@@ -1391,6 +1424,43 @@ applyReminderSettings()
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max)
+}
+
+/* ---- Sonido de clic del timer (Free) ---- */
+function getPomodoroClickAudioCtx() {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return null
+    if (!pomodoroClickAudioCtx) pomodoroClickAudioCtx = new AudioCtx()
+    if (pomodoroClickAudioCtx.state === 'suspended') pomodoroClickAudioCtx.resume().catch(() => {})
+    return pomodoroClickAudioCtx
+}
+
+function playTimerClickSound(kind) {
+    /* kind: 'start' | 'pause' */
+    const ctx = getPomodoroClickAudioCtx()
+    if (!ctx) return
+
+    const now = ctx.currentTime + 0.01
+    const master = ctx.createGain()
+    master.gain.setValueAtTime(0.0001, now)
+    master.gain.exponentialRampToValueAtTime(0.08, now + 0.012)
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.09)
+    master.connect(ctx.destination)
+
+    const osc = ctx.createOscillator()
+    osc.type = 'sine'
+
+    if (kind === 'start') {
+        osc.frequency.setValueAtTime(680, now)
+        osc.frequency.exponentialRampToValueAtTime(820, now + 0.07)
+    } else {
+        osc.frequency.setValueAtTime(560, now)
+        osc.frequency.exponentialRampToValueAtTime(430, now + 0.07)
+    }
+
+    osc.connect(master)
+    osc.start(now)
+    osc.stop(now + 0.1)
 }
 
 function renderPomodoroStreak() {
@@ -1526,6 +1596,44 @@ function sendPomodoroReminder(kind, title, body, noticeConfig) {
     showPomodoroNotice(noticeConfig)
 }
 
+/* ---- Tarea activa vinculada al pomodoro (Feature C) ---- */
+function syncPomodoroActiveTask() {
+    const wrap   = document.getElementById('pomodoroActiveTask')
+    const textEl = document.getElementById('pomodoroActiveTaskText')
+    const doneBtn = document.getElementById('pomodoroActiveTaskDone')
+    if (!wrap || !textEl) return
+
+    const { activeTask } = getTaskStats()
+
+    if (activeTask) {
+        textEl.textContent = activeTask.text
+        wrap.classList.remove('pomodoro__active-task--hidden')
+        wrap.setAttribute('aria-hidden', 'false')
+        if (doneBtn) {
+            doneBtn.setAttribute('aria-label', i18n.t('pomodoro.activeTask.doneAriaLabel'))
+        }
+    } else {
+        wrap.classList.add('pomodoro__active-task--hidden')
+        wrap.setAttribute('aria-hidden', 'true')
+    }
+}
+
+function updateTimerCost() {
+    const el = document.getElementById('pomodoroCost')
+    if (!el) return
+    const done   = Stats.getPomodoros()
+    const active = !isBreak && !!interval
+    const total  = Math.max(done + (active ? 1 : 0), 1)
+    const dots   = []
+    for (let i = 0; i < total; i++) {
+        let cls = 'pomodoro__cost-dot'
+        if (i < done) cls += ' pomodoro__cost-dot--done'
+        else if (active && i === done) cls += ' pomodoro__cost-dot--active'
+        dots.push(`<span class="${cls}"></span>`)
+    }
+    el.innerHTML = dots.join('')
+}
+
 function updateTimerDisplay() {
     const m = Math.floor(time / 60)
     const s = time % 60
@@ -1536,6 +1644,7 @@ function updateTimerDisplay() {
     const offset = CIRCUMFERENCE * (1 - time / totalTime)
     progressCircle.style.strokeDashoffset = offset
     syncPomodoroVisualState()
+    updateTimerCost()
 }
 
 function ensurePomodoroRunning(trigger = "manual") {
@@ -1552,11 +1661,18 @@ function startTimer() {
         interval = null
         startBtn.textContent = i18n.t('pomodoro.resume')
         syncPomodoroVisualState()
+        playTimerClickSound('pause')
         return
     }
 
     hidePomodoroNotice()
     startBtn.textContent = i18n.t('pomodoro.pause')
+    playTimerClickSound('start')
+
+    if (!isBreak) {
+        pomodoroAttemptActive = true
+        Stats.addAttempt()
+    }
 
     interval = setInterval(() => {
         time--
@@ -1568,6 +1684,7 @@ function startTimer() {
             interval = null
 
             if(!isBreak) {
+                pomodoroAttemptActive = false
                 Stats.addPomodoro()
                 Stats.addBreak()
                 renderPomodoroStreak()
@@ -1617,6 +1734,7 @@ function startTimer() {
 
 function resetTimer() {
     hidePomodoroNotice()
+    if (pomodoroAttemptActive) { Stats.addInterrupted(); pomodoroAttemptActive = false }
     clearInterval(interval)
     interval  = null
     isBreak   = false
@@ -1629,6 +1747,7 @@ function resetTimer() {
 
 function startBreak() {
     hidePomodoroNotice()
+    if (pomodoroAttemptActive) { Stats.addInterrupted(); pomodoroAttemptActive = false }
     clearInterval(interval)
     interval  = null
     isBreak   = true
@@ -1648,7 +1767,7 @@ ipcRenderer.on('strict-interaction-lock-activated', () => {
     ensurePomodoroRunning('interaction-lock')
 })
 
-startBtn.addEventListener("click", startTimer)
+startBtn.addEventListener("click", () => Discipline.onStartTimerClick())
 resetBtn.addEventListener("click", resetTimer)
 breakBtn.addEventListener("click", startBreak)
 if (pomodoroNoticeActionBtn) {
@@ -1857,8 +1976,190 @@ const MusicPlayer = (() => {
     return { init }
 })()
 
+/* =====================
+   DISCIPLINE
+   Propuesta 1: Intención de sesión
+   Propuesta 4: Revisión de cierre diario
+   ===================== */
+const Discipline = (() => {
+    const SESSION_KEY = () => `disciplineSession_${new Date().toDateString()}`
+    const REVIEW_KEY  = () => `disciplineReview_${new Date().toDateString()}`
+
+    let _session    = null    /* { intention, skipped } */
+    let _reviewMet  = null    /* true | false | null */
+    let _pendingAction = null /* callback to run after modal resolves */
+
+    /* ---- Helpers ---- */
+    function _loadSession() {
+        try { _session = JSON.parse(localStorage.getItem(SESSION_KEY()) || 'null') } catch { _session = null }
+    }
+
+    function _saveSession(data) {
+        _session = data
+        localStorage.setItem(SESSION_KEY(), JSON.stringify(data))
+    }
+
+    function _hasIntention() {
+        return _session && (_session.intention || _session.skipped)
+    }
+
+    /* ---- Intention anchor ---- */
+    function _updateIntentionAnchor() {
+        const el = document.getElementById('pomodoroIntention')
+        if (!el) return
+        if (_session && _session.intention) {
+            el.textContent = _session.intention
+            el.classList.remove('pomodoro__intention--hidden')
+            el.setAttribute('tabindex', '0')
+            el.setAttribute('aria-hidden', 'false')
+        } else {
+            el.textContent = ''
+            el.classList.add('pomodoro__intention--hidden')
+            el.setAttribute('tabindex', '-1')
+            el.setAttribute('aria-hidden', 'true')
+        }
+    }
+
+    /* ---- Intention modal ---- */
+    function _showIntentionModal(onDone) {
+        const overlay = document.getElementById('disciplineIntentionOverlay')
+        const input   = document.getElementById('disciplineIntentionInput')
+        const confirm = document.getElementById('disciplineIntentionConfirm')
+        const skip    = document.getElementById('disciplineIntentionSkip')
+        if (!overlay) { onDone(); return }
+
+        input.value = ''
+        overlay.classList.remove('discipline-overlay--hidden')
+        setTimeout(() => input.focus(), 60)
+
+        function _close() {
+            overlay.classList.add('discipline-overlay--hidden')
+            confirm.removeEventListener('click', _onConfirm)
+            skip.removeEventListener('click', _onSkip)
+        }
+
+        function _onConfirm() {
+            const val = input.value.trim()
+            _saveSession({ intention: val || null, skipped: !val })
+            _updateIntentionAnchor()
+            _close()
+            onDone()
+        }
+
+        function _onSkip() {
+            _saveSession({ intention: null, skipped: true })
+            _updateIntentionAnchor()
+            _close()
+            onDone()
+        }
+
+        confirm.addEventListener('click', _onConfirm)
+        skip.addEventListener('click', _onSkip)
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _onConfirm() }
+        }, { once: true })
+    }
+
+    /* ---- Review modal ---- */
+    function _showReviewModal(onClose) {
+        const overlay  = document.getElementById('disciplineReviewOverlay')
+        const recap    = document.getElementById('disciplineReviewIntentionText')
+        const yesBtn   = document.getElementById('disciplineReviewYes')
+        const noBtn    = document.getElementById('disciplineReviewNo')
+        const notes    = document.getElementById('disciplineReviewNotes')
+        const confirm  = document.getElementById('disciplineReviewConfirm')
+        const closeBtn = document.getElementById('disciplineReviewClose')
+        if (!overlay) { onClose(); return }
+
+        _reviewMet = null
+        notes.value = ''
+        recap.textContent = (_session && _session.intention)
+            ? `"${_session.intention}"`
+            : i18n.t('discipline.review.noIntention')
+
+        yesBtn.classList.remove('discipline-modal__met-btn--selected')
+        noBtn.classList.remove('discipline-modal__met-btn--selected')
+
+        overlay.classList.remove('discipline-overlay--hidden')
+
+        function _close() {
+            overlay.classList.add('discipline-overlay--hidden')
+            yesBtn.removeEventListener('click', _onYes)
+            noBtn.removeEventListener('click', _onNo)
+            confirm.removeEventListener('click', _onConfirm)
+            closeBtn.removeEventListener('click', _onSkip)
+        }
+
+        function _onYes() { _reviewMet = true;  yesBtn.classList.add('discipline-modal__met-btn--selected'); noBtn.classList.remove('discipline-modal__met-btn--selected') }
+        function _onNo()  { _reviewMet = false; noBtn.classList.add('discipline-modal__met-btn--selected');  yesBtn.classList.remove('discipline-modal__met-btn--selected') }
+
+        function _onConfirm() {
+            localStorage.setItem(REVIEW_KEY(), JSON.stringify({
+                intention: _session ? _session.intention : null,
+                met: _reviewMet,
+                notes: notes.value.trim()
+            }))
+            _close()
+            onClose()
+        }
+
+        function _onSkip() { _close(); onClose() }
+
+        yesBtn.addEventListener('click', _onYes)
+        noBtn.addEventListener('click', _onNo)
+        confirm.addEventListener('click', _onConfirm)
+        closeBtn.addEventListener('click', _onSkip)
+    }
+
+    /* ---- Public API ---- */
+    return {
+        onStartTimerClick() {
+            if (_hasIntention()) {
+                startTimer()
+                return
+            }
+            _showIntentionModal(() => startTimer())
+        },
+
+        onCloseBtnClick() {
+            const hasPomodoros = Stats.getPomodoros() > 0
+            if (!hasPomodoros) {
+                ipcRenderer.send('close-app')
+                return
+            }
+            _showReviewModal(() => ipcRenderer.send('close-app'))
+        },
+
+        init() {
+            _loadSession()
+            _updateIntentionAnchor()
+            const anchor = document.getElementById('pomodoroIntention')
+            if (anchor) {
+                anchor.addEventListener('click', (e) => {
+                    e.preventDefault()
+                    /* clicking intention text re-opens modal if not running */
+                    if (!interval) {
+                        _session = null
+                        _showIntentionModal(() => {})
+                    }
+                })
+            }
+        }
+    }
+})()
+
 MusicPlayer.init()
 Stats.init()
+Discipline.init()
+
+const _pomodoroActiveTaskDoneBtn = document.getElementById('pomodoroActiveTaskDone')
+if (_pomodoroActiveTaskDoneBtn) {
+    _pomodoroActiveTaskDoneBtn.addEventListener('click', () => {
+        TodoList.completeActiveTask()
+        syncPomodoroActiveTask()
+    })
+}
+syncPomodoroActiveTask()
 
 /* =====================
    i18n — aplicar traducciones al DOM
@@ -1867,6 +2168,7 @@ function applyLanguageToPage() {
     i18n.applyPage()
     if (TodoList && typeof TodoList.render === 'function') {
         TodoList.render()
+        syncPomodoroActiveTask()
     }
     syncViewModesButtonState()
     syncStrictModeButtonState()

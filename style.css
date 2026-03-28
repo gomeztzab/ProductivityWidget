@@ -1276,6 +1276,141 @@ body {
     transform: scale(0.82);
 }
 
+/* ---- Propuesta 5: Cost dots ---- */
+.pomodoro__cost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 14px;
+    margin-top: 4px;
+}
+
+.pomodoro__cost-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent-color) 35%, #ffffff22);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 50%, transparent);
+    transition: background 0.3s ease, transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.pomodoro__cost-dot--done {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent-color) 60%, transparent);
+}
+
+.pomodoro__cost-dot--active {
+    background: color-mix(in srgb, var(--accent-color) 70%, transparent);
+    border-color: var(--accent-color);
+    animation: cost-dot-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes cost-dot-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50%       { transform: scale(1.25); opacity: 1; }
+}
+
+/* ---- Propuesta 1: Intention anchor ---- */
+.pomodoro__intention {
+    display: block;
+    margin-top: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: color-mix(in srgb, var(--accent-color) 90%, #ffffff);
+    background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+    border-radius: 20px;
+    text-decoration: none;
+    text-align: center;
+    max-width: 220px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: opacity 0.2s ease, max-height 0.2s ease, margin-top 0.2s ease, padding 0.2s ease;
+    max-height: 32px;
+}
+
+.pomodoro__intention:hover {
+    background: color-mix(in srgb, var(--accent-color) 22%, transparent);
+}
+
+.pomodoro__intention--hidden {
+    opacity: 0;
+    pointer-events: none;
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* ---- Feature C: Active task chip ---- */
+.pomodoro__active-task {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 5px 10px 5px 8px;
+    font-size: 12px;
+    color: #ffffffcc;
+    background: #ffffff0d;
+    border: 1px solid #ffffff18;
+    border-radius: 20px;
+    max-width: 220px;
+    max-height: 32px;
+    overflow: hidden;
+    transition: opacity 0.2s ease, max-height 0.2s ease, margin-top 0.2s ease, padding 0.2s ease;
+}
+
+.pomodoro__active-task--hidden {
+    opacity: 0;
+    pointer-events: none;
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.pomodoro__active-task-pin {
+    font-size: 10px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.pomodoro__active-task-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pomodoro__active-task-done {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid #ffffff30;
+    background: transparent;
+    color: #ffffffaa;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pomodoro__active-task-done:hover {
+    background: color-mix(in srgb, #22c55e 30%, transparent);
+    color: #86efac;
+    border-color: #22c55e60;
+}
+
 .pomodoro__notice {
     width: 100%;
     margin-top: 18px;
@@ -2701,6 +2836,47 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     margin-left: 4px;
 }
 
+/* ---- Propuesta 2: Adherence bar ---- */
+.stats__adherence {
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats__adherence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stats__adherence-label {
+    font-size: 12px;
+    color: #ffffff80;
+}
+
+.stats__adherence-pct {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.stats__adherence-track {
+    width: 100%;
+    height: 5px;
+    background: #ffffff18;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stats__adherence-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
 /* ======================
    WEATHER
    ====================== */
@@ -3187,4 +3363,127 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     --card-radius: 12px;
     --circle-glow: drop-shadow(0 0 12px #d9770680);
     --clock-glow: 0 0 15px #fbbf2440;
+}
+
+/* ======================
+   DISCIPLINE MODULE
+   Propuestas 1 & 4: intention + daily review
+   ====================== */
+.discipline-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: opacity 0.22s ease;
+}
+
+.discipline-overlay--hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.discipline-modal {
+    background: var(--card-bg, #1a1a2e);
+    border: 1px solid color-mix(in srgb, var(--accent-color) 30%, #ffffff18);
+    border-radius: 16px;
+    padding: 28px 24px 22px;
+    width: min(340px, calc(100vw - 40px));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 20px 50px -12px rgba(0,0,0,0.6);
+    animation: discipline-in 0.22s ease;
+}
+
+@keyframes discipline-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.discipline-modal__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.3;
+    margin: 0;
+}
+
+.discipline-modal__subtitle {
+    font-size: 13px;
+    color: #ffffffb3;
+    margin: -6px 0 0;
+}
+
+.discipline-modal__intention-recap {
+    font-size: 13px;
+    color: color-mix(in srgb, var(--accent-color) 90%, #ffffff);
+    background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    margin: 0;
+    min-height: 18px;
+}
+
+.discipline-modal__input {
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+    background: #ffffff0d;
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text-color);
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.discipline-modal__input:focus {
+    border-color: color-mix(in srgb, var(--accent-color) 60%, transparent);
+}
+
+.discipline-modal__met {
+    display: flex;
+    gap: 10px;
+}
+
+.discipline-modal__met-btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 10px;
+    border: 1px solid #ffffff22;
+    background: #ffffff0a;
+    color: #ffffffcc;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.discipline-modal__met-btn--yes:hover,
+.discipline-modal__met-btn--yes.discipline-modal__met-btn--selected {
+    background: color-mix(in srgb, #22c55e 25%, transparent);
+    border-color: #22c55e80;
+    color: #86efac;
+}
+
+.discipline-modal__met-btn--no:hover,
+.discipline-modal__met-btn--no.discipline-modal__met-btn--selected {
+    background: color-mix(in srgb, #ef4444 20%, transparent);
+    border-color: #ef444480;
+    color: #fca5a5;
+}
+
+.discipline-modal__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
 }
