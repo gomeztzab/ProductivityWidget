@@ -39,7 +39,7 @@
       "node_modules/**/*"
     ],
     "win": {
-      "icon": null
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,

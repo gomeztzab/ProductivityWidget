@@ -29,7 +29,6 @@ const licenseStateText = document.getElementById("licenseStateText")
 const licenseKeyMasked = document.getElementById("licenseKeyMasked")
 const licenseActivationMeta = document.getElementById("licenseActivationMeta")
 const licenseMessage = document.getElementById("licenseMessage")
-const toggleTrialLicenseBtn = document.getElementById("toggleTrialLicenseBtn")
 const buyFocusProBtn = document.getElementById("buyFocusProBtn")
 const licenseHelpBtn = document.getElementById("licenseHelpBtn")
 const swatches      = document.querySelectorAll("#swatchGroup .settings__swatch")
@@ -80,7 +79,6 @@ let selectedLanguage  = localStorage.getItem("appLanguage") || "es"
 let currentLicenseState = createEmptyLicenseState()
 let licenseFeedback = { tone: "", text: "" }
 let licenseActivationPending = false
-let trialLicenseEnabled = false
 
 /* ---- Aplicar colores/tema/fuente al propio settings al abrir ---- */
 document.documentElement.style.setProperty("--accent-color", selectedColor)
@@ -214,12 +212,6 @@ if (activateLicenseBtn) {
     })
 }
 
-if (toggleTrialLicenseBtn) {
-    toggleTrialLicenseBtn.addEventListener("click", () => {
-        void handleTrialLicenseToggle()
-    })
-}
-
 ipcRenderer.on("license-state-updated", (_event, payload) => {
     currentLicenseState = normalizeLicenseState(payload)
     enforceLicenseSelections()
@@ -227,9 +219,7 @@ ipcRenderer.on("license-state-updated", (_event, payload) => {
     if (currentLicenseState.isPro) {
         licenseFeedback = {
             tone: "success",
-            text: i18n.t(currentLicenseState.isTrial
-                ? "settings.license.message.trialActivated"
-                : "settings.license.message.success")
+            text: i18n.t("settings.license.message.success")
         }
     }
     renderLicensePanel()
@@ -297,7 +287,6 @@ function createEmptyLicenseState() {
         planName: "Free",
         status: "inactive",
         isPro: false,
-        isTrial: false,
         licenseKeyMasked: "",
         deviceFingerprint: "",
         activatedAt: null,
@@ -317,8 +306,6 @@ function normalizeLicenseState(payload) {
 
 async function syncLicenseState() {
     try {
-        const trialState = await ipcRenderer.invoke("get-trial-license-availability")
-        trialLicenseEnabled = Boolean(trialState?.enabled)
         const payload = await ipcRenderer.invoke("get-license-state")
         currentLicenseState = normalizeLicenseState(payload)
         enforceLicenseSelections()
@@ -555,54 +542,6 @@ async function handleLicenseActivation() {
     }
 }
 
-async function handleTrialLicenseToggle() {
-    if (!toggleTrialLicenseBtn || licenseActivationPending) return
-
-    if (!trialLicenseEnabled) {
-        licenseFeedback = {
-            tone: "error",
-            text: i18n.t("settings.license.trial.unavailable")
-        }
-        renderLicensePanel()
-        return
-    }
-
-    licenseActivationPending = true
-    licenseFeedback = { tone: "info", text: i18n.t("settings.license.status.loading") }
-    renderLicensePanel()
-
-    try {
-        const result = currentLicenseState?.isTrial
-            ? await ipcRenderer.invoke("deactivate-trial-license")
-            : await ipcRenderer.invoke("activate-trial-license")
-
-        if (result?.ok) {
-            currentLicenseState = normalizeLicenseState(result.license)
-            licenseFeedback = {
-                tone: "success",
-                text: i18n.t(currentLicenseState.isTrial
-                    ? "settings.license.message.trialActivated"
-                    : "settings.license.message.trialDeactivated")
-            }
-        } else {
-            licenseFeedback = {
-                tone: "error",
-                text: result?.message || i18n.t("settings.license.message.generic")
-            }
-        }
-    } catch (_) {
-        licenseFeedback = {
-            tone: "error",
-            text: i18n.t("settings.license.message.generic")
-        }
-    } finally {
-        licenseActivationPending = false
-        enforceLicenseSelections()
-        applyFeatureGating()
-        renderLicensePanel()
-    }
-}
-
 function setupExternalLicenseActions() {
     if (buyFocusProBtn) {
         buyFocusProBtn.disabled = !GUMROAD_PRODUCT_URL
@@ -643,7 +582,6 @@ function renderLicensePanel() {
     }
 
     const isPro = Boolean(currentLicenseState?.isPro)
-    const isTrial = Boolean(currentLicenseState?.isTrial)
     const tone = licenseActivationPending ? "loading" : licenseFeedback.tone === "error" ? "error" : isPro ? "pro" : "free"
 
     licenseBadge.className = `settings__license-badge settings__license-badge--${tone}`
@@ -679,14 +617,6 @@ function renderLicensePanel() {
 
     if (buyFocusProBtn) {
         buyFocusProBtn.hidden = isPro
-    }
-
-    if (toggleTrialLicenseBtn) {
-        toggleTrialLicenseBtn.hidden = !trialLicenseEnabled || (isPro && !isTrial)
-        toggleTrialLicenseBtn.disabled = licenseActivationPending
-        toggleTrialLicenseBtn.textContent = i18n.t(
-            isTrial ? "settings.license.trial.deactivate" : "settings.license.trial.activate"
-        )
     }
 }
 

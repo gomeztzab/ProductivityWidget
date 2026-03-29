@@ -17,7 +17,7 @@ Traducir el contexto de producto definido en [FOCUS_PRO_CONTEXT.md](m:/Igniter/D
 - La validacion inicial requiere internet
 - No se permite liberar dispositivos desde la app en la V1
 - Las licencias se asignan por maquina
-- El limite maximo es 2 maquinas por licencia
+- El limite maximo es 1 maquina por licencia
 - Los reembolsos revocan la licencia automaticamente
 - El gating de funciones se controla por modulo, no solo con un booleano global
 
@@ -42,7 +42,7 @@ Valores iniciales recomendados:
 - name: Focus Pro
 - price_usd: 6.99
 - billing_type: lifetime
-- max_devices: 2
+- max_devices: 1
 
 ## Tabla: license_statuses
 Catalogo de estados de licencia para evitar valores libres.
@@ -336,7 +336,7 @@ Respuesta exitosa sugerida:
     },
     "license": {
         "status": "active",
-        "maxDevices": 2
+        "maxDevices": 1
     },
     "activation": {
         "deviceFingerprint": "machine-stable-id",
@@ -371,7 +371,7 @@ Respuesta de limite alcanzado:
 {
     "ok": false,
     "code": "DEVICE_LIMIT_REACHED",
-    "message": "Esta licencia ya alcanzo el maximo de 2 maquinas activadas."
+    "message": "Esta licencia ya alcanzo el maximo de 1 dispositivo activado."
 }
 ```
 
@@ -513,7 +513,7 @@ Lista visible dentro del panel:
 
 ### Estado tecnico opcional
 Texto discreto:
-- `Licencia valida para 2 maquinas`
+- `Licencia valida para 1 dispositivo`
 - `Activacion por maquina`
 - `Requiere internet solo para la activacion inicial`
 
@@ -541,7 +541,7 @@ Texto discreto:
 - titulo: `Licencia / Focus Pro`
 - subtitulo: `Desbloquea todas las funciones avanzadas con un pago unico.`
 - helper: `Tu codigo se valida online una sola vez y queda activo en esta maquina.`
-- limite: `Cada licencia permite hasta 2 maquinas.`
+- limite: `Cada licencia permite 1 dispositivo.`
 
 ## Integración con la app actual
 
@@ -624,7 +624,7 @@ Ejemplo:
 - Notificaciones son Free
 - Sonido e intensidad son Pro
 - Personalizacion completa es Pro con muestras Free visibles
-- Al superar 2 maquinas, la tercera activacion debe bloquearse
+- Al intentar activar en una segunda maquina distinta, la activacion debe bloquearse
 - No hay liberacion de dispositivos desde la app en la V1
 - Los reembolsos deben revocar la licencia en backend
 

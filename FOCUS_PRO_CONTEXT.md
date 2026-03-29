@@ -5,7 +5,7 @@ Definir de forma clara y consistente el modelo comercial, el alcance de Free vs 
 
 ## Producto
 - Nombre del plan: Focus Pro
-- Precio: $5.99 USD
+- Precio: $6.99 USD
 - Tipo de compra: pago unico
 - Duracion: acceso de por vida
 - Canal principal de venta: Gumroad
@@ -114,9 +114,9 @@ El plan Free debe ofrecer muestras visibles para que el usuario pruebe el produc
 - Texto de ayuda para soporte manual
 
 ## Politica de licencias
-- Maximo de dispositivos por codigo: 2
+- Maximo de dispositivos por codigo: 1
 - La licencia se considera por maquina, no por usuario ni por instalacion temporal
-- Si se supera el limite de 2 dispositivos, la activacion extra se bloquea
+- Si se supera el limite de 1 dispositivo, la activacion extra se bloquea
 - No se permitira liberar dispositivos desde la app en la V1
 - Soporte manual permitido para casos de recuperacion
 - Reembolso: revocacion automatica en backend
@@ -155,7 +155,7 @@ La arquitectura recomendada para esta app es:
 4. El usuario pega la key
 5. La app envia la key y el device id al backend
 6. El backend valida la licencia
-7. El backend verifica si aun hay cupo dentro del limite de 2 maquinas
+7. El backend verifica si aun hay cupo dentro del limite de 1 maquina
 8. Si es valida, el backend registra la activacion
 9. La app guarda el estado local Pro y los features habilitados
 10. Si no es valida o supera el limite, se bloquea la activacion
@@ -189,7 +189,7 @@ La app no debe depender de un unico booleano isPro. Debe guardar tambien un mapa
 ## Politica de soporte
 - Debe existir soporte manual por email
 - Debe poder revisarse una licencia manualmente en backend
-- Debe poder resolverse manualmente un caso de cambio de maquina si el usuario legitimo agota sus 2 activaciones
+- Debe poder resolverse manualmente un caso de cambio de maquina si el usuario legitimo agota su activacion disponible
 
 ## Integracion con la app actual
 La implementacion debe vivir principalmente en:
@@ -206,4 +206,4 @@ La implementacion debe vivir principalmente en:
 - Las funciones premium deben controlarse por features, no solo por un estado global
 
 ## Decision final consolidada
-Focus Pro sera un plan de pago unico de por vida, vendido principalmente en Gumroad, con activacion por machine-based license, limite de 2 dispositivos por codigo, validacion inicial online, uso posterior offline, backend en Supabase con Edge Functions y funciones premium visibles como opciones bloqueadas dentro de la UI.
+Focus Pro sera un plan de pago unico de por vida, vendido principalmente en Gumroad, con activacion por machine-based license, limite de 1 dispositivo por codigo, validacion inicial online, uso posterior offline, backend en Supabase con Edge Functions y funciones premium visibles como opciones bloqueadas dentro de la UI.

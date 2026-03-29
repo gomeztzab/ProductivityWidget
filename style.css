@@ -1343,6 +1343,7 @@ body {
     -webkit-app-region: no-drag;
     transition: border-color 0.15s ease, color 0.15s ease;
     /* hide spin arrows */
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 
@@ -1625,6 +1626,13 @@ body[data-view-mode-draft="compact"] .dashboard__grid {
 body[data-view-mode-draft="compact"] .stats,
 body[data-view-mode-draft="compact"] .dashboard__bottom,
 body[data-view-mode-draft="compact"] .pomodoro__notice {
+    display: none;
+}
+
+body[data-view-mode-draft="compact"] .pomodoro__status-strip,
+body[data-view-mode-draft="mini"] .pomodoro__status-strip,
+body[data-view-mode-draft="bar"] .pomodoro__status-strip,
+body[data-view-mode-draft="collapsed"] .pomodoro__status-strip {
     display: none;
 }
 

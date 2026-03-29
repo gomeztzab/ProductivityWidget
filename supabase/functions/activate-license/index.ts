@@ -309,7 +309,7 @@ Deno.serve(async request => {
             return jsonResponse({
                 ok: false,
                 code: 'DEVICE_LIMIT_REACHED',
-                message: 'Esta licencia ya alcanzo el maximo de 2 maquinas activadas.'
+                message: 'Esta licencia ya alcanzo el maximo de 1 dispositivo activado.'
             }, 403)
         }
 

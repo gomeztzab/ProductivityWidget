@@ -9,7 +9,6 @@ const { HOSTS_PATH, applyWebsiteBlock, normalizeWebsiteDomains, restoreWebsiteBl
 
 const store = new Store()
 const ACTIVATE_LICENSE_URL = process.env.ACTIVATE_LICENSE_URL || 'https://kcysjrjllelgcrwuwwuy.functions.supabase.co/activate-license'
-const ENABLE_FOCUS_PRO_TRIAL_BUTTON = process.env.ENABLE_FOCUS_PRO_TRIAL_BUTTON !== 'false'
 const LICENSE_STORE_KEY = 'license'
 const DEVICE_FINGERPRINT_STORE_KEY = 'deviceFingerprint'
 let cachedDeviceFingerprint = null
@@ -59,7 +58,6 @@ function createDefaultLicenseState() {
         planName: 'Free',
         status: 'inactive',
         isPro: false,
-        isTrial: false,
         licenseKeyMasked: '',
         deviceFingerprint: '',
         activatedAt: null,
@@ -143,33 +141,6 @@ function maskLicenseKey(licenseKey) {
     if (typeof licenseKey !== 'string' || !licenseKey.trim()) return ''
     if (licenseKey.length <= 8) return licenseKey
     return `${licenseKey.slice(0, 4)}-****-****-${licenseKey.slice(-4)}`
-}
-
-function createFocusProTrialLicenseState(deviceFingerprint) {
-    return saveLicenseState({
-        planCode: 'focus_pro',
-        planName: 'Focus Pro Trial',
-        status: 'active',
-        isPro: true,
-        isTrial: true,
-        licenseKeyMasked: 'TRIAL',
-        deviceFingerprint,
-        activatedAt: new Date().toISOString(),
-        features: {
-            windowModeBar: true,
-            windowModeCollapsed: true,
-            pomodoroSound: true,
-            pomodoroSoundIntensity: true,
-            customAccentColors: true,
-            customTextColors: true,
-            customThemes: true,
-            customFonts: true,
-            customBackground: true,
-            strictScreenLock: true,
-            strictInteractionLock: true,
-            strictWebsiteBlock: true
-        }
-    })
 }
 
 function clearLicenseState() {
@@ -1073,45 +1044,6 @@ ipcMain.handle('get-license-state', () => {
 
 ipcMain.handle('activate-license', async (event, payload = {}) => {
     return activateFocusProLicense(payload)
-})
-
-ipcMain.handle('get-trial-license-availability', () => {
-    return {
-        enabled: ENABLE_FOCUS_PRO_TRIAL_BUTTON
-    }
-})
-
-ipcMain.handle('activate-trial-license', () => {
-    if (!ENABLE_FOCUS_PRO_TRIAL_BUTTON) {
-        return {
-            ok: false,
-            message: 'La prueba Pro esta desactivada en esta build.'
-        }
-    }
-
-    const nextLicenseState = createFocusProTrialLicenseState(getDeviceFingerprint())
-    broadcastLicenseState()
-    return {
-        ok: true,
-        license: nextLicenseState
-    }
-})
-
-ipcMain.handle('deactivate-trial-license', () => {
-    const currentLicenseState = getStoredLicenseState()
-    if (!currentLicenseState.isTrial) {
-        return {
-            ok: false,
-            message: 'No hay una prueba Pro activa para desactivar.'
-        }
-    }
-
-    const nextLicenseState = clearLicenseState()
-    broadcastLicenseState()
-    return {
-        ok: true,
-        license: nextLicenseState
-    }
 })
 
 ipcMain.handle('get-launch-at-startup', () => {
