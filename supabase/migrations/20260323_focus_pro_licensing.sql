@@ -134,7 +134,7 @@ on conflict (code) do update
 set description = excluded.description;
 
 insert into public.plans (code, name, price_usd, billing_type, max_devices, is_active)
-values ('focus_pro', 'Focus Pro', 6.99, 'lifetime', 2, true)
+values ('focus_pro', 'Focus Pro', 6.99, 'lifetime', 1, true)
 on conflict (code) do update
 set
     name = excluded.name,

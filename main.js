@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, Notification, screen, dialog } = require('electron')
+const { autoUpdater } = require('electron-updater')
 const Store = require('electron-store')
 const { spawn, spawnSync } = require('child_process')
 const { createHash, randomUUID } = require('crypto')
@@ -1559,7 +1560,46 @@ app.whenReady().then(() => {
         app.setLoginItemSettings(getLoginItemSettingsPayload(launchAtStartupEnabled))
     } catch (_) {}
     void bootstrapApp()
+    setupAutoUpdater()
 })
+
+function setupAutoUpdater() {
+    autoUpdater.autoDownload = false
+
+    autoUpdater.on('update-available', (info) => {
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Nueva versión disponible',
+            message: `Focus Pro ${info.version} ya está disponible.`,
+            detail: 'Se descargará en segundo plano mientras trabajas.',
+            buttons: ['Actualizar', 'Ahora no']
+        }).then(({ response }) => {
+            if (response === 0) {
+                autoUpdater.autoDownload = true
+                autoUpdater.downloadUpdate()
+            }
+        })
+    })
+
+    autoUpdater.on('update-downloaded', () => {
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Actualización lista',
+            message: 'La nueva versión se instalará al cerrar la app.',
+            buttons: ['Reiniciar ahora', 'Después']
+        }).then(({ response }) => {
+            if (response === 0) {
+                autoUpdater.quitAndInstall()
+            }
+        })
+    })
+
+    autoUpdater.on('error', () => {})
+
+    // Revisar una vez al abrir, luego cada 4 horas
+    autoUpdater.checkForUpdates().catch(() => {})
+    setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 4 * 60 * 60 * 1000)
+}
 
 app.on('window-all-closed', () => {
 if(process.platform !== 'darwin') app.quit()

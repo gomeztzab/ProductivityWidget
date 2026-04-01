@@ -183,6 +183,44 @@ async function triggerRevokeLicense(licenseKey: string, reason: string) {
     return payload
 }
 
+async function createLicenseFromSale(payload: JsonRecord): Promise<{ id: string } | null> {
+    const licenseKey = resolveLicenseKey(payload)
+    const saleId = normalizeText(payload.sale_id)
+
+    if (!licenseKey || !saleId) {
+        return null
+    }
+
+    const { data: plan, error: planError } = await supabase
+        .from('plans')
+        .select('id, max_devices')
+        .eq('code', 'focus_pro')
+        .eq('is_active', true)
+        .maybeSingle()
+
+    if (planError) throw planError
+    if (!plan) throw new Error('Plan focus_pro no encontrado o inactivo')
+
+    const { data: license, error: licenseError } = await supabase
+        .from('licenses')
+        .upsert({
+            plan_id: plan.id,
+            gumroad_sale_id: saleId,
+            gumroad_product_id: normalizeText(payload.product_id) || null,
+            gumroad_license_key: licenseKey,
+            buyer_email: normalizeText(payload.email) || normalizeText(payload.purchaser_email) || null,
+            buyer_name: normalizeText(payload.full_name) || normalizeText(payload.purchaser_name) || null,
+            source: 'gumroad',
+            status: 'active',
+            max_devices: plan.max_devices
+        }, { onConflict: 'gumroad_sale_id' })
+        .select('id')
+        .single()
+
+    if (licenseError) throw licenseError
+    return license
+}
+
 Deno.serve(async request => {
     if (request.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders })
@@ -210,6 +248,30 @@ Deno.serve(async request => {
             },
             licenseId
         )
+
+        if (eventType === 'sale') {
+            const createdLicense = await createLicenseFromSale(payload)
+
+            await markWebhookProcessed(webhookEventId)
+
+            await writeAuditLog(
+                'webhook_processed',
+                'Sale webhook processed: license created or updated',
+                {
+                    eventType,
+                    externalEventId,
+                    licenseId: createdLicense?.id ?? null
+                },
+                createdLicense?.id ?? licenseId
+            )
+
+            return jsonResponse({
+                ok: true,
+                eventType,
+                action: 'license_created',
+                message: 'Licencia registrada correctamente'
+            })
+        }
 
         if (eventType !== 'refund') {
             await markWebhookProcessed(webhookEventId)

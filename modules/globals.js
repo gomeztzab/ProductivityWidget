@@ -366,11 +366,11 @@ if(collapsedExpandBtn) {
 if(minimizeBtn) {
     minimizeBtn.addEventListener("click", () => {
         if (strictModeState.exit) return
-        Discipline.onMinimizeBtnClick()
+        ipcRenderer.send('minimize-app')
     })
 }
 if(closeBtn) {
-    closeBtn.addEventListener("click", () => Discipline.onCloseBtnClick())
+    closeBtn.addEventListener("click", () => ipcRenderer.send('close-app'))
 }
 if(strictModeBtn) {
     strictModeBtn.addEventListener("click", () => {

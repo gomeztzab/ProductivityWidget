@@ -653,7 +653,7 @@
             'settings.license.benefit.screenLock': 'Screen lock for deep work sessions',
             'settings.license.benefit.interactionLock': 'Interaction lock to leave only the widget usable',
             'settings.license.benefit.websiteBlocker': 'Website blocker to cut distractions at the system level',
-            'settings.license.limit': 'Each license supports up to 2 machines.',
+            'settings.license.limit': 'Each license supports up to 1 machine.',
             'settings.license.machine': 'Per-machine activation',
             'settings.license.internet': 'Internet is required only for the initial activation.',
             'settings.license.key.none': 'No active code',
@@ -663,7 +663,7 @@
             'settings.license.message.required': 'Enter a license code to activate Focus Pro.',
             'settings.license.message.invalid': 'That code is not valid. Check your Gumroad license.',
             'settings.license.message.inactive': 'This license is not active. If it was refunded or revoked, contact support.',
-            'settings.license.message.limit': 'This license already reached the 2-machine limit.',
+            'settings.license.message.limit': 'This license already reached the 1-machine limit.',
             'settings.license.message.network': 'Could not connect to the activation server. Check your internet and try again.',
             'settings.license.message.generic': 'Could not activate Focus Pro. Try again in a few seconds.',
 

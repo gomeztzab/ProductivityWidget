@@ -504,7 +504,7 @@ ipcRenderer.on('strict-interaction-lock-activated', () => {
     ensurePomodoroRunning('interaction-lock')
 })
 
-startBtn.addEventListener("click", () => Discipline.onStartTimerClick())
+startBtn.addEventListener("click", () => startTimer())
 resetBtn.addEventListener("click", confirmResetTimer)
 breakBtn.addEventListener("click", startBreak)
 if (pomodoroNoticeActionBtn) {
