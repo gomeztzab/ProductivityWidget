@@ -1422,8 +1422,11 @@ let psReady     = false
 function spawnPS() {
     psReady = false
     fs.writeFileSync(scriptPath, PS_BRIDGE, 'utf8')
-    psProc = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', scriptPath], {
-        stdio: ['pipe', 'pipe', 'ignore']
+    psProc = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
+        stdio: ['pipe', 'pipe', 'pipe']
+    })
+    psProc.stderr.on('data', chunk => {
+        console.error('[media-bridge stderr]', chunk.toString().trim())
     })
     psProc.stdout.on('data', chunk => {
         psBuffer += chunk.toString()
