@@ -1,7 +1,6 @@
 ﻿
 MusicPlayer.init()
 Stats.init()
-Discipline.init()
 
 /* Feature K — inicializar input de meta */
 ;(function initGoalInput() {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Focus Dashboard - Productivity App</title>
+  <title>Focus Pro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=Sora:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Urbanist:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -412,36 +412,6 @@
         </section>
     </div>
 
-<!-- Discipline: Intention modal -->
-<div class="discipline-overlay discipline-overlay--hidden" id="disciplineIntentionOverlay" role="dialog" aria-modal="true" aria-labelledby="disciplineIntentionTitle">
-    <div class="discipline-modal">
-        <h2 class="discipline-modal__title" id="disciplineIntentionTitle" data-i18n="discipline.intention.title">¿Cuál es tu intención para esta sesión?</h2>
-        <p class="discipline-modal__subtitle" data-i18n="discipline.intention.subtitle">Una intención clara mejora tu enfoque.</p>
-        <textarea class="discipline-modal__input" id="disciplineIntentionInput" rows="3" data-i18n-placeholder="discipline.intention.placeholder" placeholder="Ej: Terminar el módulo de autenticación..."></textarea>
-        <div class="discipline-modal__actions">
-            <button class="btn btn--primary" id="disciplineIntentionConfirm" data-i18n="discipline.intention.confirm">Empezar</button>
-            <button class="btn btn--secondary" id="disciplineIntentionSkip" data-i18n="discipline.intention.skip">Omitir</button>
-        </div>
-    </div>
-</div>
-
-<!-- Discipline: Review modal -->
-<div class="discipline-overlay discipline-overlay--hidden" id="disciplineReviewOverlay" role="dialog" aria-modal="true" aria-labelledby="disciplineReviewTitle">
-    <div class="discipline-modal">
-        <h2 class="discipline-modal__title" id="disciplineReviewTitle" data-i18n="discipline.review.title">Revisión de cierre</h2>
-        <p class="discipline-modal__intention-recap" id="disciplineReviewIntentionText"></p>
-        <div class="discipline-modal__met">
-            <button class="discipline-modal__met-btn discipline-modal__met-btn--yes" id="disciplineReviewYes" data-i18n="discipline.review.yes">✓ Sí lo logré</button>
-            <button class="discipline-modal__met-btn discipline-modal__met-btn--no" id="disciplineReviewNo" data-i18n="discipline.review.no">✗ No del todo</button>
-        </div>
-        <textarea class="discipline-modal__input" id="disciplineReviewNotes" rows="2" data-i18n-placeholder="discipline.review.notesPlaceholder" placeholder="Notas opcionales..."></textarea>
-        <div class="discipline-modal__actions">
-            <button class="btn btn--primary" id="disciplineReviewConfirm" data-i18n="discipline.review.confirm">Guardar y cerrar</button>
-            <button class="btn btn--secondary" id="disciplineReviewClose" data-i18n="discipline.review.skip">Cerrar sin guardar</button>
-        </div>
-    </div>
-</div>
-
 <script src="i18n.js"></script>
 <!-- Módulos de renderer (divididos por responsabilidad) -->
 <script src="modules/globals.js"></script>
@@ -450,7 +420,6 @@
 <script src="modules/todo.js"></script>
 <script src="modules/pomodoro.js"></script>
 <script src="modules/music.js"></script>
-<script src="modules/discipline.js"></script>
 <script src="modules/init.js"></script>
 </body>
 </html>

@@ -3,14 +3,10 @@
    ===================== */
 
 function parseStoredDuration(value, defaultMinutes) {
-    if (typeof value === "string" && value.endsWith("s")) {
-        return parseInt(value, 10) || defaultMinutes * 60
-    }
     return (parseInt(value, 10) || defaultMinutes) * 60
 }
 
 function formatDurationText(seconds) {
-    if (seconds < 60) return i18n.t('duration.seconds', { n: seconds })
     const minutes = Math.round(seconds / 60)
     return i18n.t('duration.min', { n: minutes })
 }

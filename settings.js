@@ -115,16 +115,10 @@ focusSel.addEventListener("change", updateBars)
 breakSel.addEventListener("change", updateBars)
 
 function parseDurationValue(value, defaultMinutes) {
-    if (typeof value === "string" && value.endsWith("s")) {
-        return { seconds: parseInt(value, 10) || defaultMinutes * 60, unit: "seconds" }
-    }
     return { seconds: (parseInt(value, 10) || defaultMinutes) * 60, unit: "minutes" }
 }
 
 function formatDurationLabel(duration) {
-    if (duration.unit === "seconds" || duration.seconds < 60) {
-        return `${duration.seconds} s`
-    }
     return `${Math.round(duration.seconds / 60)} min`
 }
 
