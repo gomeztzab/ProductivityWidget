@@ -1,6 +1,6 @@
 {
   "name": "productivity-widget",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Desktop productivity widget",
   "main": "main.js",
   "scripts": {

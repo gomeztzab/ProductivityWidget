@@ -303,8 +303,8 @@ async function deactivateWebsiteLock() {
         websiteLockEnabled = false
         websiteLockError = ''
         store.set('strictWebsiteLockEnabled', false)
+        syncWinAlwaysOnTop()
         broadcastWebsiteLockState()
-        return { ok: true, enabled: false }
     } catch (error) {
         websiteLockError = formatWebsiteLockError(error)
         broadcastWebsiteLockState()
@@ -329,6 +329,7 @@ async function activateWebsiteLock(domains) {
         websiteLockError = ''
         store.set('strictWebsiteLockEnabled', true)
         store.set('strictWebsiteLockDomains', websiteLockDomains)
+        syncWinAlwaysOnTop()
         broadcastWebsiteLockState()
         return { ok: true, enabled: true, domains: websiteLockDomains }
     } catch (error) {
@@ -650,6 +651,19 @@ async function disableOtherStrictModes(exceptMode) {
     return true
 }
 
+function isAnyStrictModeActive() {
+    return exitLockEnabled || screenLockEnabled || interactionLockEnabled || websiteLockEnabled
+}
+
+function syncWinAlwaysOnTop() {
+    if (!win || win.isDestroyed()) return
+    if (isAnyStrictModeActive()) {
+        win.setAlwaysOnTop(true, 'screen-saver')
+    } else {
+        win.setAlwaysOnTop(false)
+    }
+}
+
 async function setExitLockEnabled(enabled) {
     if (enabled) {
         const canContinue = await disableOtherStrictModes('exit')
@@ -657,6 +671,7 @@ async function setExitLockEnabled(enabled) {
     }
     exitLockEnabled = Boolean(enabled)
     store.set('strictExitLockEnabled', exitLockEnabled)
+    syncWinAlwaysOnTop()
     broadcastExitLockState()
 }
 
@@ -743,6 +758,7 @@ async function setScreenLockEnabled(enabled) {
         lockScreenWindow.close()
     }
 
+    syncWinAlwaysOnTop()
     broadcastScreenLockState()
 }
 
@@ -761,9 +777,9 @@ async function setInteractionLockEnabled(enabled) {
         updateInteractionLockWindows()
     } else {
         closeInteractionLockWindow()
-        if (win && !win.isDestroyed()) win.setAlwaysOnTop(true)
     }
 
+    syncWinAlwaysOnTop()
     broadcastInteractionLockState()
 }
 
@@ -788,7 +804,7 @@ show:false,
 
 frame:false,
 transparent:true,
-alwaysOnTop:true,
+alwaysOnTop:false,
 resizable:false,
 
 webPreferences:{
@@ -850,9 +866,11 @@ win.on('focus', () => {
 })
 
 win.on('blur', () => {
-    if (!interactionLockEnabled) return
+    if (!isAnyStrictModeActive()) return
     setTimeout(() => {
-        if (interactionLockEnabled && win && !win.isDestroyed()) {
+        if (!isAnyStrictModeActive() || !win || win.isDestroyed()) return
+        win.setAlwaysOnTop(true, 'screen-saver')
+        if (interactionLockEnabled) {
             win.focus()
             updateInteractionLockWindows()
         }
@@ -878,7 +896,6 @@ height: 740,
 resizable: false,
 frame: false,
 transparent: true,
-alwaysOnTop: true,
 
 webPreferences:{
 nodeIntegration:true,
@@ -886,6 +903,8 @@ contextIsolation:false
 }
 
 })
+
+if (win && !win.isDestroyed()) settingsWindow.setParentWindow(win)
 
 settingsWindow.loadFile("settings.html")
 
@@ -913,7 +932,6 @@ height: 680,
 resizable: false,
 frame: false,
 transparent: true,
-alwaysOnTop: true,
 
 webPreferences:{
 nodeIntegration:true,
@@ -921,6 +939,8 @@ contextIsolation:false
 }
 
 })
+
+if (win && !win.isDestroyed()) strictModeWindow.setParentWindow(win)
 
 strictModeWindow.loadFile("strict-mode.html")
 
