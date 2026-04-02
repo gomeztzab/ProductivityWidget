@@ -136,6 +136,7 @@ const MusicPlayer = (() => {
         const trackChanged = newTitle !== curTitle
         const drift     = newPos - state.position
 
+        const durChanged = newDur !== state.duration
         state.duration = newDur
         state.lastSyncAt = Number.isFinite(capturedAt) ? capturedAt : Date.now()
 
@@ -147,6 +148,9 @@ const MusicPlayer = (() => {
         } else if (Math.abs(drift) > 0.15) {
             state.position = clampPosition(state.position + drift * 0.75, state.duration)
         }
+
+        /* Duración cambió sin cambio de posición → forzar re-render del tiempo */
+        if (durChanged) state.renderedSec = -1
 
         setTrack(newTitle)
         setPlayIcon(newPlay)
