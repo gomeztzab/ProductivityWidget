@@ -1593,22 +1593,30 @@ function setupAutoUpdater() {
         dialog.showMessageBox({
             type: 'info',
             title: 'Nueva versión disponible',
-            message: `Focus Pro ${info.version} ya está disponible.`,
-            detail: 'Se descargará en segundo plano mientras trabajas.',
-            buttons: ['Actualizar', 'Ahora no']
+            message: `Focus Pro ${info.version} está disponible.`,
+            detail: 'La descarga comenzará de inmediato. Verás el progreso en la barra de tareas.',
+            buttons: ['Actualizar ahora', 'Ahora no']
         }).then(({ response }) => {
             if (response === 0) {
-                autoUpdater.autoDownload = true
+                if (win && !win.isDestroyed()) win.setProgressBar(0)
                 autoUpdater.downloadUpdate()
             }
         })
     })
 
-    autoUpdater.on('update-downloaded', () => {
+    autoUpdater.on('download-progress', ({ percent }) => {
+        if (win && !win.isDestroyed()) {
+            win.setProgressBar(percent / 100)
+        }
+    })
+
+    autoUpdater.on('update-downloaded', (info) => {
+        if (win && !win.isDestroyed()) win.setProgressBar(-1)
         dialog.showMessageBox({
             type: 'info',
             title: 'Actualización lista',
-            message: 'La nueva versión se instalará al cerrar la app.',
+            message: `Focus Pro ${info.version} descargado.`,
+            detail: 'Haz clic en "Reiniciar ahora" para aplicar la actualización.',
             buttons: ['Reiniciar ahora', 'Después']
         }).then(({ response }) => {
             if (response === 0) {
@@ -1617,7 +1625,9 @@ function setupAutoUpdater() {
         })
     })
 
-    autoUpdater.on('error', () => {})
+    autoUpdater.on('error', () => {
+        if (win && !win.isDestroyed()) win.setProgressBar(-1)
+    })
 
     // Revisar una vez al abrir, luego cada 4 horas
     autoUpdater.checkForUpdates().catch(() => {})
