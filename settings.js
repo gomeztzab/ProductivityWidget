@@ -1,7 +1,7 @@
 ﻿const { ipcRenderer, shell } = require('electron')
 
-const GUMROAD_PRODUCT_URL = process.env.FOCUS_PRO_GUMROAD_URL || process.env.GUMROAD_PRODUCT_URL || ""
-const SUPPORT_URL = process.env.FOCUS_PRO_SUPPORT_URL || process.env.SUPPORT_URL || ""
+const GUMROAD_PRODUCT_URL = process.env.FOCUS_PRO_GUMROAD_URL || process.env.GUMROAD_PRODUCT_URL || "https://josegomez45.gumroad.com/l/xspqpp"
+const SUPPORT_URL = process.env.FOCUS_PRO_SUPPORT_URL || process.env.SUPPORT_URL || "mailto:focusprosupport@gmail.com"
 const FREE_ACCENT_COLORS = new Set(["#3b82f6", "#10b981", "#111111"])
 const FREE_TEXT_COLORS = new Set(["#ffffff", "#e0f2fe", "#e5e7eb", "#111111"])
 const FREE_THEMES = new Set(["glass", "light"])
