@@ -1,6 +1,6 @@
 :root {
     --accent-color: #3b82f6;
-    --text-color: #ffffff;
+    --text-color: var(--text-color);
     --font-family: 'Inter', sans-serif;
     --dash-bg: #0f172ab3;
     --dash-blur: blur(20px);
@@ -378,7 +378,7 @@ body {
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, var(--accent-color), color-mix(in srgb, var(--accent-color) 45%, #ffffff));
-    color: #ffffff;
+    color: var(--text-color);
     box-shadow: 0 12px 22px -16px color-mix(in srgb, var(--accent-color) 60%, transparent);
 }
 

@@ -7,6 +7,124 @@ const HOSTS_PATH = 'C:\\Windows\\System32\\drivers\\etc\\hosts'
 const BEGIN_MARKER = '# >>> ProductivityWidget Strict Mode >>>'
 const END_MARKER = '# <<< ProductivityWidget Strict Mode <<<'
 
+// Familias de dominios conocidos para bloqueo integral.
+// Cuando el usuario bloquea cualquier dominio de una familia,
+// todos los dominios relacionados se bloquean automaticamente.
+const DOMAIN_FAMILIES = [
+    {
+        id: 'youtube',
+        domains: [
+            'youtube.com', 'youtu.be', 'youtube-nocookie.com', 'yt.be',
+            'm.youtube.com', 'music.youtube.com', 'tv.youtube.com',
+            'gaming.youtube.com', 'kids.youtube.com', 'studio.youtube.com',
+            'accounts.youtube.com'
+        ]
+    },
+    {
+        id: 'twitter',
+        domains: [
+            'twitter.com', 'x.com', 't.co', 'tweetdeck.com',
+            'mobile.twitter.com', 'm.twitter.com',
+            'mobile.x.com', 'm.x.com', 'pro.x.com'
+        ]
+    },
+    {
+        id: 'facebook',
+        domains: [
+            'facebook.com', 'fb.com', 'fb.me',
+            'm.facebook.com', 'mbasic.facebook.com',
+            'touch.facebook.com', 'free.facebook.com'
+        ]
+    },
+    {
+        id: 'instagram',
+        domains: [
+            'instagram.com', 'ig.me',
+            'm.instagram.com', 'i.instagram.com'
+        ]
+    },
+    {
+        id: 'tiktok',
+        domains: [
+            'tiktok.com', 'm.tiktok.com', 'vm.tiktok.com',
+            'lite.tiktok.com'
+        ]
+    },
+    {
+        id: 'reddit',
+        domains: [
+            'reddit.com', 'redd.it',
+            'old.reddit.com', 'new.reddit.com',
+            'i.reddit.com', 'np.reddit.com',
+            'sh.reddit.com', 'm.reddit.com'
+        ]
+    },
+    {
+        id: 'twitch',
+        domains: [
+            'twitch.tv', 'm.twitch.tv',
+            'clips.twitch.tv', 'go.twitch.tv'
+        ]
+    },
+    {
+        id: 'discord',
+        domains: [
+            'discord.com', 'discord.gg', 'discordapp.com',
+            'canary.discord.com', 'ptb.discord.com'
+        ]
+    },
+    {
+        id: 'pinterest',
+        domains: ['pinterest.com', 'pin.it', 'm.pinterest.com']
+    },
+    {
+        id: 'linkedin',
+        domains: ['linkedin.com', 'lnkd.in', 'm.linkedin.com']
+    },
+    {
+        id: 'snapchat',
+        domains: ['snapchat.com', 'snap.com']
+    }
+]
+
+// Mapa inverso: dominio → lista completa de dominios de su familia
+const DOMAIN_FAMILY_MAP = {}
+for (const family of DOMAIN_FAMILIES) {
+    for (const domain of family.domains) {
+        DOMAIN_FAMILY_MAP[domain] = family.domains
+    }
+}
+
+// Prefijos de subdominio comunes que se agregan automaticamente
+const COMMON_SUBDOMAIN_PREFIXES = ['m', 'mobile', 'app']
+
+// Expande dominios normalizados con familias conocidas y subdominios comunes
+function expandDomainsForBlocking(normalizedDomains) {
+    const expanded = new Set()
+
+    for (const domain of normalizedDomains) {
+        expanded.add(domain)
+
+        // Expansion por familia de dominios conocidos
+        const familyDomains = DOMAIN_FAMILY_MAP[domain]
+        if (familyDomains) {
+            for (const related of familyDomains) {
+                expanded.add(related)
+            }
+        }
+
+        // Expansion con prefijos de subdominio comunes
+        const isSubdomain = COMMON_SUBDOMAIN_PREFIXES.some(p => domain.startsWith(p + '.'))
+        if (!isSubdomain) {
+            for (const prefix of COMMON_SUBDOMAIN_PREFIXES) {
+                expanded.add(`${prefix}.${domain}`)
+            }
+        }
+    }
+
+    return Array.from(expanded)
+}
+
 function normalizeWebsiteDomains(input = []) {
     const rawValues = Array.isArray(input) ? input : [input]
     const values = rawValues
@@ -21,6 +139,7 @@ function normalizeWebsiteDomains(input = []) {
             .replace(/^https?:\/\//, '')
             .replace(/^www\./, '')
             .replace(/[/?#].*$/, '')
+            .replace(/:\d+$/, '')
             .replace(/^\.+|\.+$/g, '')
 
         if (!normalized || normalized.includes(' ')) return
@@ -82,6 +201,12 @@ function createWebsiteBlockerScript() {
         "            Set-ItemProperty -Path $pol.Path -Name $pol.Name -Value 'off' -Type String -Force",
         '        } catch {}',
         '    }',
+        '    # Firefox usa formato distinto para DoH',
+        "    $foxPath = 'HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox\\DNSOverHTTPS'",
+        '    try {',
+        '        if (-not (Test-Path $foxPath)) { New-Item -Path $foxPath -Force | Out-Null }',
+        "        Set-ItemProperty -Path $foxPath -Name 'Enabled' -Value 0 -Type DWord -Force",
+        '    } catch {}',
         '}',
         '',
         'function Restore-BrowserDoh {',
@@ -96,6 +221,17 @@ function createWebsiteBlockerScript() {
         '            }',
         '        } catch {}',
         '    }',
+        '    # Restaurar DoH de Firefox',
+        "    $foxPath = 'HKLM:\\SOFTWARE\\Policies\\Mozilla\\Firefox\\DNSOverHTTPS'",
+        '    try {',
+        '        if (Test-Path $foxPath) {',
+        "            Remove-ItemProperty -Path $foxPath -Name 'Enabled' -ErrorAction SilentlyContinue",
+        '            $remaining = Get-ItemProperty -Path $foxPath -ErrorAction SilentlyContinue',
+        '            if (-not ($remaining.PSObject.Properties | Where-Object { $_.Name -notmatch "^PS" })) {',
+        '                Remove-Item -Path $foxPath -Force -ErrorAction SilentlyContinue',
+        '            }',
+        '        }',
+        '    } catch {}',
         '}',
         '',
         '$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(',
@@ -213,12 +349,13 @@ function runWebsiteBlocker(mode, backupPath, domains = []) {
         const scriptPath = path.join(os.tmpdir(), `pw-hosts-script-${timestamp}.ps1`)
         const resultPath = path.join(os.tmpdir(), `pw-hosts-result-${timestamp}.json`)
 
+        const normalizedDomains = normalizeWebsiteDomains(domains)
         const payload = {
             mode,
             hostsPath: HOSTS_PATH,
             backupPath,
             resultPath,
-            domains: normalizeWebsiteDomains(domains)
+            domains: mode === 'apply' ? expandDomainsForBlocking(normalizedDomains) : normalizedDomains
         }
 
         fs.writeFileSync(payloadPath, JSON.stringify(payload), 'utf8')
@@ -298,6 +435,7 @@ function restoreWebsiteBlock(backupPath) {
 module.exports = {
     HOSTS_PATH,
     applyWebsiteBlock,
+    expandDomainsForBlocking,
     normalizeWebsiteDomains,
     restoreWebsiteBlock
 }

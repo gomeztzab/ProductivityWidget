@@ -5,7 +5,7 @@
 :root {
     /* Acento y texto (dinámicos vía settings) */
     --accent-color: #3b82f6;
-    --text-color: #ffffff;
+    --text-color: var(--text-color);
     --font-family: 'Inter', sans-serif;
 
     /* Tokens de tema - defaults = glass */
@@ -119,7 +119,7 @@
 
 [data-theme="light"] .btn--danger {
     background: #dc2626;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 [data-theme="light"] .todo__item,
@@ -448,7 +448,7 @@ body {
     border-radius: 50%;
     border: 1px solid #ffffff1a;
     background: #ffffff0d;
-    color: #ffffff66;
+    color: color-mix(in srgb, var(--text-color) 40%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -460,15 +460,15 @@ body {
 
 .dashboard__ctrl-btn:hover {
     background: #ffffff26;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .dashboard__ctrl-btn:disabled,
 .dashboard__ctrl-btn--disabled {
     cursor: not-allowed;
     opacity: 0.48;
-    color: #ffffff4d;
-    border-color: #ffffff12;
+    color: color-mix(in srgb, var(--text-color) 30%, transparent);
+    border-color: color-mix(in srgb, var(--text-color) 7%, transparent);
     background: #ffffff08;
     box-shadow: none;
 }
@@ -476,7 +476,7 @@ body {
 .dashboard__ctrl-btn:disabled:hover,
 .dashboard__ctrl-btn--disabled:hover {
     background: #ffffff08;
-    color: #ffffff4d;
+    color: color-mix(in srgb, var(--text-color) 30%, transparent);
 }
 
 .dashboard__ctrl-btn--active {
@@ -488,7 +488,7 @@ body {
 .dashboard__ctrl-btn--close:hover {
     background: #dc262666;
     border-color: #dc2626;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .dashboard__ctrl-btn svg {
@@ -664,7 +664,7 @@ body {
     border-radius: 999px;
     background: #0f172acc;
     border: 1px solid #ffffff1a;
-    color: #ffffff;
+    color: var(--text-color);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -894,7 +894,7 @@ body {
 
 .clock__date {
     font-size: 14px;
-    color: #ffffff99;
+    color: color-mix(in srgb, var(--text-color) 60%, transparent);
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 8px;
@@ -946,7 +946,7 @@ body {
 
 .pomodoro__circle-track {
     fill: none;
-    stroke: #ffffff1a;
+    stroke: color-mix(in srgb, var(--text-color) 10%, transparent);
     stroke-width: 8;
 }
 
@@ -978,7 +978,7 @@ body {
 
 .pomodoro__label {
     font-size: 12px;
-    color: #ffffff99;
+    color: color-mix(in srgb, var(--text-color) 60%, transparent);
     text-transform: uppercase;
     letter-spacing: 2px;
     margin-top: 4px;
@@ -1027,7 +1027,7 @@ body {
     font-size: 9px;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
 }
 
 .pomodoro__streak-value {
@@ -1075,7 +1075,7 @@ body {
     border-radius: 999px;
     border: 1px solid #ffffff40;
     background: linear-gradient(135deg, color-mix(in srgb, var(--pomodoro-progress-color) 36%, #ffffff18) 0%, #0f172acc 100%);
-    color: #ffffff;
+    color: var(--text-color);
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.6px;
@@ -1326,7 +1326,7 @@ body {
 .pomodoro__goal-fraction {
     font-size: 11px;
     font-variant-numeric: tabular-nums;
-    color: #ffffffaa;
+    color: color-mix(in srgb, var(--text-color) 67%, transparent);
     letter-spacing: 0.3px;
 }
 
@@ -1335,7 +1335,7 @@ body {
     background: transparent;
     border: none;
     border-bottom: 1px solid #ffffff30;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
     font-size: 11px;
     text-align: center;
     padding: 0 2px 1px;
@@ -1355,11 +1355,11 @@ body {
 
 .pomodoro__goal-input:focus {
     border-bottom-color: var(--accent-color);
-    color: #ffffffcc;
+    color: color-mix(in srgb, var(--text-color) 80%, transparent);
 }
 
 .pomodoro__goal-input::placeholder {
-    color: #ffffff40;
+    color: color-mix(in srgb, var(--text-color) 25%, transparent);
 }
 
 .pomodoro__goal-input--error {
@@ -1416,7 +1416,7 @@ body {
     margin-top: 6px;
     padding: 5px 10px 5px 8px;
     font-size: 12px;
-    color: #ffffffcc;
+    color: color-mix(in srgb, var(--text-color) 80%, transparent);
     background: #ffffff0d;
     border: 1px solid #ffffff18;
     border-radius: 20px;
@@ -1456,7 +1456,7 @@ body {
     border-radius: 50%;
     border: 1px solid #ffffff30;
     background: transparent;
-    color: #ffffffaa;
+    color: color-mix(in srgb, var(--text-color) 67%, transparent);
     font-size: 11px;
     cursor: pointer;
     display: flex;
@@ -1522,7 +1522,7 @@ body {
 
 .pomodoro__notice-body {
     font-size: 12px;
-    color: #ffffffb3;
+    color: color-mix(in srgb, var(--text-color) 70%, transparent);
     line-height: 1.45;
 }
 
@@ -1548,7 +1548,7 @@ body {
     border: 1px solid #ffffff1a;
     border-radius: 10px;
     background: #ffffff0a;
-    color: #ffffff99;
+    color: color-mix(in srgb, var(--text-color) 60%, transparent);
     font-size: 18px;
     line-height: 1;
     cursor: pointer;
@@ -1558,8 +1558,8 @@ body {
 
 .pomodoro__notice-dismiss:hover {
     background: #ffffff14;
-    color: #ffffff;
-    border-color: #ffffff30;
+    color: var(--text-color);
+    border-color: color-mix(in srgb, var(--text-color) 19%, transparent);
 }
 
 /* ======================
@@ -1584,7 +1584,7 @@ body {
 
 .btn--primary {
     background: var(--accent-color);
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .btn--primary:hover {
@@ -1593,7 +1593,7 @@ body {
 
 .btn--secondary {
     background: #ffffff1a;
-    color: #ffffff;
+    color: var(--text-color);
     border: 1px solid #ffffff33;
 }
 
@@ -2093,7 +2093,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .btn--danger {
     background: #dc2626;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .btn--danger:hover {
@@ -2149,7 +2149,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .todo__summary-text {
     font-size: 12px;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
 }
 
 .todo__progress {
@@ -2179,12 +2179,12 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .todo__progress-text {
     font-size: 11px;
-    color: #ffffff99;
+    color: color-mix(in srgb, var(--text-color) 60%, transparent);
     white-space: nowrap;
 }
 
 .todo__header-icon {
-    color: #ffffff66;
+    color: color-mix(in srgb, var(--text-color) 40%, transparent);
 }
 
 .todo__compact-toggle,
@@ -2235,7 +2235,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__compact-active {
-    color: #ffffffa6;
+    color: color-mix(in srgb, var(--text-color) 65%, transparent);
     text-align: right;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2290,7 +2290,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__item:hover {
-    border-color: #ffffff20;
+    border-color: color-mix(in srgb, var(--text-color) 13%, transparent);
     background: #ffffff0d;
 }
 
@@ -2307,7 +2307,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__item--completed .todo__text {
-    color: #ffffff66;
+    color: color-mix(in srgb, var(--text-color) 40%, transparent);
     opacity: 0.64;
 }
 
@@ -2348,7 +2348,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 .todo__checkbox svg {
     width: 12px;
     height: 12px;
-    color: #ffffff;
+    color: var(--text-color);
     opacity: 0;
 }
 
@@ -2446,11 +2446,11 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__check-icon {
-    color: #ffffff4d;
+    color: color-mix(in srgb, var(--text-color) 30%, transparent);
 }
 
 .todo__add {
-    color: #ffffff66;
+    color: color-mix(in srgb, var(--text-color) 40%, transparent);
     font-size: 14px;
     flex: 1;
 }
@@ -2509,14 +2509,14 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 .todo__priority-select option:checked,
 .todo__sort option:checked {
     background: color-mix(in srgb, var(--accent-color) 28%, #0f172a);
-    color: #ffffff;
+    color: var(--text-color);
     font-weight: 700;
 }
 
 .todo__priority-select:hover,
 .todo__sort:hover {
     border-color: color-mix(in srgb, var(--accent-color) 32%, transparent);
-    background-color: #ffffff10;
+    background-color: color-mix(in srgb, var(--text-color) 6%, transparent);
 }
 
 .todo__priority-select:focus,
@@ -2583,9 +2583,9 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__active-task--idle {
-    border-color: #ffffff14;
+    border-color: color-mix(in srgb, var(--text-color) 8%, transparent);
     background: #ffffff08;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
 }
 
 .todo__active-task--idle::after {
@@ -2609,7 +2609,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .todo__active-task-meta {
     font-size: 11px;
-    color: #ffffffb0;
+    color: color-mix(in srgb, var(--text-color) 69%, transparent);
     line-height: 1.45;
 }
 
@@ -2647,7 +2647,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     display: block;
     margin: 0;
     padding: 14px 0 2px;
-    color: #ffffff70;
+    color: color-mix(in srgb, var(--text-color) 44%, transparent);
     font-size: 12px;
 }
 
@@ -2675,14 +2675,14 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .todo__input::placeholder {
-    color: #ffffff4d;
+    color: color-mix(in srgb, var(--text-color) 30%, transparent);
 }
 
 .todo__remove {
     background: #ffffff0b;
     border: 1px solid #ffffff14;
     border-radius: 10px;
-    color: #ffffff33;
+    color: color-mix(in srgb, var(--text-color) 20%, transparent);
     font-size: 18px;
     cursor: pointer;
     padding: 3px 8px;
@@ -2898,7 +2898,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 .stats__item-icon {
     width: 20px;
     height: 20px;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
 }
 
 .stats__item-value {
@@ -2909,7 +2909,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .stats__item-label {
     font-size: 14px;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
     margin-left: 4px;
 }
 
@@ -2922,7 +2922,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     background: #ffffff0a;
     border: 1px solid #ffffff18;
     border-radius: 10px;
-    color: #ffffffcc;
+    color: color-mix(in srgb, var(--text-color) 80%, transparent);
     font-size: 12px;
     text-align: center;
     cursor: pointer;
@@ -2952,7 +2952,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .stats__adherence-label {
     font-size: 12px;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
 }
 
 .stats__adherence-pct {
@@ -3014,12 +3014,12 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .weather__condition {
     font-weight: 400;
-    color: #ffffffb3;
+    color: color-mix(in srgb, var(--text-color) 70%, transparent);
 }
 
 .weather__location {
     font-size: 12px;
-    color: #ffffff80;
+    color: color-mix(in srgb, var(--text-color) 50%, transparent);
     overflow-wrap: anywhere;
 }
 
@@ -3060,7 +3060,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 .music__icon svg {
     width: 22px;
     height: 22px;
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 .music__info {
@@ -3073,7 +3073,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .music__now-playing {
     font-size: 12px;
-    color: #ffffff55;
+    color: color-mix(in srgb, var(--text-color) 33%, transparent);
     letter-spacing: 0.2px;
     white-space: nowrap;
     display: flex;
@@ -3161,7 +3161,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .music__time {
     font-size: 11px;
-    color: #ffffff35;
+    color: color-mix(in srgb, var(--text-color) 21%, transparent);
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.3px;
 }
@@ -3178,7 +3178,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 .music__btn {
     background: none;
     border: none;
-    color: #ffffff55;
+    color: color-mix(in srgb, var(--text-color) 33%, transparent);
     cursor: pointer;
     padding: 7px;
     border-radius: 50%;
@@ -3190,7 +3190,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 }
 
 .music__btn:hover {
-    color: #ffffff;
+    color: var(--text-color);
     background: #ffffff12;
     transform: scale(1.1);
 }
@@ -3202,7 +3202,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .music__btn--play {
     background: var(--accent-color);
-    color: #ffffff;
+    color: var(--text-color);
     width: 36px;
     height: 36px;
     min-width: 36px;
@@ -3213,7 +3213,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .music__btn--play:hover {
     background: var(--accent-color);
-    color: #ffffff;
+    color: var(--text-color);
     filter: brightness(1.18);
     box-shadow: 0 4px 22px color-mix(in srgb, var(--accent-color) 65%, transparent);
     transform: scale(1.08);
@@ -3514,7 +3514,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
 
 .discipline-modal__subtitle {
     font-size: 13px;
-    color: #ffffffb3;
+    color: color-mix(in srgb, var(--text-color) 70%, transparent);
     margin: -6px 0 0;
 }
 
@@ -3560,7 +3560,7 @@ body[data-view-mode-draft="collapsed"] .collapsed-view {
     border-radius: 10px;
     border: 1px solid #ffffff22;
     background: #ffffff0a;
-    color: #ffffffcc;
+    color: color-mix(in srgb, var(--text-color) 80%, transparent);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
